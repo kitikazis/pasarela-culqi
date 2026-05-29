@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'culqi' => [
+        'public_key'  => env('CULQI_PUBLIC_KEY'),
+        'private_key' => env('CULQI_PRIVATE_KEY'),
+        'base_url'    => env('CULQI_BASE_URL', 'https://api.culqi.com/v2'),
+    ],
+
 ];
