@@ -21,6 +21,6 @@ if ($uri === '/' && file_exists(__DIR__.'/public/index.html')) {
 if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
     return false; // El servidor built-in lo sirve con el Content-Type correcto
 }
-
+// Todo lo demás → Laravel
 // Todo lo demás → Laravel
 require_once __DIR__.'/public/index.php';
