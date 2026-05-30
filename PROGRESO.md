@@ -7,6 +7,7 @@
 ## ✅ Lo que YA está hecho y funcionando
 
 ### Backend (Laravel 12 + SDK Culqi + RSA)
+
 - **CulqiService** — charge, yape, refund, customer, card, order, token, ping
 - **PaymentController** — showCheckout, charge, yape, refund, saveCard, createOrder, webhook, health
 - **Transaction** (modelo) — email encriptado, soft deletes
@@ -16,20 +17,23 @@
 - **Seguridad** — `.htaccess` con HTTPS + headers, CSRF, RSA auto-activable
 
 ### Métodos de pago probados
-| Método | Estado |
-|--------|--------|
-| 💳 Tarjeta | ✅ Cobra (probado: chr_test_...) |
-| 🔁 Devolución | ✅ Funciona |
-| 📦 Crear orden (PagoEfectivo/billeteras) | ✅ Se genera la orden |
-| 💾 Guardar tarjeta | ✅ Código listo |
-| 📱 Yape | ⚠️ Código OK, falta habilitar teléfono de prueba en tu cuenta Culqi |
+
+| Método                                   | Estado                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| 💳 Tarjeta                               | ✅ Cobra (probado: chr*test*...)                                    |
+| 🔁 Devolución                            | ✅ Funciona                                                         |
+| 📦 Crear orden (PagoEfectivo/billeteras) | ✅ Se genera la orden                                               |
+| 💾 Guardar tarjeta                       | ✅ Código listo                                                     |
+| 📱 Yape                                  | ⚠️ Código OK, falta habilitar teléfono de prueba en tu cuenta Culqi |
 
 ### Frontend
+
 - Página `/pago` — **Custom Checkout multipago v1.0** con planes y precios
 - Botón "Destacar — Planes" en `index.html`
 - Planes: Básico S/6 · Plus S/25 · Premium S/50
 
 ### Git
+
 - `main` = todo el trabajo (sincronizado con GitHub) ✅
 - Respaldo del estado viejo en rama `backup-no-correr`
 - Pendiente de push: commit de `.env.example` ordenado (corre `git push origin main`)
@@ -41,10 +45,12 @@
 Estábamos por implementar el **WEBHOOK** (para que PagoEfectivo/billeteras/Cuotéalo se confirmen solos).
 
 **Ya hecho:**
+
 - ✅ ngrok instalado en `C:\Users\luisk\ngrok\ngrok.exe` (v3.39.5)
 - ✅ Token de ngrok configurado
 
 **Pendiente (próximos pasos):**
+
 ```
 1️⃣  Crear tabla webhook_events (idempotencia + auditoría)   ← lo hace Claude
 2️⃣  Mejorar el webhook para usarla                          ← lo hace Claude
