@@ -1,165 +1,275 @@
 <?php
+
 namespace App\Services;
 
-use App\Exceptions\CulqiException;
+use Culqi\Culqi;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Capa de servicio sobre el SDK oficial culqi/culqi-php (API v2.0).
+ *
+ * Seguridad:
+ *  - La SECRET_KEY solo se usa aquí (backend). Nunca se expone ni se loggea.
+ *  - Todas las operaciones de escritura envían $encryption_params (RSA+AES)
+ *    cuando CULQI_RSA_ID y CULQI_RSA_PUBLIC_KEY están definidos en .env.
+ *  - Los métodos devuelven arrays limpios y normalizados, NUNCA el objeto
+ *    crudo de Culqi hacia capas superiores que puedan exponerlo.
+ *  - El logging registra solo type/code/merchant_message; jamás datos de tarjeta.
+ *
+ * El SDK devuelve un objeto (stdClass) en éxito y un string en error;
+ * el método handle() unifica ese comportamiento.
+ */
 class CulqiService
 {
-    private string $privateKey;
-    private string $publicKey;  // ← AGREGAR
-    private string $baseUrl;
-
-    public function __construct(array $culqiConfig)
+    /** Instancia del SDK autenticada con la llave PÚBLICA (solo tokens). */
+    private function publicClient(): Culqi
     {
-        $this->privateKey = $culqiConfig['private_key'];
-        $this->publicKey  = $culqiConfig['public_key'];  // ← AGREGAR
-        $this->baseUrl    = rtrim($culqiConfig['base_url'], '/');
+        return new Culqi(['api_key' => config('culqi.public_key')]);
     }
 
-    // ── Token Yape (usa LLAVE PÚBLICA) ─────────────────────────
+    /** Instancia del SDK autenticada con la llave SECRETA (cargos, etc.). */
+    private function secretClient(): Culqi
+    {
+        return new Culqi(['api_key' => config('culqi.secret_key')]);
+    }
+
+    /**
+     * Parámetros de encriptación RSA. Se activan solo si ambas variables
+     * existen en .env; de lo contrario se retorna [] y el SDK no encripta.
+     */
+    private function rsaParams(): array
+    {
+        $rsaId  = config('culqi.rsa_id');
+        $rsaKey = config('culqi.rsa_public_key');
+
+        if (! empty($rsaId) && ! empty($rsaKey)) {
+            return ['rsa_id' => $rsaId, 'rsa_public_key' => $rsaKey];
+        }
+
+        return [];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  CARGOS (Charges)
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Crea un cargo a una tarjeta tokenizada.
+     *
+     * @param array $data   token, amount, currency_code, email, description
+     * @param array $auth3ds  Parámetros authentication_3DS (opcional, reintento 3DS)
+     */
+    public function createCharge(array $data, array $auth3ds = []): array
+    {
+        $payload = [
+            'amount'        => (int) $data['amount'],
+            'currency_code' => $data['currency_code'] ?? config('culqi.default_currency'),
+            'email'         => $data['email'],
+            'source_id'     => $data['token'],
+            'description'   => $data['description'] ?? 'Pago',
+            'capture'       => true,
+        ];
+
+        if (! empty($auth3ds)) {
+            $payload['authentication_3DS'] = $auth3ds;
+        }
+
+        $response = $this->secretClient()->Charges->create($payload, $this->rsaParams());
+
+        return $this->handle($response, 'charge.create');
+    }
+
+    /** Consulta un cargo por su ID (chr_...). Usado por el webhook para verificar. */
+    public function getCharge(string $chargeId): array
+    {
+        $response = $this->secretClient()->Charges->get($chargeId);
+
+        return $this->handle($response, 'charge.get');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  DEVOLUCIONES (Refunds)
+    // ─────────────────────────────────────────────────────────────
+
+    public function createRefund(array $data): array
+    {
+        $payload = [
+            'amount'    => (int) $data['amount'],
+            'charge_id' => $data['charge_id'],
+            'reason'    => $data['reason'],
+        ];
+
+        $response = $this->secretClient()->Refunds->create($payload, $this->rsaParams());
+
+        return $this->handle($response, 'refund.create');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  CLIENTES Y TARJETAS (one-click / recurrente)
+    // ─────────────────────────────────────────────────────────────
+
+    public function createCustomer(array $data): array
+    {
+        $payload = [
+            'first_name'   => $data['first_name'],
+            'last_name'    => $data['last_name'],
+            'email'        => $data['email'],
+            'address'      => $data['address']      ?? '-',
+            'address_city' => $data['address_city'] ?? 'Lima',
+            'country_code' => $data['country_code'] ?? config('culqi.country_code'),
+            'phone_number' => $data['phone_number'],
+        ];
+
+        $response = $this->secretClient()->Customers->create($payload, $this->rsaParams());
+
+        return $this->handle($response, 'customer.create');
+    }
+
+    public function createCard(array $data): array
+    {
+        $payload = [
+            'customer_id' => $data['customer_id'],
+            'token_id'    => $data['token_id'],
+        ];
+
+        $response = $this->secretClient()->Cards->create($payload, $this->rsaParams());
+
+        return $this->handle($response, 'card.create');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  ÓRDENES (PagoEfectivo)
+    // ─────────────────────────────────────────────────────────────
+
+    public function createOrder(array $data): array
+    {
+        $payload = [
+            'amount'         => (int) $data['amount'],
+            'currency_code'  => $data['currency_code'] ?? config('culqi.default_currency'),
+            'description'    => $data['description'] ?? 'Orden de pago',
+            'order_number'   => $data['order_number'],
+            'expiration_date' => $data['expiration_date'] ?? (time() + 60 * 60 * 24), // 24h
+            'client_details' => $data['client_details'],
+            'confirm'        => false,
+        ];
+
+        $response = $this->secretClient()->Orders->create($payload, $this->rsaParams());
+
+        return $this->handle($response, 'order.create');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  YAPE  (token con llave pública  +  cargo con llave secreta)
+    // ─────────────────────────────────────────────────────────────
 
     public function createYapeToken(string $phoneNumber, string $otp, int $amount): array
     {
-        return $this->post('/tokens', [
-            'number_phone'        => $phoneNumber,
-            'otp'                 => $otp,
-            'amount'              => $amount,
-            'payment_method_type' => 'yape',
-            'metadata'            => ['negocio' => 'Bitácora de mantenimiento'],
-        ], usePublicKey: true);
+        $response = $this->publicClient()->Tokens->createYape([
+            'number_phone' => $phoneNumber,
+            'otp'          => $otp,
+            'amount'       => $amount,
+        ]);
+
+        return $this->handle($response, 'yape.token');
     }
 
-    // ── Cargo con Yape (usa LLAVE PRIVADA) ─────────────────────
-
-    public function createYapeCharge(array $data): array
+    /**
+     * Flujo Yape completo: genera el token y ejecuta el cargo.
+     * Devuelve 'failed_step' indicando dónde falló (token_yape | cargo).
+     */
+    public function chargeYape(string $phone, string $otp, int $amount, string $email, ?string $description = null): array
     {
-        return $this->post('/charges', [
-            'amount'        => (int) $data['amount'],
+        $token = $this->createYapeToken($phone, $otp, $amount);
+        if (! $token['success']) {
+            return ['success' => false, 'failed_step' => 'token_yape', 'user_message' => $token['user_message']];
+        }
+
+        $charge = $this->createCharge([
+            'token'         => $token['data']->id,
+            'amount'        => $amount,
             'currency_code' => 'PEN',
-            'email'         => $data['email'],
-            'source_id'     => $data['yape_token'],
-            'description'   => $data['description'] ?? 'Pago de mantenimiento',
+            'email'         => $email,
+            'description'   => $description,
         ]);
+        if (! $charge['success']) {
+            return ['success' => false, 'failed_step' => 'cargo', 'user_message' => $charge['user_message']];
+        }
+
+        return ['success' => true, 'data' => $charge['data'], 'token_id' => $token['data']->id];
     }
 
-    // ── Cargo con tarjeta (usa LLAVE PRIVADA) ──────────────────
+    // ─────────────────────────────────────────────────────────────
+    //  TOKEN DE TARJETA  — SOLO TESTING (en producción lo genera el frontend)
+    // ─────────────────────────────────────────────────────────────
 
-    public function createCharge(array $data): array
+    public function createToken(array $data): array
     {
-        return $this->post('/charges', [
-            'amount'        => (int) $data['amount'],
-            'currency_code' => $data['currency'] ?? 'PEN',
-            'email'         => $data['email'],
-            'source_id'     => $data['token_id'],
-            'description'   => $data['description'] ?? 'Pago de mantenimiento',
+        $response = $this->publicClient()->Tokens->create([
+            'card_number'      => $data['card_number'],
+            'cvv'              => $data['cvv'],
+            'expiration_month' => $data['expiration_month'],
+            'expiration_year'  => $data['expiration_year'],
+            'email'            => $data['email'],
         ]);
+
+        return $this->handle($response, 'token.create');
     }
 
-    // ── Consultar cargo ────────────────────────────────────────
-
-    public function getCharge(string $chargeId): array
-    {
-        return $this->get("/charges/{$chargeId}");
-    }
-
-    // ── Health check ───────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    //  HEALTH CHECK
+    // ─────────────────────────────────────────────────────────────
 
     public function ping(): array
     {
         try {
-            $ch       = $this->buildCurl('/charges?limit=1', 'GET');
-            $body     = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlErr  = curl_error($ch);
-            curl_close($ch);
+            $response = $this->secretClient()->Charges->all(['limit' => 1]);
 
-            if ($curlErr) {
-                return ['status' => 'error', 'message' => 'No se puede alcanzar Culqi: ' . $curlErr];
+            if (is_object($response)) {
+                return ['ok' => true, 'message' => 'Credenciales válidas'];
             }
 
-            $decoded = json_decode($body, true);
+            $decoded = is_string($response) ? json_decode($response, true) : null;
 
-            if ($httpCode === 401) {
-                return ['status' => 'error', 'http_status' => $httpCode, 'message' => 'Credenciales de Culqi inválidas.'];
-            }
-
-            if ($httpCode === 200) {
-                return ['status' => 'ok', 'http_status' => $httpCode, 'message' => 'Culqi API responde correctamente y credenciales válidas.'];
-            }
-
-            return ['status' => 'error', 'http_status' => $httpCode, 'message' => 'Respuesta inesperada: ' . ($decoded['user_message'] ?? 'Error desconocido')];
-
+            return [
+                'ok'      => false,
+                'message' => $decoded['user_message'] ?? 'Llave secreta inválida o sin conexión',
+            ];
         } catch (\Throwable $e) {
-            return ['status' => 'error', 'message' => 'No se puede alcanzar Culqi: ' . $e->getMessage()];
+            Log::error('Culqi ping error', ['message' => $e->getMessage()]);
+
+            return ['ok' => false, 'message' => 'Sin conexión a Culqi'];
         }
     }
 
-    // ── HTTP Helpers ───────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    //  NORMALIZACIÓN DE RESPUESTA
+    // ─────────────────────────────────────────────────────────────
 
-    private function post(string $endpoint, array $payload, bool $usePublicKey = false): array
+    /**
+     * El SDK devuelve stdClass en éxito y string (JSON o texto) en error.
+     * Aquí se unifica a ['success' => bool, 'data'|'user_message' => ...].
+     * El logging NUNCA incluye datos sensibles, solo metadatos del error.
+     */
+    private function handle(mixed $response, string $context): array
     {
-        $ch = $this->buildCurl($endpoint, 'POST', $payload, $usePublicKey);
-        return $this->execute($ch, $endpoint);
-    }
+        if (is_object($response) && isset($response->object) && $response->object !== 'error') {
+            return ['success' => true, 'data' => $response];
+        }
 
-    private function get(string $endpoint, bool $usePublicKey = false): array
-    {
-        $ch = $this->buildCurl($endpoint, 'GET', null, $usePublicKey);
-        return $this->execute($ch, $endpoint);
-    }
+        $decoded = is_string($response) ? json_decode($response, true) : (array) $response;
+        $decoded = is_array($decoded) ? $decoded : [];
 
-    private function buildCurl(string $endpoint, string $method, ?array $payload = null, bool $usePublicKey = false): \CurlHandle
-    {
-        $ch  = curl_init($this->baseUrl . $endpoint);
-        $key = $usePublicKey ? $this->publicKey : $this->privateKey;  // ← elegir llave
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 30,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_CUSTOMREQUEST  => $method,
-            CURLOPT_HTTPHEADER     => [
-                'Authorization: Bearer ' . $key,
-                'Content-Type: application/json',
-                'Accept: application/json',
-            ],
+        Log::error('Culqi API error', [
+            'context'          => $context,
+            'type'             => $decoded['type']             ?? null,
+            'code'             => $decoded['code']             ?? null,
+            'merchant_message' => $decoded['merchant_message'] ?? null,
         ]);
 
-        if ($payload !== null) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        }
-
-        return $ch;
-    }
-
-    private function execute(\CurlHandle $ch, string $endpoint): array
-    {
-        $body     = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr  = curl_error($ch);
-        curl_close($ch);
-
-        if ($curlErr) {
-            throw new CulqiException('No se pudo conectar con Culqi.', 503);
-        }
-
-        $decoded = json_decode($body, true);
-
-        if ($httpCode >= 200 && $httpCode < 300) {
-            return $decoded;
-        }
-
-        $userMessage = $decoded['user_message'] ?? $decoded['merchant_message'] ?? 'Error al procesar el pago.';
-
-        error_log(sprintf(
-            '[Culqi Error] endpoint=%s http=%d code=%s msg=%s',
-            $endpoint,
-            $httpCode,
-            $decoded['code'] ?? 'unknown',
-            $decoded['merchant_message'] ?? $userMessage
-        ));
-
-        throw new CulqiException($userMessage, $httpCode, $decoded);
+        return [
+            'success'      => false,
+            'user_message' => $decoded['user_message'] ?? 'No se pudo procesar la solicitud. Intenta nuevamente.',
+            'code'         => $decoded['code'] ?? null,
+        ];
     }
 }

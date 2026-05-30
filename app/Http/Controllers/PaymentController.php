@@ -2,199 +2,367 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\CulqiException;
-use App\Models\Payment;
+use App\Http\Requests\ChargeRequest;
+use App\Http\Requests\CreateOrderRequest;
+use App\Http\Requests\RefundRequest;
+use App\Http\Requests\YapeRequest;
+use App\Models\Transaction;
 use App\Services\CulqiService;
-use App\Validators\PaymentValidator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
-class PaymentController
+class PaymentController extends Controller
 {
-    public function __construct(
-        private readonly CulqiService    $culqiService,
-        private readonly Payment         $paymentModel,
-        private readonly PaymentValidator $validator
-    ) {}
+    public function __construct(private CulqiService $culqi) {}
 
-    // ── GET /health ────────────────────────────────────────────
-
-    public function health(): void
+    // ─────────────────────────────────────────────────────────────
+    //  GET /pago  — Vista de checkout (Culqi Checkout v4)
+    // ─────────────────────────────────────────────────────────────
+    public function showCheckout(): View
     {
-        $dbStatus    = $this->checkDatabase();
-        $culqiStatus = $this->culqiService->ping();
-
-        $allOk   = $dbStatus['status'] === 'ok' && $culqiStatus['status'] === 'ok';
-        $httpCode = $allOk ? 200 : 503;
-
-        $this->json([
-            'database'  => $dbStatus,
-            'culqi'     => $culqiStatus,
-            'timestamp' => date('c'),
-        ], $httpCode);
+        // La PUBLIC_KEY se inyecta en la vista desde config('culqi.public_key').
+        return view('payment.checkout');
     }
 
-    // ── POST /payment/charge (tarjeta) ─────────────────────────
-
-    public function charge(): void
+    // ─────────────────────────────────────────────────────────────
+    //  POST /pago/cargo  — Cargo con tarjeta
+    // ─────────────────────────────────────────────────────────────
+    public function charge(ChargeRequest $request): JsonResponse
     {
-        $data = $this->getJsonBody();
+        $data = $request->validated();
 
-        if (!$this->validator->validateCharge($data)) {
-            $this->json([
+        // El precio se resuelve en el backend desde el plan (no se confía del cliente).
+        $amount      = $this->resolveAmount($data);
+        $description = $this->resolveDescription($data);
+
+        $result = $this->culqi->createCharge([
+            'token'         => $data['token'],
+            'amount'        => $amount,
+            'currency_code' => $data['currency_code'] ?? 'PEN',
+            'email'         => $data['email'],
+            'description'   => $description,
+        ]);
+
+        if (! $result['success']) {
+            // Auditoría del intento fallido (sin datos sensibles)
+            Transaction::create([
+                'payment_method'      => 'card',
+                'amount'              => $amount,
+                'currency'            => $data['currency_code'] ?? 'PEN',
+                'status'              => 'failed',
+                'culqi_response_code' => $result['code'] ?? null,
+                'customer_email'      => $data['email'],
+                'description'         => $description,
+                'metadata'            => ['plan' => $data['plan'] ?? null],
+            ]);
+
+            return response()->json([
                 'success' => false,
-                'errors'  => $this->validator->getErrors(),
+                'message' => $result['user_message'],
             ], 422);
-            return;
         }
 
-        // Registrar en BD como pending
-        $paymentId = $this->paymentModel->create([
-            'token_id'       => $data['token_id'],
-            'amount'         => $data['amount'],
-            'currency'       => $data['currency'] ?? 'PEN',
-            'payment_method' => 'card',
-            'email'          => $data['email'],
-            'description'    => $data['description'] ?? null,
+        $charge = $result['data'];
+
+        $transaction = Transaction::create([
+            'charge_id'           => $charge->id,
+            'payment_method'      => 'card',
+            'amount'              => $charge->amount,
+            'currency'            => $charge->currency_code ?? 'PEN',
+            'status'              => 'paid',
+            'culqi_response_code' => $charge->outcome->code ?? null,
+            'customer_email'      => $charge->email ?? $data['email'],
+            'card_last4'          => $charge->source->last_four ?? null,
+            'card_brand'          => $charge->source->iin->card_brand ?? null,
+            'description'         => $description,
+            'metadata'            => [
+                'outcome_type' => $charge->outcome->type ?? null,
+                'plan'         => $data['plan'] ?? null,
+            ],
         ]);
 
-        try {
-            $charge = $this->culqiService->createCharge($data);
+        return response()->json([
+            'success'    => true,
+            'message'    => 'Pago procesado exitosamente.',
+            'charge_id'  => $charge->id,
+            'order_id'   => $transaction->id,
+            'amount'     => round($charge->amount / 100, 2),
+            'currency'   => $charge->currency_code ?? 'PEN',
+        ]);
+    }
 
-            $this->paymentModel->updateStatus($paymentId, 'paid', $charge['id'], $charge);
+    // ─────────────────────────────────────────────────────────────
+    //  POST /pago/devolucion  — Devolución (Refund)
+    // ─────────────────────────────────────────────────────────────
+    public function refund(RefundRequest $request): JsonResponse
+    {
+        $data = $request->validated();
 
-            $this->json([
-                'success'    => true,
-                'message'    => 'Pago procesado exitosamente.',
-                'payment_id' => $paymentId,
-                'charge_id'  => $charge['id'],
-                'amount'     => (int)$data['amount'] / 100,
-                'currency'   => $data['currency'] ?? 'PEN',
-            ], 200);
+        $result = $this->culqi->createRefund($data);
 
-        } catch (CulqiException $e) {
-            $this->paymentModel->updateStatus($paymentId, 'failed', null, $e->getCulqiError());
-
-            $this->json([
+        if (! $result['success']) {
+            return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], $e->getHttpStatus());
+                'message' => $result['user_message'],
+            ], 422);
         }
+
+        Transaction::where('charge_id', $data['charge_id'])
+            ->update(['status' => 'refunded']);
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Devolución procesada exitosamente.',
+            'refund_id' => $result['data']->id,
+        ]);
     }
 
-    // ── POST /payment/yape ─────────────────────────────────────
-
-   // ── POST /payment/yape ─────────────────────────────────────
-
-public function yapeCharge(): void
-{
-    $data = $this->getJsonBody();
-
-    // Validar entrada
-    if (!$this->validator->validateYapeCharge($data)) {
-        $this->json([
-            'success' => false,
-            'errors'  => $this->validator->getErrors(),
-        ], 422);
-        return;
-    }
-
-    // Registrar como pending
-    $paymentId = $this->paymentModel->create([
-        'amount'         => $data['amount'],
-        'currency'       => 'PEN',
-        'payment_method' => 'yape',
-        'email'          => $data['email'],
-        'description'    => $data['description'] ?? 'Pago de mantenimiento via Yape',
-    ]);
-
-    try {
-        // Paso 1: Generar token Yape con número + OTP
-    $yapeToken = $this->culqiService->createYapeToken(
-    $data['phone_number'],
-    $data['otp'],
-    (int) $data['amount']  // ← pasar el monto
-);
-
-        // Paso 2: Ejecutar el cargo con el token obtenido
-        $charge = $this->culqiService->createYapeCharge([
-            'amount'      => $data['amount'],
-            'email'       => $data['email'],
-            'description' => $data['description'] ?? 'Pago de mantenimiento via Yape',
-            'yape_token'  => $yapeToken['id'],  // ← id del token generado
+    // ─────────────────────────────────────────────────────────────
+    //  POST /pago/guardar-tarjeta  — Cliente + tarjeta (one-click)
+    // ─────────────────────────────────────────────────────────────
+    public function saveCard(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token'        => ['required', 'string', 'starts_with:tkn_live_,tkn_test_'],
+            'email'        => ['required', 'email'],
+            'first_name'   => ['required', 'string', 'max:50'],
+            'last_name'    => ['required', 'string', 'max:50'],
+            'phone_number' => ['required', 'string', 'max:15'],
         ]);
 
-        // Guardar éxito
-        $this->paymentModel->updateStatus(
-            $paymentId,
-            'paid',
-            $charge['id'],
-            $charge
+        $customer = $this->culqi->createCustomer($data);
+        if (! $customer['success']) {
+            return response()->json(['success' => false, 'message' => $customer['user_message']], 422);
+        }
+
+        $card = $this->culqi->createCard([
+            'customer_id' => $customer['data']->id,
+            'token_id'    => $data['token'],
+        ]);
+        if (! $card['success']) {
+            return response()->json(['success' => false, 'message' => $card['user_message']], 422);
+        }
+
+        // customer_id y card_id son referencias no sensibles para cobros futuros.
+        return response()->json([
+            'success'     => true,
+            'message'     => 'Tarjeta guardada exitosamente.',
+            'customer_id' => $customer['data']->id,
+            'card_id'     => $card['data']->id,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  POST /api/payment/yape  — Pago con Yape
+    // ─────────────────────────────────────────────────────────────
+    public function yape(YapeRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        $result = $this->culqi->chargeYape(
+            $data['phone_number'],
+            $data['otp'],
+            (int) $data['amount'],
+            $data['email'],
+            $data['description'] ?? null,
         );
 
-        $this->json([
-            'success'    => true,
-            'message'    => 'Pago con Yape procesado exitosamente.',
-            'payment_id' => $paymentId,
-            'charge_id'  => $charge['id'],
-            'amount'     => (int)$data['amount'] / 100,
-            'currency'   => 'PEN',
-        ], 200);
+        if (! $result['success']) {
+            Transaction::create([
+                'payment_method' => 'yape',
+                'amount'         => $data['amount'],
+                'currency'       => 'PEN',
+                'status'         => 'failed',
+                'customer_email' => $data['email'],
+                'description'    => $data['description'] ?? null,
+                'metadata'       => ['failed_step' => $result['failed_step'] ?? null],
+            ]);
 
-    } catch (CulqiException $e) {
-        $this->paymentModel->updateStatus($paymentId, 'failed', null, $e->getCulqiError());
-
-        $this->json([
-            'success' => false,
-            'message' => $e->getMessage(),
-            'step'    => isset($yapeToken) ? 'cargo' : 'token_yape', // ← indica en qué paso falló
-        ], $e->getHttpStatus());
-    }
-}
-
-
-
-    // ── GET /payment/{id} ──────────────────────────────────────
-    public function show(string $id): void
-    {
-        $payment = $this->paymentModel->findById($id);
-
-        if (!$payment) {
-            $this->json(['success' => false, 'message' => 'Pago no encontrado.'], 404);
-            return;
+            return response()->json([
+                'success'     => false,
+                'message'     => $result['user_message'],
+                'failed_step' => $result['failed_step'] ?? null,
+            ], 422);
         }
 
-        $this->json([
-            'id'             => $payment['id'],
-            'amount'         => (int)$payment['amount'] / 100,
-            'currency'       => $payment['currency'],
-            'status'         => $payment['status'],
-            'payment_method' => $payment['payment_method'],
-            'charge_id'      => $payment['culqi_charge_id'],
-            'created_at'     => $payment['created_at'],
+        $charge = $result['data'];
+
+        $transaction = Transaction::create([
+            'charge_id'           => $charge->id,
+            'payment_method'      => 'yape',
+            'amount'              => $charge->amount,
+            'currency'            => 'PEN',
+            'status'              => 'paid',
+            'culqi_response_code' => $charge->outcome->code ?? null,
+            'customer_email'      => $charge->email ?? $data['email'],
+            'description'         => $data['description'] ?? null,
+            'metadata'            => ['outcome_type' => $charge->outcome->type ?? null],
+        ]);
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Pago con Yape procesado exitosamente.',
+            'charge_id' => $charge->id,
+            'order_id'  => $transaction->id,
+            'amount'    => round($charge->amount / 100, 2),
+            'currency'  => 'PEN',
         ]);
     }
 
-    // ── Helpers ────────────────────────────────────────────────
-
-    private function getJsonBody(): array
+    // ─────────────────────────────────────────────────────────────
+    //  POST /pago/orden  — Crea una Orden (PagoEfectivo / Cuotéalo)
+    // ─────────────────────────────────────────────────────────────
+    public function createOrder(CreateOrderRequest $request): JsonResponse
     {
-        $raw = file_get_contents('php://input');
-        return json_decode($raw, true) ?? [];
+        $data = $request->validated();
+
+        $amount      = $this->resolveAmount($data);
+        $description = $this->resolveDescription($data);
+
+        $result = $this->culqi->createOrder([
+            'amount'         => $amount,
+            'currency_code'  => 'PEN',
+            'description'    => $description,
+            'order_number'   => 'ord-' . now()->format('YmdHis') . '-' . random_int(100, 999),
+            'expiration_date' => time() + 60 * 60 * 24, // 24 horas
+            'client_details' => [
+                'first_name'   => $data['first_name'],
+                'last_name'    => $data['last_name'],
+                'email'        => $data['email'],
+                'phone_number' => $data['phone_number'],
+            ],
+        ]);
+
+        if (! $result['success']) {
+            return response()->json(['success' => false, 'message' => $result['user_message']], 422);
+        }
+
+        $order = $result['data'];
+
+        // Registro local de la orden pendiente
+        Transaction::create([
+            'order_number'   => $order->order_number ?? null,
+            'payment_method' => 'pagoefectivo',
+            'amount'         => $amount,
+            'currency'       => 'PEN',
+            'status'         => 'pending',
+            'customer_email' => $data['email'],
+            'description'    => $description,
+            'metadata'       => ['order_id' => $order->id, 'plan' => $data['plan'] ?? null],
+        ]);
+
+        // El frontend usa este order->id en Culqi.settings({ order })
+        return response()->json([
+            'success'  => true,
+            'order_id' => $order->id,
+            'amount'   => round($amount / 100, 2),
+        ]);
     }
 
-    private function json(array $data, int $status = 200): void
+    // ─────────────────────────────────────────────────────────────
+    //  Resolución segura de monto y descripción desde el plan
+    // ─────────────────────────────────────────────────────────────
+
+    /** Si viene un plan, el monto se toma de config/plans.php (no del cliente). */
+    private function resolveAmount(array $data): int
     {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if (! empty($data['plan'])) {
+            return (int) config("plans.{$data['plan']}.amount");
+        }
+
+        return (int) $data['amount'];
     }
 
-    private function checkDatabase(): array
+    private function resolveDescription(array $data): string
+    {
+        if (! empty($data['plan'])) {
+            return config("plans.{$data['plan']}.name") . ' — ' . config("plans.{$data['plan']}.description");
+        }
+
+        return $data['description'] ?? 'Pago';
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  POST /culqi/webhook  — Notificaciones de Culqi
+    // ─────────────────────────────────────────────────────────────
+    public function webhook(Request $request): JsonResponse
+    {
+        $event = $request->all();
+        $type  = $event['type'] ?? 'unknown';
+
+        // Validación anti-spoofing: NO confiamos en el payload.
+        // Re-consultamos el recurso directamente a Culqi con la llave secreta.
+        $resourceId = $event['data']['id'] ?? null;
+
+        if ($resourceId && str_starts_with($resourceId, 'chr_')) {
+            $verified = $this->culqi->getCharge($resourceId);
+
+            if ($verified['success']) {
+                $charge = $verified['data'];
+                $status = ($charge->outcome->type ?? null) === 'venta_exitosa' ? 'paid' : 'failed';
+
+                Transaction::where('charge_id', $charge->id)->update([
+                    'status'              => $status,
+                    'culqi_response_code' => $charge->outcome->code ?? null,
+                ]);
+
+                Log::info('Culqi webhook procesado', ['type' => $type, 'charge_id' => $charge->id]);
+            } else {
+                Log::warning('Culqi webhook no verificable', ['type' => $type, 'resource' => $resourceId]);
+            }
+        }
+
+        // Siempre respondemos 200 de inmediato.
+        return response()->json(['received' => true], 200);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  GET /api/health  — Estado de BD y Culqi
+    // ─────────────────────────────────────────────────────────────
+    public function health(): JsonResponse
     {
         try {
-            $this->paymentModel->ping();
-            return ['status' => 'ok', 'message' => 'Conexión activa'];
-        } catch (\Throwable $e) {
-            return ['status' => 'error', 'message' => $e->getMessage()];
+            DB::select('SELECT 1');
+            $dbOk = true;
+        } catch (\Throwable) {
+            $dbOk = false;
         }
+
+        $culqi = $this->culqi->ping();
+
+        return response()->json([
+            'status'    => ($dbOk && $culqi['ok']) ? 'ok' : 'degraded',
+            'database'  => $dbOk,
+            'culqi'     => $culqi,
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  GET /api/transaction/{id}  — Consulta local (no expone email)
+    // ─────────────────────────────────────────────────────────────
+    public function show(string $id): JsonResponse
+    {
+        $tx = Transaction::where('charge_id', $id)->orWhere('id', $id)->first();
+
+        if (! $tx) {
+            return response()->json(['success' => false, 'message' => 'Transacción no encontrada.'], 404);
+        }
+
+        return response()->json([
+            'success'        => true,
+            'order_id'       => $tx->id,
+            'charge_id'      => $tx->charge_id,
+            'amount'         => $tx->amount_in_soles,
+            'currency'       => $tx->currency,
+            'status'         => $tx->status,
+            'payment_method' => $tx->payment_method,
+            'card_last4'     => $tx->card_last4,
+            'card_brand'     => $tx->card_brand,
+            'created_at'     => $tx->created_at,
+        ]);
     }
 }

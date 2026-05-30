@@ -5,6 +5,12 @@
 
     RewriteEngine On
 
+    # ── Forzar HTTPS en producción ──────────────────────────────
+    # (En cPanel, una vez instalado el certificado SSL.)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -23,3 +29,18 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# ── Cabeceras de seguridad ──────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin"
+    # HSTS: fuerza HTTPS por 1 año (activar solo con SSL ya funcionando)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# ── Proteger archivos sensibles ─────────────────────────────────
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>

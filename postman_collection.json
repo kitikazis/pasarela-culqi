@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "Pasarela Culqi - Completa",
+    "_postman_id": "pasarela-culqi-full",
+    "description": "Flujo completo. Ejecuta los requests EN ORDEN: cada uno guarda variables (token, charge_id, transaction_id) para el siguiente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",         "value": "http://127.0.0.1:8000" },
+    { "key": "culqi_public_key", "value": "pk_test_uqJHboypE9phYJR8" },
+    { "key": "token_id",         "value": "" },
+    { "key": "token_id_card",    "value": "" },
+    { "key": "charge_id",        "value": "" },
+    { "key": "transaction_id",   "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/health", "host": ["{{base_url}}"], "path": ["api", "health"] }
+      }
+    },
+    {
+      "name": "2. Generar Token Tarjeta (Culqi)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "const r = pm.response.json();",
+          "if (r.id) { pm.collectionVariables.set('token_id', r.id); console.log('token_id =', r.id); }",
+          "else { console.log('Error token:', JSON.stringify(r)); }"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{culqi_public_key}}" },
+          { "key": "Content-Type",  "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"card_number\": \"4111111111111111\",\n  \"cvv\": \"123\",\n  \"expiration_month\": \"09\",\n  \"expiration_year\": \"2028\",\n  \"email\": \"test@culqi.com\"\n}" },
+        "url": { "raw": "https://api.culqi.com/v2/tokens", "protocol": "https", "host": ["api", "culqi", "com"], "path": ["v2", "tokens"] },
+        "description": "Genera un tkn_test_ usando la LLAVE PUBLICA. Se guarda en {{token_id}}.\nLos tokens son de un solo uso: genera uno nuevo para cada cargo."
+      }
+    },
+    {
+      "name": "3. Cargo con Tarjeta",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "const r = pm.response.json();",
+          "if (r.success) {",
+          "  pm.collectionVariables.set('charge_id', r.charge_id);",
+          "  pm.collectionVariables.set('transaction_id', r.order_id);",
+          "  console.log('charge_id =', r.charge_id, '| order_id =', r.order_id);",
+          "} else { console.log('Error cargo:', r.message); }"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{token_id}}\",\n  \"amount\": 1000,\n  \"currency_code\": \"PEN\",\n  \"email\": \"test@culqi.com\",\n  \"description\": \"Compra de prueba\"\n}" },
+        "url": { "raw": "{{base_url}}/api/payment/charge", "host": ["{{base_url}}"], "path": ["api", "payment", "charge"] },
+        "description": "Usa el {{token_id}} del paso 2. IMPORTANTE: si da error 'token usado', vuelve a ejecutar el paso 2 primero."
+      }
+    },
+    {
+      "name": "4. Consultar Transaccion",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/api/transaction/{{charge_id}}", "host": ["{{base_url}}"], "path": ["api", "transaction", "{{charge_id}}"] }
+      }
+    },
+    {
+      "name": "5. Devolucion (Refund)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"charge_id\": \"{{charge_id}}\",\n  \"amount\": 1000,\n  \"reason\": \"solicitud_comprador\"\n}" },
+        "url": { "raw": "{{base_url}}/api/payment/refund", "host": ["{{base_url}}"], "path": ["api", "payment", "refund"] },
+        "description": "Devuelve el cargo del paso 3. Razones validas: duplicado, fraudulento, solicitud_comprador."
+      }
+    },
+    {
+      "name": "6. Generar Token (para guardar tarjeta)",
+      "event": [{
+        "listen": "test",
+        "script": { "type": "text/javascript", "exec": [
+          "const r = pm.response.json();",
+          "if (r.id) { pm.collectionVariables.set('token_id_card', r.id); console.log('token_id_card =', r.id); }"
+        ] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{culqi_public_key}}" },
+          { "key": "Content-Type",  "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"card_number\": \"4111111111111111\",\n  \"cvv\": \"123\",\n  \"expiration_month\": \"09\",\n  \"expiration_year\": \"2028\",\n  \"email\": \"cliente@test.com\"\n}" },
+        "url": { "raw": "https://api.culqi.com/v2/tokens", "protocol": "https", "host": ["api", "culqi", "com"], "path": ["v2", "tokens"] }
+      }
+    },
+    {
+      "name": "7. Guardar Tarjeta (one-click)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{token_id_card}}\",\n  \"email\": \"cliente@test.com\",\n  \"first_name\": \"Maria\",\n  \"last_name\": \"Garcia\",\n  \"phone_number\": \"999888777\"\n}" },
+        "url": { "raw": "{{base_url}}/api/payment/save-card", "host": ["{{base_url}}"], "path": ["api", "payment", "save-card"] },
+        "description": "Crea un cliente + tarjeta en Culqi para cobros futuros. Usa el token del paso 6."
+      }
+    },
+    {
+      "name": "8. Pago con Yape",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"phone_number\": \"999999999\",\n  \"otp\": \"012345\",\n  \"amount\": 1000,\n  \"email\": \"test@culqi.com\",\n  \"description\": \"Pago Yape\"\n}" },
+        "url": { "raw": "{{base_url}}/api/payment/yape", "host": ["{{base_url}}"], "path": ["api", "payment", "yape"] },
+        "description": "NOTA: el telefono 999999999 debe estar habilitado en TU cuenta sandbox de Culqi, si no dara error en el paso token_yape."
+      }
+    }
+  ]
+}

@@ -1,62 +1,37 @@
 <?php
 
-declare(strict_types=1);
+use Illuminate\Http\Request;
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+define('LARAVEL_START', microtime(true));
 
-// ── Headers globales ───────────────────────────────────────────
-header('Content-Type: application/json; charset=utf-8');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-
-// Para pruebas con Postman (quitar en producción):
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
 }
 
-// ── Cargar config ──────────────────────────────────────────────
-$config = require dirname(__DIR__) . '/config/config.php';
+require __DIR__.'/../vendor/autoload.php';
 
-// ── Manejo global de excepciones ───────────────────────────────
-set_exception_handler(function (\Throwable $e) use ($config) {
-    $status = method_exists($e, 'getHttpStatus') ? $e->getHttpStatus() : 500;
-    http_response_code($status);
+/*
+|--------------------------------------------------------------------------
+| Archivos estáticos (servidor built-in de PHP)
+|--------------------------------------------------------------------------
+| php artisan serve usa server.php que los sirve automáticamente.
+| php -S lo usa este bloque.
+*/
+if (PHP_SAPI === 'cli-server') {
+    $uri  = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+    $file = __DIR__.$uri;
 
-    $response = ['success' => false, 'message' => $e->getMessage()];
-
-    if ($config['app']['debug']) {
-        $response['debug'] = [
-            'file'  => $e->getFile(),
-            'line'  => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-        ];
+    if ($uri !== '/' && file_exists($file) && is_file($file)) {
+        return false; // El servidor built-in lo sirve directamente
     }
 
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-});
+    if (($uri === '/' || $uri === '') && file_exists(__DIR__.'/index.html')) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile(__DIR__.'/index.html');
+        exit;
+    }
+}
 
-// ── Instanciar dependencias (DI manual) ────────────────────────
-use App\Http\Controllers\PaymentController;
-use App\Models\Payment;
-use App\Router;
-use App\Services\CulqiService;
-use App\Validators\PaymentValidator;
+$app = require_once __DIR__.'/../bootstrap/app.php';
 
-$payment    = new Payment($config['db']);
-$culqi      = new CulqiService($config['culqi']);
-$validator  = new PaymentValidator();
-$controller = new PaymentController($culqi, $payment, $validator);
-
-// ── Rutas ──────────────────────────────────────────────────────
-$router = new Router();
-
-$router->get('/health',          fn()           => $controller->health());
-$router->post('/payment/charge', fn()           => $controller->charge());
-$router->post('/payment/yape',   fn()           => $controller->yapeCharge());
-$router->get('/payment/{id}',    fn(string $id) => $controller->show($id));
-$router->dispatch();
+$app->handleRequest(Request::capture());
