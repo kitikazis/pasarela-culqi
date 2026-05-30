@@ -1,353 +1,743 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pagar – Anuncios Perú</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-<link href="../styles.css" rel="stylesheet">
-<style>
-  .pay-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; }
-  .pay-tab {
-    flex:1; padding:.75rem; border:2px solid var(--line);
-    border-radius:10px; background:#fff; cursor:pointer;
-    text-align:center; font-weight:500; font-size:.9rem;
-    transition:all .15s ease; color:var(--ink-2);
-  }
-  .pay-tab:hover { border-color:#a8b4c0; }
-  .pay-tab.active { border-color:var(--primary); background:var(--primary-soft); color:var(--primary); }
-  .pay-tab i { display:block; font-size:1.5rem; margin-bottom:.3rem; }
-  .pay-tab[data-tab="yape"].active { border-color:#742c8c; background:#f7eef9; color:#742c8c; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Pagar – Anuncios de Perú</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+        />
+        <link href="../styles.css" rel="stylesheet" />
+        <style>
+            .pay-tabs {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .pay-tab {
+                flex: 1;
+                padding: 0.75rem;
+                border: 2px solid var(--line);
+                border-radius: 10px;
+                background: #fff;
+                cursor: pointer;
+                text-align: center;
+                font-weight: 500;
+                font-size: 0.9rem;
+                transition: all 0.15s ease;
+                color: var(--ink-2);
+            }
+            .pay-tab:hover {
+                border-color: #a8b4c0;
+            }
+            .pay-tab.active {
+                border-color: var(--primary);
+                background: var(--primary-soft);
+                color: var(--primary);
+            }
+            .pay-tab i {
+                display: block;
+                font-size: 1.5rem;
+                margin-bottom: 0.3rem;
+            }
+            .pay-tab[data-tab="yape"].active {
+                border-color: #742c8c;
+                background: #f7eef9;
+                color: #742c8c;
+            }
 
-  .amount-pills { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.25rem; }
-  .amount-pill {
-    border:1.5px solid var(--line); background:#fff; padding:.45rem .9rem;
-    border-radius:999px; font-size:.875rem; font-weight:500; cursor:pointer;
-    color:var(--ink-2); transition:all .15s ease;
-  }
-  .amount-pill:hover { border-color:var(--primary); color:var(--primary); }
-  .amount-pill.active { border-color:var(--primary); background:var(--primary); color:#fff; }
+            .amount-pills {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin-bottom: 1.25rem;
+            }
+            .amount-pill {
+                border: 1.5px solid var(--line);
+                background: #fff;
+                padding: 0.45rem 0.9rem;
+                border-radius: 999px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                cursor: pointer;
+                color: var(--ink-2);
+                transition: all 0.15s ease;
+            }
+            .amount-pill:hover {
+                border-color: var(--primary);
+                color: var(--primary);
+            }
+            .amount-pill.active {
+                border-color: var(--primary);
+                background: var(--primary);
+                color: #fff;
+            }
 
-  .result-box { border-radius:10px; padding:1.5rem; text-align:center; display:none; }
-  .result-box.show { display:block; }
-  .result-box.success { background:#e6f4ea; border:1px solid #34a853; }
-  .result-box.error   { background:#fce8e6; border:1px solid #ea4335; }
-  .result-box i { font-size:2.25rem; margin-bottom:.5rem; display:block; }
-  .result-box.success i { color:#137333; }
-  .result-box.error   i { color:#c5221f; }
+            .result-box {
+                border-radius: 10px;
+                padding: 1.5rem;
+                text-align: center;
+                display: none;
+            }
+            .result-box.show {
+                display: block;
+            }
+            .result-box.success {
+                background: #e6f4ea;
+                border: 1px solid #34a853;
+            }
+            .result-box.error {
+                background: #fce8e6;
+                border: 1px solid #ea4335;
+            }
+            .result-box i {
+                font-size: 2.25rem;
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+            .result-box.success i {
+                color: #137333;
+            }
+            .result-box.error i {
+                color: #c5221f;
+            }
 
-  .spinner-overlay {
-    display:none; position:absolute; inset:0;
-    background:rgba(255,255,255,.8); border-radius:10px;
-    align-items:center; justify-content:center; z-index:10;
-  }
-  .spinner-overlay.show { display:flex; }
-  .form-card { position:relative; }
+            .spinner-overlay {
+                display: none;
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 10px;
+                align-items: center;
+                justify-content: center;
+                z-index: 10;
+            }
+            .spinner-overlay.show {
+                display: flex;
+            }
+            .form-card {
+                position: relative;
+            }
 
-  .secure-badge { font-size:.78rem; color:var(--muted); display:flex; align-items:center; gap:.4rem; margin-top:.75rem; }
-  .secure-badge i { color:#34a853; }
-</style>
-</head>
-<body>
-
-<nav class="app-navbar">
-  <div class="container">
-    <div class="d-flex align-items-center justify-content-between">
-      <a href="../index.html" class="brand">
-        <span class="brand-mark"><span>A</span></span>
-        <span>Anuncios</span>
-      </a>
-      <span class="text-muted small"><i class="fa-solid fa-lock me-1"></i>Pago seguro</span>
-    </div>
-  </div>
-</nav>
-
-<section class="page-header">
-  <div class="container">
-    <div class="col-lg-6 mx-auto">
-      <div class="d-flex align-items-center gap-2 text-muted small mb-2">
-        <a href="../index.html" class="text-muted">Inicio</a>
-        <i class="fa-solid fa-chevron-right" style="font-size:.65rem;"></i>
-        <span>Pagar destacado</span>
-      </div>
-      <h1>Destacar anuncio</h1>
-      <p>Tu anuncio aparecerá en los primeros resultados durante el período seleccionado.</p>
-    </div>
-  </div>
-</section>
-
-<main class="py-4">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-6 mx-auto">
-
-        <!-- Resumen -->
-        <div class="form-card mb-3" style="padding:1.1rem 1.5rem;">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <div class="fw-500 mb-1" id="summaryLabel">Anuncio destacado – 7 días</div>
-              <div class="text-muted small">Aparece primero en tu categoría y departamento</div>
-            </div>
-            <div class="text-end">
-              <div class="fw-bold fs-5" id="displayAmount">S/ 10.00</div>
-              <div class="text-muted small">incl. IGV</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Selección de duración -->
-        <div class="mb-3">
-          <label class="form-label fw-500">Duración</label>
-          <div class="amount-pills">
-            <button class="amount-pill active" data-amount="1000" data-label="Anuncio destacado – 7 días">7 días — S/ 10</button>
-            <button class="amount-pill"        data-amount="2500" data-label="Anuncio destacado – 30 días">30 días — S/ 25</button>
-            <button class="amount-pill"        data-amount="5000" data-label="Anuncio destacado – 90 días">90 días — S/ 50</button>
-          </div>
-        </div>
-
-        <!-- Formulario -->
-        <div class="form-card">
-          <div class="spinner-overlay" id="spinner">
-            <div class="spinner-border text-primary" role="status"></div>
-          </div>
-
-          <!-- Resultado -->
-          <div class="result-box" id="resultBox">
-            <i id="resultIcon"></i>
-            <h5 id="resultTitle"></h5>
-            <p class="mb-3" id="resultMsg"></p>
-            <a href="../mis-anuncios.html" class="btn-primary-app" id="resultBtn">Ver mis anuncios</a>
-          </div>
-
-          <!-- Contenido del form -->
-          <div id="payForm">
-            <p class="form-section-title" style="margin-top:0;">Método de pago</p>
-
-            <div class="pay-tabs">
-              <button class="pay-tab active" data-tab="card">
-                <i class="fa-regular fa-credit-card"></i>Tarjeta
-              </button>
-              <button class="pay-tab" data-tab="yape">
-                <i class="fa-solid fa-mobile-screen-button"></i>Yape
-              </button>
-            </div>
-
-            <!-- Panel tarjeta -->
-            <div id="panelCard">
-              <div class="mb-3">
-                <label class="form-label" for="cardEmail">Correo electrónico <span class="required">*</span></label>
-                <input type="email" class="form-control" id="cardEmail" placeholder="tu@correo.com" autocomplete="email">
-              </div>
-
-              <button type="button" class="btn-primary-app w-100 justify-content-center" id="btnOpenCulqi" style="height:46px;font-size:1rem;">
-                <i class="fa-solid fa-lock me-2"></i>Pagar con tarjeta
-              </button>
-
-              <div class="secure-badge justify-content-center mt-2">
-                <i class="fa-solid fa-shield-halved"></i>
-                Procesado por <strong class="ms-1">Culqi</strong> · PCI DSS
-              </div>
-
-              <div class="mt-3 p-2 rounded" style="background:#f8f9fa;font-size:.8rem;color:var(--muted);">
-                <strong>Tarjetas de prueba sandbox:</strong><br>
-                Visa aprobada: <code>4111 1111 1111 1111</code> · CVV 123 · Exp 09/2025<br>
-                Visa rechazada: <code>4000 0000 0000 0002</code> · CVV 123 · Exp 09/2025<br>
-                Mastercard: <code>5111 1111 1111 1118</code> · CVV 123 · Exp 09/2025
-              </div>
-            </div>
-
-            <!-- Panel Yape -->
-            <div id="panelYape" style="display:none;">
-              <div class="row g-3">
-                <div class="col-sm-7">
-                  <label class="form-label" for="yapePhone">Número de celular <span class="required">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-white" style="border-color:var(--line);">+51</span>
-                    <input type="tel" class="form-control" id="yapePhone" inputmode="numeric" maxlength="9" placeholder="9XX XXX XXX">
-                  </div>
-                  <div class="form-text">9 dígitos, empieza con 9.</div>
+            .secure-badge {
+                font-size: 0.78rem;
+                color: var(--muted);
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                margin-top: 0.75rem;
+            }
+            .secure-badge i {
+                color: #34a853;
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="app-navbar">
+            <div class="container">
+                <div class="d-flex align-items-center justify-content-between">
+                    <a href="../index.html" class="brand">
+                        <span class="brand-mark"><span>A</span></span>
+                        <span>Anuncios</span>
+                    </a>
+                    <span class="text-muted small"
+                        ><i class="fa-solid fa-lock me-1"></i>Pago seguro</span
+                    >
                 </div>
-                <div class="col-sm-5">
-                  <label class="form-label" for="yapeOtp">Código OTP <span class="required">*</span></label>
-                  <input type="text" class="form-control" id="yapeOtp" inputmode="numeric" maxlength="6" placeholder="6 dígitos">
-                  <div class="form-text">Código de tu app Yape.</div>
-                </div>
-                <div class="col-12">
-                  <label class="form-label" for="yapeEmail">Correo electrónico <span class="required">*</span></label>
-                  <input type="email" class="form-control" id="yapeEmail" placeholder="tu@correo.com" autocomplete="email">
-                </div>
-              </div>
-
-              <button type="button" id="btnYape"
-                      class="btn w-100 mt-3 fw-500"
-                      style="background:#742c8c;color:#fff;height:46px;font-size:1rem;border-radius:6px;display:flex;align-items:center;justify-content:center;gap:.5rem;">
-                <span style="width:26px;height:26px;background:#fff;color:#742c8c;border-radius:5px;font-weight:800;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;">Y</span>
-                Pagar con Yape
-              </button>
-
-              <div class="mt-3 p-2 rounded" style="background:#f8f9fa;font-size:.8rem;color:var(--muted);">
-                <strong>Datos de prueba sandbox:</strong><br>
-                Teléfono: <code>999 999 999</code> · OTP: <code>012345</code>
-              </div>
             </div>
-          </div><!-- /payForm -->
-        </div><!-- /form-card -->
+        </nav>
 
-      </div>
-    </div>
-  </div>
-</main>
+        <section class="page-header">
+            <div class="container">
+                <div class="col-lg-6 mx-auto">
+                    <div
+                        class="d-flex align-items-center gap-2 text-muted small mb-2"
+                    >
+                        <a href="../index.html" class="text-muted">Inicio</a>
+                        <i
+                            class="fa-solid fa-chevron-right"
+                            style="font-size: 0.65rem"
+                        ></i>
+                        <span>Pagar destacado</span>
+                    </div>
+                    <h1>Destacar anuncio</h1>
+                    <p>
+                        Tu anuncio aparecerá en los primeros resultados durante
+                        el período seleccionado.
+                    </p>
+                </div>
+            </div>
+        </section>
 
-<footer class="app-footer">
-  <div class="container">
-    <div class="footer-bottom" style="border-top:none;margin:0;padding:0;">
-      <span>© 2026 Anuncios Perú. Todos los derechos reservados.</span>
-      <span>Pago seguro con Culqi</span>
-    </div>
-  </div>
-</footer>
+        <main class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 mx-auto">
+                        <!-- Resumen -->
+                        <div
+                            class="form-card mb-3"
+                            style="padding: 1.1rem 1.5rem"
+                        >
+                            <div
+                                class="d-flex align-items-center justify-content-between"
+                            >
+                                <div>
+                                    <div class="fw-500 mb-1" id="summaryLabel">
+                                        Anuncio destacado – 7 días
+                                    </div>
+                                    <div class="text-muted small">
+                                        Aparece primero en tu categoría y
+                                        departamento
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div
+                                        class="fw-bold fs-5"
+                                        id="displayAmount"
+                                    >
+                                        S/ 10.00
+                                    </div>
+                                    <div class="text-muted small">
+                                        incl. IGV
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-<!-- Culqi Checkout v3 -->
-<script src="https://checkout.culqi.com/js/v3"></script>
-<script>
-const PUBLIC_KEY  = 'pk_test_uqJHboypE9phYJR8';
-const API_BASE    = '/api/payment';
+                        <!-- Selección de duración -->
+                        <div class="mb-3">
+                            <label class="form-label fw-500">Duración</label>
+                            <div class="amount-pills">
+                                <button
+                                    class="amount-pill active"
+                                    data-amount="1000"
+                                    data-label="Anuncio destacado – 7 días"
+                                >
+                                    7 días — S/ 10
+                                </button>
+                                <button
+                                    class="amount-pill"
+                                    data-amount="2500"
+                                    data-label="Anuncio destacado – 30 días"
+                                >
+                                    30 días — S/ 25
+                                </button>
+                                <button
+                                    class="amount-pill"
+                                    data-amount="5000"
+                                    data-label="Anuncio destacado – 90 días"
+                                >
+                                    90 días — S/ 50
+                                </button>
+                            </div>
+                        </div>
 
-let selectedAmount = 1000;
-let selectedLabel  = 'Anuncio destacado – 7 días';
+                        <!-- Formulario -->
+                        <div class="form-card">
+                            <div class="spinner-overlay" id="spinner">
+                                <div
+                                    class="spinner-border text-primary"
+                                    role="status"
+                                ></div>
+                            </div>
 
-/* ── Amount pills ── */
-document.querySelectorAll('.amount-pill').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.amount-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedAmount = parseInt(btn.dataset.amount);
-    selectedLabel  = btn.dataset.label;
-    document.getElementById('displayAmount').textContent = 'S/ ' + (selectedAmount/100).toFixed(2);
-    document.getElementById('summaryLabel').textContent  = selectedLabel;
-    configureCulqi();
-  });
-});
+                            <!-- Resultado -->
+                            <div class="result-box" id="resultBox">
+                                <i id="resultIcon"></i>
+                                <h5 id="resultTitle"></h5>
+                                <p class="mb-3" id="resultMsg"></p>
+                                <a
+                                    href="../mis-anuncios.html"
+                                    class="btn-primary-app"
+                                    id="resultBtn"
+                                    >Ver mis anuncios</a
+                                >
+                            </div>
 
-/* ── Tabs ── */
-document.querySelectorAll('.pay-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('panelCard').style.display = tab.dataset.tab === 'card' ? '' : 'none';
-    document.getElementById('panelYape').style.display = tab.dataset.tab === 'yape' ? '' : 'none';
-  });
-});
+                            <!-- Contenido del form -->
+                            <div id="payForm">
+                                <p
+                                    class="form-section-title"
+                                    style="margin-top: 0"
+                                >
+                                    Método de pago
+                                </p>
 
-/* ── Sanitize ── */
-document.getElementById('yapePhone').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,9); });
-document.getElementById('yapeOtp').addEventListener('input',   e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,6); });
+                                <div class="pay-tabs">
+                                    <button
+                                        class="pay-tab active"
+                                        data-tab="card"
+                                    >
+                                        <i class="fa-regular fa-credit-card"></i
+                                        >Tarjeta
+                                    </button>
+                                    <button class="pay-tab" data-tab="yape">
+                                        <i
+                                            class="fa-solid fa-mobile-screen-button"
+                                        ></i
+                                        >Yape
+                                    </button>
+                                </div>
 
-/* ── Culqi Checkout ── */
-function configureCulqi() {
-  Culqi.publicKey = PUBLIC_KEY;
-  Culqi.settings({ title: 'Anuncios Perú', currency: 'PEN', description: selectedLabel, amount: selectedAmount });
-  Culqi.options({ lang: 'es', installments: false });
-}
+                                <!-- Panel tarjeta -->
+                                <div id="panelCard">
+                                    <div class="mb-3">
+                                        <label
+                                            class="form-label"
+                                            for="cardEmail"
+                                            >Correo electrónico
+                                            <span class="required"
+                                                >*</span
+                                            ></label
+                                        >
+                                        <input
+                                            type="email"
+                                            class="form-control"
+                                            id="cardEmail"
+                                            placeholder="tu@correo.com"
+                                            autocomplete="email"
+                                        />
+                                    </div>
 
-window.culqi = function () {
-  if (Culqi.token) {
-    Culqi.close();
-    chargeCard(Culqi.token.id, Culqi.token.email);
-  }
-};
+                                    <button
+                                        type="button"
+                                        class="btn-primary-app w-100 justify-content-center"
+                                        id="btnOpenCulqi"
+                                        style="height: 46px; font-size: 1rem"
+                                    >
+                                        <i class="fa-solid fa-lock me-2"></i
+                                        >Pagar con tarjeta
+                                    </button>
 
-document.getElementById('btnOpenCulqi').addEventListener('click', () => {
-  const email = document.getElementById('cardEmail').value.trim();
-  if (email) Culqi.settings({ email });
-  configureCulqi();
-  Culqi.open();
-});
+                                    <div
+                                        class="secure-badge justify-content-center mt-2"
+                                    >
+                                        <i
+                                            class="fa-solid fa-shield-halved"
+                                        ></i>
+                                        Procesado por
+                                        <strong class="ms-1">Culqi</strong> ·
+                                        PCI DSS
+                                    </div>
 
-async function chargeCard(tokenId, email) {
-  showSpinner(true);
-  try {
-    const res  = await fetch(`${API_BASE}/charge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ token_id: tokenId, amount: selectedAmount, email, currency: 'PEN', description: selectedLabel }),
-    });
-    const data = await res.json();
-    data.success
-      ? showSuccess('¡Pago exitoso!', `Anuncio destacado. Cargo: ${data.charge_id}`)
-      : showError(data.message || 'Error al procesar el pago.');
-  } catch { showError('Error de conexión. Intenta de nuevo.'); }
-  finally  { showSpinner(false); }
-}
+                                    <div
+                                        class="mt-3 p-2 rounded"
+                                        style="
+                                            background: #f8f9fa;
+                                            font-size: 0.8rem;
+                                            color: var(--muted);
+                                        "
+                                    >
+                                        <strong
+                                            >Tarjetas de prueba sandbox:</strong
+                                        ><br />
+                                        Visa aprobada:
+                                        <code>4111 1111 1111 1111</code> · CVV
+                                        123 · Exp 09/2025<br />
+                                        Visa rechazada:
+                                        <code>4000 0000 0000 0002</code> · CVV
+                                        123 · Exp 09/2025<br />
+                                        Mastercard:
+                                        <code>5111 1111 1111 1118</code> · CVV
+                                        123 · Exp 09/2025
+                                    </div>
+                                </div>
 
-/* ── Yape ── */
-document.getElementById('btnYape').addEventListener('click', async () => {
-  const phone = document.getElementById('yapePhone').value.trim();
-  const otp   = document.getElementById('yapeOtp').value.trim();
-  const email = document.getElementById('yapeEmail').value.trim();
+                                <!-- Panel Yape -->
+                                <div id="panelYape" style="display: none">
+                                    <div class="row g-3">
+                                        <div class="col-sm-7">
+                                            <label
+                                                class="form-label"
+                                                for="yapePhone"
+                                                >Número de celular
+                                                <span class="required"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <div class="input-group">
+                                                <span
+                                                    class="input-group-text bg-white"
+                                                    style="
+                                                        border-color: var(
+                                                            --line
+                                                        );
+                                                    "
+                                                    >+51</span
+                                                >
+                                                <input
+                                                    type="tel"
+                                                    class="form-control"
+                                                    id="yapePhone"
+                                                    inputmode="numeric"
+                                                    maxlength="9"
+                                                    placeholder="9XX XXX XXX"
+                                                />
+                                            </div>
+                                            <div class="form-text">
+                                                9 dígitos, empieza con 9.
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-5">
+                                            <label
+                                                class="form-label"
+                                                for="yapeOtp"
+                                                >Código OTP
+                                                <span class="required"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="yapeOtp"
+                                                inputmode="numeric"
+                                                maxlength="6"
+                                                placeholder="6 dígitos"
+                                            />
+                                            <div class="form-text">
+                                                Código de tu app Yape.
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label
+                                                class="form-label"
+                                                for="yapeEmail"
+                                                >Correo electrónico
+                                                <span class="required"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <input
+                                                type="email"
+                                                class="form-control"
+                                                id="yapeEmail"
+                                                placeholder="tu@correo.com"
+                                                autocomplete="email"
+                                            />
+                                        </div>
+                                    </div>
 
-  if (!/^9\d{8}$/.test(phone))                      { mark('yapePhone','El número debe tener 9 dígitos y empezar con 9.'); return; }
-  if (!/^\d{6}$/.test(otp))                          { mark('yapeOtp','El OTP debe tener 6 dígitos.'); return; }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { mark('yapeEmail','Correo inválido.'); return; }
+                                    <button
+                                        type="button"
+                                        id="btnYape"
+                                        class="btn w-100 mt-3 fw-500"
+                                        style="
+                                            background: #742c8c;
+                                            color: #fff;
+                                            height: 46px;
+                                            font-size: 1rem;
+                                            border-radius: 6px;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            gap: 0.5rem;
+                                        "
+                                    >
+                                        <span
+                                            style="
+                                                width: 26px;
+                                                height: 26px;
+                                                background: #fff;
+                                                color: #742c8c;
+                                                border-radius: 5px;
+                                                font-weight: 800;
+                                                font-size: 0.9rem;
+                                                display: inline-flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                            "
+                                            >Y</span
+                                        >
+                                        Pagar con Yape
+                                    </button>
 
-  showSpinner(true);
-  try {
-    const res  = await fetch(`${API_BASE}/yape`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ phone_number: phone, otp, amount: selectedAmount, email, description: selectedLabel }),
-    });
-    const data = await res.json();
-    data.success
-      ? showSuccess('¡Pago con Yape exitoso!', `Anuncio destacado. Cargo: ${data.charge_id}`)
-      : showError(data.message || 'Error al procesar el pago con Yape.');
-  } catch { showError('Error de conexión. Intenta de nuevo.'); }
-  finally  { showSpinner(false); }
-});
+                                    <div
+                                        class="mt-3 p-2 rounded"
+                                        style="
+                                            background: #f8f9fa;
+                                            font-size: 0.8rem;
+                                            color: var(--muted);
+                                        "
+                                    >
+                                        <strong>Datos de prueba sandbox:</strong
+                                        ><br />
+                                        Teléfono: <code>999 999 999</code> ·
+                                        OTP: <code>012345</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /payForm -->
+                        </div>
+                        <!-- /form-card -->
+                    </div>
+                </div>
+            </div>
+        </main>
 
-/* ── Helpers ── */
-function showSpinner(v) { document.getElementById('spinner').classList.toggle('show', v); }
+        <footer class="app-footer">
+            <div class="container">
+                <div
+                    class="footer-bottom"
+                    style="border-top: none; margin: 0; padding: 0"
+                >
+                    <span
+                        >© 2026 Anuncios Perú. Todos los derechos
+                        reservados.</span
+                    >
+                    <span>Pago seguro con Culqi</span>
+                </div>
+            </div>
+        </footer>
 
-function showSuccess(title, msg) {
-  document.getElementById('payForm').style.display = 'none';
-  const box = document.getElementById('resultBox');
-  document.getElementById('resultIcon').className  = 'fa-solid fa-circle-check';
-  document.getElementById('resultTitle').textContent = title;
-  document.getElementById('resultMsg').textContent   = msg;
-  document.getElementById('resultBtn').textContent   = 'Ver mis anuncios';
-  document.getElementById('resultBtn').href          = '../mis-anuncios.html';
-  box.className = 'result-box success show';
-}
+        <!-- Culqi Checkout v3 -->
+        <script src="https://checkout.culqi.com/js/v3"></script>
+        <script>
+            const PUBLIC_KEY = "pk_test_uqJHboypE9phYJR8";
+            const API_BASE = "/api/payment";
 
-function showError(msg) {
-  document.getElementById('payForm').style.display = 'none';
-  const box = document.getElementById('resultBox');
-  document.getElementById('resultIcon').className  = 'fa-solid fa-circle-xmark';
-  document.getElementById('resultTitle').textContent = 'Pago no procesado';
-  document.getElementById('resultMsg').textContent   = msg;
-  document.getElementById('resultBtn').textContent   = 'Intentar de nuevo';
-  document.getElementById('resultBtn').onclick = e => {
-    e.preventDefault();
-    box.className = 'result-box';
-    document.getElementById('payForm').style.display = '';
-  };
-  box.className = 'result-box error show';
-}
+            let selectedAmount = 1000;
+            let selectedLabel = "Anuncio destacado – 7 días";
 
-function mark(id, msg) {
-  const el = document.getElementById(id);
-  el.classList.add('is-invalid');
-  let fb = el.closest('.col-sm-7, .col-sm-5, .col-12')?.querySelector('.invalid-feedback');
-  if (!fb) { fb = document.createElement('div'); fb.className = 'invalid-feedback'; el.parentElement.appendChild(fb); }
-  fb.textContent = msg;
-  el.addEventListener('input', () => el.classList.remove('is-invalid'), { once: true });
-}
+            /* ── Amount pills ── */
+            document.querySelectorAll(".amount-pill").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document
+                        .querySelectorAll(".amount-pill")
+                        .forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    selectedAmount = parseInt(btn.dataset.amount);
+                    selectedLabel = btn.dataset.label;
+                    document.getElementById("displayAmount").textContent =
+                        "S/ " + (selectedAmount / 100).toFixed(2);
+                    document.getElementById("summaryLabel").textContent =
+                        selectedLabel;
+                    configureCulqi();
+                });
+            });
 
-configureCulqi();
-</script>
-</body>
+            /* ── Tabs ── */
+            document.querySelectorAll(".pay-tab").forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    document
+                        .querySelectorAll(".pay-tab")
+                        .forEach((t) => t.classList.remove("active"));
+                    tab.classList.add("active");
+                    document.getElementById("panelCard").style.display =
+                        tab.dataset.tab === "card" ? "" : "none";
+                    document.getElementById("panelYape").style.display =
+                        tab.dataset.tab === "yape" ? "" : "none";
+                });
+            });
+
+            /* ── Sanitize ── */
+            document
+                .getElementById("yapePhone")
+                .addEventListener("input", (e) => {
+                    e.target.value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 9);
+                });
+            document
+                .getElementById("yapeOtp")
+                .addEventListener("input", (e) => {
+                    e.target.value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                });
+
+            /* ── Culqi Checkout ── */
+            function configureCulqi() {
+                Culqi.publicKey = PUBLIC_KEY;
+                Culqi.settings({
+                    title: "Anuncios Perú",
+                    currency: "PEN",
+                    description: selectedLabel,
+                    amount: selectedAmount,
+                });
+                Culqi.options({ lang: "es", installments: false });
+            }
+
+            window.culqi = function () {
+                if (Culqi.token) {
+                    Culqi.close();
+                    chargeCard(Culqi.token.id, Culqi.token.email);
+                }
+            };
+
+            document
+                .getElementById("btnOpenCulqi")
+                .addEventListener("click", () => {
+                    const email = document
+                        .getElementById("cardEmail")
+                        .value.trim();
+                    if (email) Culqi.settings({ email });
+                    configureCulqi();
+                    Culqi.open();
+                });
+
+            async function chargeCard(tokenId, email) {
+                showSpinner(true);
+                try {
+                    const res = await fetch(`${API_BASE}/charge`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify({
+                            token_id: tokenId,
+                            amount: selectedAmount,
+                            email,
+                            currency: "PEN",
+                            description: selectedLabel,
+                        }),
+                    });
+                    const data = await res.json();
+                    data.success
+                        ? showSuccess(
+                              "¡Pago exitoso!",
+                              `Anuncio destacado. Cargo: ${data.charge_id}`,
+                          )
+                        : showError(
+                              data.message || "Error al procesar el pago.",
+                          );
+                } catch {
+                    showError("Error de conexión. Intenta de nuevo.");
+                } finally {
+                    showSpinner(false);
+                }
+            }
+
+            /* ── Yape ── */
+            document
+                .getElementById("btnYape")
+                .addEventListener("click", async () => {
+                    const phone = document
+                        .getElementById("yapePhone")
+                        .value.trim();
+                    const otp = document.getElementById("yapeOtp").value.trim();
+                    const email = document
+                        .getElementById("yapeEmail")
+                        .value.trim();
+
+                    if (!/^9\d{8}$/.test(phone)) {
+                        mark(
+                            "yapePhone",
+                            "El número debe tener 9 dígitos y empezar con 9.",
+                        );
+                        return;
+                    }
+                    if (!/^\d{6}$/.test(otp)) {
+                        mark("yapeOtp", "El OTP debe tener 6 dígitos.");
+                        return;
+                    }
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        mark("yapeEmail", "Correo inválido.");
+                        return;
+                    }
+
+                    showSpinner(true);
+                    try {
+                        const res = await fetch(`${API_BASE}/yape`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Accept: "application/json",
+                            },
+                            body: JSON.stringify({
+                                phone_number: phone,
+                                otp,
+                                amount: selectedAmount,
+                                email,
+                                description: selectedLabel,
+                            }),
+                        });
+                        const data = await res.json();
+                        data.success
+                            ? showSuccess(
+                                  "¡Pago con Yape exitoso!",
+                                  `Anuncio destacado. Cargo: ${data.charge_id}`,
+                              )
+                            : showError(
+                                  data.message ||
+                                      "Error al procesar el pago con Yape.",
+                              );
+                    } catch {
+                        showError("Error de conexión. Intenta de nuevo.");
+                    } finally {
+                        showSpinner(false);
+                    }
+                });
+
+            /* ── Helpers ── */
+            function showSpinner(v) {
+                document.getElementById("spinner").classList.toggle("show", v);
+            }
+
+            function showSuccess(title, msg) {
+                document.getElementById("payForm").style.display = "none";
+                const box = document.getElementById("resultBox");
+                document.getElementById("resultIcon").className =
+                    "fa-solid fa-circle-check";
+                document.getElementById("resultTitle").textContent = title;
+                document.getElementById("resultMsg").textContent = msg;
+                document.getElementById("resultBtn").textContent =
+                    "Ver mis anuncios";
+                document.getElementById("resultBtn").href =
+                    "../mis-anuncios.html";
+                box.className = "result-box success show";
+            }
+
+            function showError(msg) {
+                document.getElementById("payForm").style.display = "none";
+                const box = document.getElementById("resultBox");
+                document.getElementById("resultIcon").className =
+                    "fa-solid fa-circle-xmark";
+                document.getElementById("resultTitle").textContent =
+                    "Pago no procesado";
+                document.getElementById("resultMsg").textContent = msg;
+                document.getElementById("resultBtn").textContent =
+                    "Intentar de nuevo";
+                document.getElementById("resultBtn").onclick = (e) => {
+                    e.preventDefault();
+                    box.className = "result-box";
+                    document.getElementById("payForm").style.display = "";
+                };
+                box.className = "result-box error show";
+            }
+
+            function mark(id, msg) {
+                const el = document.getElementById(id);
+                el.classList.add("is-invalid");
+                let fb = el
+                    .closest(".col-sm-7, .col-sm-5, .col-12")
+                    ?.querySelector(".invalid-feedback");
+                if (!fb) {
+                    fb = document.createElement("div");
+                    fb.className = "invalid-feedback";
+                    el.parentElement.appendChild(fb);
+                }
+                fb.textContent = msg;
+                el.addEventListener(
+                    "input",
+                    () => el.classList.remove("is-invalid"),
+                    { once: true },
+                );
+            }
+
+            configureCulqi();
+        </script>
+    </body>
 </html>
