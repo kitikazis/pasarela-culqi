@@ -62,7 +62,8 @@
         <input type="text" id="searchInput" class="form-control" placeholder="Buscar anuncios, productos, trabajos...">
       </div>
 
-      <div class="ms-auto d-flex align-items-center gap-2">
+      <!-- Área de autenticación: la llena el JS (botones de login o usuario) -->
+      <div class="ms-auto d-flex align-items-center gap-2" id="authArea">
         <a class="btn-google" href="/auth/google/redirect" title="Ingresar con Google">
           <i class="fa-brands fa-google"></i>
           <span>Google</span>
@@ -193,11 +194,14 @@ const STATE = {
   perPage: 12
 };
 
+/* Anuncios cargados desde la BD (vía /api/ads) */
+let ADS = [];
+
 /* ===== RENDER SIDEBAR (departamentos) ===== */
 function renderDepList() {
   const list = document.getElementById('depList');
   const countByDep = {};
-  SAMPLE_ADS.forEach(a => {
+  ADS.forEach(a => {
     const key = a.dep;
     countByDep[key] = (countByDep[key] || 0) + 1;
   });
@@ -211,7 +215,7 @@ function renderDepList() {
 
   list.innerHTML = deps.map(d => {
     const label = d === 'todos' ? 'Todos' : d;
-    const count = d === 'todos' ? SAMPLE_ADS.length : (countByDep[d] || 0);
+    const count = d === 'todos' ? ADS.length : (countByDep[d] || 0);
     const isActive = STATE.departamento === d ? 'active' : '';
     return `
       <li>
@@ -234,7 +238,7 @@ function renderDepList() {
 
 /* ===== FILTER ===== */
 function filteredAds() {
-  return SAMPLE_ADS.filter(a => {
+  return ADS.filter(a => {
     if (STATE.category !== 'todos' && a.cat !== STATE.category) return false;
     if (STATE.departamento !== 'todos' && a.dep !== STATE.departamento) return false;
     if (STATE.search) {
@@ -355,9 +359,52 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   renderAds();
 });
 
+/* ===== USUARIO (sesión) ===== */
+async function renderAuth() {
+  try {
+    const res = await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    const data = await res.json();
+    const area = document.getElementById('authArea');
+    if (data.authenticated) {
+      const u = data.user;
+      const avatar = u.avatar
+        ? `<img src="${u.avatar}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
+        : `<i class="fa-regular fa-circle-user" style="font-size:1.6rem;color:var(--muted);"></i>`;
+      area.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+          ${avatar}
+          <span style="font-weight:500;font-size:.9rem;">${u.name}</span>
+          <form method="POST" action="/logout" style="margin:0;">
+            <input type="hidden" name="_token" value="${csrfToken()}">
+            <button type="submit" class="btn-outline-app" style="padding:.3rem .7rem;font-size:.8rem;">Salir</button>
+          </form>
+        </div>`;
+    }
+    // Si NO está autenticado, se quedan los botones de login que ya están en el HTML.
+  } catch (e) { /* sin sesión: deja los botones de login */ }
+}
+
+/* Lee el CSRF token de la cookie XSRF-TOKEN (Laravel) para el logout */
+function csrfToken() {
+  const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+/* ===== CARGA DE ANUNCIOS (desde la BD) ===== */
+async function loadAds() {
+  try {
+    const res = await fetch('/api/ads', { headers: { 'Accept': 'application/json' } });
+    ADS = await res.json();
+  } catch (e) {
+    ADS = [];
+  }
+  renderDepList();
+  renderAds();
+}
+
 /* ===== INIT ===== */
-renderDepList();
-renderAds();
+renderAuth();
+loadAds();
 </script>
 </body>
 </html>

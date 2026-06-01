@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
+
+// Anuncios públicos (desde la BD)
+Route::get('/ads', [AdController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------

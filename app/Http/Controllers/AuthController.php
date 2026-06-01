@@ -67,4 +67,24 @@ class AuthController extends Controller
 
         return redirect('/');
     }
+
+    /** Devuelve el usuario autenticado (para que el frontend muestre nombre/foto). */
+    public function me(): \Illuminate\Http\JsonResponse
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return response()->json(['authenticated' => false]);
+        }
+
+        return response()->json([
+            'authenticated' => true,
+            'user' => [
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'avatar' => $user->avatar,
+            ],
+        ]);
+    }
 }
+

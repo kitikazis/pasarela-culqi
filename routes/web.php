@@ -17,6 +17,9 @@ Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirect'])->na
 Route::get('/auth/{provider}/callback', [AuthController::class, 'callback'])->name('auth.callback');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Usuario autenticado (sesión web) — para que el frontend muestre nombre/foto.
+Route::get('/me', [AuthController::class, 'me'])->name('me');
+
 /*
 |--------------------------------------------------------------------------
 | Pasarela de pago Culqi
