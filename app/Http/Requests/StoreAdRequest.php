@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoProfanity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +18,7 @@ class StoreAdRequest extends FormRequest
     {
         return [
             'category'    => ['required', 'string', 'in:venta,compra,trabajo,busca'],
-            'description' => ['required', 'string', 'max:144'],
+            'description' => ['required', 'string', 'max:144', new NoProfanity()],
             'phone'       => ['required', 'string', 'regex:/^9\d{8}$/'],
             'coverage'    => ['required', 'string', 'in:nacional,departamental,provincial,distrital'],
             'department'  => ['required_unless:coverage,nacional', 'nullable', 'string', 'max:60'],

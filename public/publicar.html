@@ -49,7 +49,7 @@
 </section>
 
 <!-- ===== FORM ===== -->
-<main class="py-4">
+<main class="py-4" style="visibility:hidden;">
   <div class="container">
     <div class="row">
       <div class="col-lg-8 mx-auto">
@@ -184,6 +184,7 @@
           <a href="/" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Volver al inicio</a>
         </div>
       </div>`;
+    document.querySelector('main').style.visibility = 'visible';
     return;
   }
   document.getElementById('navName').textContent = me.user.name;
@@ -192,6 +193,7 @@
     img.src = me.user.avatar;
     img.style.display = '';
   }
+  document.querySelector('main').style.visibility = 'visible';
 })();
 /* ===== Selects encadenados ===== */
 const depSel  = document.getElementById('departamento');

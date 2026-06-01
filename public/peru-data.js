@@ -201,10 +201,17 @@ function wireCascadingSelects(depSel, provSel, distSel, { includeNacional = fals
 
 /* Formato de fechas relativas */
 function relativeDate(isoDate) {
-  const today = new Date('2026-05-27');
-  const d = new Date(isoDate);
+  // Fecha de hoy a medianoche (local)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Fecha del anuncio a medianoche local (parseo seguro, sin desfase de zona horaria)
+  const p = String(isoDate).slice(0, 10).split('-');
+  const d = new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1);
+
   const diffDays = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Hoy';
+
+  if (diffDays <= 0)  return 'Hoy';
   if (diffDays === 1) return 'Ayer';
   if (diffDays < 7)   return `Hace ${diffDays} días`;
   if (diffDays < 30)  return `Hace ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) > 1 ? 's' : ''}`;

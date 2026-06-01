@@ -67,7 +67,7 @@
 </section>
 
 <!-- ===== STATS + LIST ===== -->
-<main class="py-4">
+<main class="py-4" style="visibility:hidden;">
   <div class="container">
 
     <!-- Stats -->
@@ -271,6 +271,7 @@ async function init() {
           <a href="/" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Volver al inicio</a>
         </div>
       </div>`;
+    document.querySelector('main').style.visibility = 'visible';
     return;
   }
 
@@ -290,6 +291,7 @@ async function init() {
     MY_ADS = data.ads || [];
   } catch (e) { MY_ADS = []; }
 
+  document.querySelector('main').style.visibility = 'visible';
   renderStats();
   renderList();
 }
