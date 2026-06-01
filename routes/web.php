@@ -4,9 +4,15 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+/*
+|--------------------------------------------------------------------------
+| Páginas (URLs limpias, sin .html)
+|--------------------------------------------------------------------------
+*/
+Route::get('/',                fn () => response()->file(public_path('index.html')));
+Route::get('/publicar',        fn () => response()->file(public_path('publicar.html')))->name('publicar');
+Route::get('/mis-anuncios',    fn () => response()->file(public_path('mis-anuncios.html')))->name('mis-anuncios');
+Route::get('/completar-perfil', fn () => response()->file(public_path('completar-perfil.html')))->name('completar-perfil');
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +25,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Usuario autenticado (sesión web) — para que el frontend muestre nombre/foto.
 Route::get('/me', [AuthController::class, 'me'])->name('me');
+
+// Anuncios del usuario logueado (sesión web).
+Route::get('/mis-anuncios/datos', [App\Http\Controllers\AdController::class, 'mine'])->name('ads.mine');
+
+// Publicar un anuncio nuevo (sesión web).
+Route::post('/anuncios', [App\Http\Controllers\AdController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('ads.store');
 
 /*
 |--------------------------------------------------------------------------

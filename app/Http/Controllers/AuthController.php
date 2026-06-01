@@ -56,16 +56,19 @@ class AuthController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->intended('/mis-anuncios.html');
+        return redirect()->intended('/mis-anuncios');
     }
 
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // El frontend (fetch) recibe 204 y redirige solo; navegador normal → home.
+        return $request->expectsJson()
+            ? response()->noContent()
+            : redirect('/');
     }
 
     /** Devuelve el usuario autenticado (para que el frontend muestre nombre/foto). */

@@ -17,14 +17,14 @@
 <nav class="app-navbar">
   <div class="container">
     <div class="d-flex align-items-center justify-content-between gap-3">
-      <a href="index.html" class="brand">
+      <a href="/" class="brand">
         <span class="brand-mark"><span>A</span></span>
         <span>Anuncios</span>
       </a>
       <div class="d-flex align-items-center gap-2">
-        <a href="mis-anuncios.html" class="nav-avatar">
-          <img src="https://i.pravatar.cc/64?img=47" alt="Avatar">
-          <span class="d-none d-sm-inline">María García</span>
+        <a href="/mis-anuncios" class="nav-avatar">
+          <img id="navAvatar" src="" alt="Avatar" style="display:none;">
+          <span class="d-none d-sm-inline" id="navName">Usuario</span>
         </a>
       </div>
     </div>
@@ -37,7 +37,7 @@
     <div class="row">
       <div class="col-lg-8 mx-auto">
         <div class="d-flex align-items-center gap-2 text-muted small mb-2">
-          <a href="mis-anuncios.html" class="text-muted">Mis anuncios</a>
+          <a href="/mis-anuncios" class="text-muted">Mis anuncios</a>
           <i class="fa-solid fa-chevron-right" style="font-size:.65rem;"></i>
           <span>Publicar nuevo</span>
         </div>
@@ -134,7 +134,7 @@
 
           <!-- Submit -->
           <div class="d-flex justify-content-end gap-2 mt-4 pt-3" style="border-top: 1px solid var(--line);">
-            <a href="mis-anuncios.html" class="btn-outline-app">Cancelar</a>
+            <a href="/mis-anuncios" class="btn-outline-app">Cancelar</a>
             <button type="submit" class="btn-primary-app">
               <i class="fa-solid fa-paper-plane"></i>
               Publicar anuncio
@@ -158,6 +158,41 @@
 
 <script src="peru-data.js"></script>
 <script>
+/* ===== Sesión: exige login y muestra el usuario real ===== */
+(async function () {
+  let me;
+  try {
+    me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
+  } catch (e) { me = { authenticated: false }; }
+
+  if (!me.authenticated) {
+    // Sin sesión: mostrar mensaje pidiendo iniciar sesión (no publicar sin cuenta)
+    document.querySelector('main').innerHTML = `
+      <div class="container">
+        <div class="form-card" style="max-width:460px;margin:1rem auto;text-align:center;">
+          <i class="fa-solid fa-circle-user" style="font-size:2.8rem;color:var(--primary);margin-bottom:.75rem;"></i>
+          <h2 style="font-size:1.3rem;margin:0 0 .4rem;">Necesitas una cuenta para publicar</h2>
+          <p style="color:var(--muted);margin:0 0 1.25rem;">Inicia sesión con tu cuenta de Google o Microsoft para publicar tu anuncio. Es gratis y toma segundos.</p>
+          <div class="d-flex flex-column gap-2">
+            <a href="/auth/google/redirect" class="btn-google" style="justify-content:center;height:42px;">
+              <i class="fa-brands fa-google"></i> Ingresar con Google
+            </a>
+            <a href="/auth/microsoft/redirect" class="btn-microsoft" style="justify-content:center;height:42px;">
+              <i class="fa-brands fa-microsoft"></i> Ingresar con Microsoft
+            </a>
+          </div>
+          <a href="/" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Volver al inicio</a>
+        </div>
+      </div>`;
+    return;
+  }
+  document.getElementById('navName').textContent = me.user.name;
+  if (me.user.avatar) {
+    const img = document.getElementById('navAvatar');
+    img.src = me.user.avatar;
+    img.style.display = '';
+  }
+})();
 /* ===== Selects encadenados ===== */
 const depSel  = document.getElementById('departamento');
 const provSel = document.getElementById('provincia');
@@ -224,7 +259,7 @@ document.getElementById('celular').addEventListener('input', (e) => {
 });
 
 /* ===== Validación ===== */
-document.getElementById('adForm').addEventListener('submit', (e) => {
+document.getElementById('adForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   let valid = true;
 
@@ -253,11 +288,50 @@ document.getElementById('adForm').addEventListener('submit', (e) => {
       else el.classList.remove('is-invalid');
     });
 
-  if (valid) {
-    alert('¡Anuncio publicado correctamente!');
-    window.location.href = 'mis-anuncios.html';
+  if (!valid) return;
+
+  // Enviar al backend → guarda en la BD ligado a tu usuario
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  const coverage = document.querySelector('input[name="cobertura"]:checked').value;
+
+  try {
+    const res = await fetch('/anuncios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-XSRF-TOKEN': csrfToken(),
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        category:    cat.value,
+        description: descripcion.value.trim(),
+        phone:       cel.value,
+        coverage:    coverage,
+        department:  depSel.value || null,
+        province:    provSel.value || null,
+        district:    distSel.value || null,
+      }),
+    });
+
+    if (res.ok) {
+      window.location.href = '/mis-anuncios';   // ya aparece publicado
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || 'No se pudo publicar el anuncio.');
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert('Error de conexión. Intenta nuevamente.');
+    btn.disabled = false;
   }
 });
+
+function csrfToken() {
+  const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
 </script>
 </body>
 </html>

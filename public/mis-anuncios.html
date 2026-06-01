@@ -17,7 +17,7 @@
 <nav class="app-navbar">
   <div class="container">
     <div class="d-flex align-items-center gap-3 flex-nowrap">
-      <a href="index.html" class="brand">
+      <a href="/" class="brand">
         <span class="brand-mark"><span>A</span></span>
         <span class="d-none d-sm-inline">Anuncios</span>
       </a>
@@ -28,22 +28,21 @@
       </div>
 
       <div class="ms-auto d-flex align-items-center gap-2">
-        <a href="publicar.html" class="btn-primary-app d-none d-md-inline-flex">
+        <a href="/publicar" class="btn-primary-app d-none d-md-inline-flex">
           <i class="fa-solid fa-plus"></i>
           Publicar
         </a>
         <div class="dropdown">
           <a href="#" class="nav-avatar" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="https://i.pravatar.cc/64?img=47" alt="Avatar de María">
-            <span class="d-none d-sm-inline">María García</span>
+            <img id="navAvatar" src="" alt="Avatar" style="display:none;">
+            <span class="d-none d-sm-inline" id="navName">Usuario</span>
             <i class="fa-solid fa-chevron-down" style="font-size:.7rem; color: var(--muted);"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:.9rem;">
-            <li><a class="dropdown-item" href="mis-anuncios.html"><i class="fa-regular fa-folder me-2"></i>Mis anuncios</a></li>
-            <li><a class="dropdown-item" href="completar-perfil.html"><i class="fa-regular fa-user me-2"></i>Editar perfil</a></li>
-            <li><a class="dropdown-item" href="publicar.html"><i class="fa-solid fa-plus me-2"></i>Publicar anuncio</a></li>
+            <li><a class="dropdown-item" href="/mis-anuncios"><i class="fa-regular fa-folder me-2"></i>Mis anuncios</a></li>
+            <li><a class="dropdown-item" href="/publicar"><i class="fa-solid fa-plus me-2"></i>Publicar anuncio</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-muted" href="index.html"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Cerrar sesión</a></li>
+            <li><a class="dropdown-item text-muted" href="#" id="navLogout"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Cerrar sesión</a></li>
           </ul>
         </div>
       </div>
@@ -59,7 +58,7 @@
         <h1>Mis anuncios</h1>
         <p>Administra tus publicaciones: actívalas, pausálas o elimínalas.</p>
       </div>
-      <a href="publicar.html" class="btn-primary-app">
+      <a href="/publicar" class="btn-primary-app">
         <i class="fa-solid fa-plus"></i>
         Publicar nuevo anuncio
       </a>
@@ -135,14 +134,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="peru-data.js"></script>
 <script>
-/* Anuncios "míos" — derivados del dataset, con estado */
-const MY_ADS = [
-  { id: 101, cat: "venta",   text: "Vendo Toyota Yaris 2019, color plata, 48,000 km, único dueño, mantenimientos al día en concesionario. Papeles en regla.", dep: "Lima",     prov: "Lima",     dist: "San Borja",  phone: "987 654 321", date: "2026-05-25", status: "activo",   views: 142 },
-  { id: 102, cat: "compra",  text: "Compro laptop usada Core i5 o superior, 8GB RAM mínimo. Pago al contado. Que esté en buen estado, sin pantalla rota.",  dep: "Lima",     prov: "Lima",     dist: "San Borja",  phone: "987 654 321", date: "2026-05-20", status: "activo",   views: 89  },
-  { id: 103, cat: "busca",   text: "Busco departamento en alquiler, 2 dormitorios, amoblado, zona segura. Presupuesto hasta 1500 soles, contrato mínimo 1 año.", dep: "Lima",  prov: "Lima",     dist: "Jesús María", phone: "987 654 321", date: "2026-05-15", status: "inactivo", views: 56  },
-  { id: 104, cat: "venta",   text: "Vendo bicicleta montañera aro 29, marca Trek, suspensión delantera, frenos de disco hidráulicos. Poco uso, como nueva.", dep: "Lima",     prov: "Lima",     dist: "San Borja",  phone: "987 654 321", date: "2026-05-10", status: "activo",   views: 211 },
-  { id: 105, cat: "trabajo", text: "Necesito asistente administrativa con experiencia en facturación electrónica. Medio tiempo, horario flexible.",            dep: "Lima",     prov: "Lima",     dist: "San Isidro", phone: "987 654 321", date: "2026-04-28", status: "inactivo", views: 34  }
-];
+/* Anuncios del usuario — se cargan desde la BD (/mis-anuncios/datos) */
+let MY_ADS = [];
 
 const STATE = { status: 'todos', deleteId: null };
 
@@ -163,7 +156,7 @@ function renderList() {
         <i class="fa-regular fa-folder-open"></i>
         <h5>No tienes anuncios en esta sección</h5>
         <p class="mb-3">Publica tu primer anuncio gratis y llega a miles de personas.</p>
-        <a href="publicar.html" class="btn-primary-app"><i class="fa-solid fa-plus"></i> Publicar anuncio</a>
+        <a href="/publicar" class="btn-primary-app"><i class="fa-solid fa-plus"></i> Publicar anuncio</a>
       </div>`;
     return;
   }
@@ -235,8 +228,73 @@ document.querySelectorAll('#statusTabs .cat-pill').forEach(p => {
   });
 });
 
-renderStats();
-renderList();
+/* ===== Sesión + carga de datos reales ===== */
+function csrfToken() {
+  const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+async function logout() {
+  try {
+    await fetch('/logout', {
+      method: 'POST',
+      headers: { 'X-XSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      credentials: 'same-origin',
+    });
+  } catch (e) { /* ignorar */ }
+  window.location.href = '/';
+}
+
+async function init() {
+  // 1) Verificar sesión
+  let me;
+  try {
+    me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
+  } catch (e) { me = { authenticated: false }; }
+
+  if (!me.authenticated) {
+    // Debe iniciar sesión para ver sus anuncios
+    document.querySelector('main').innerHTML = `
+      <div class="container">
+        <div class="form-card" style="max-width:460px;margin:1rem auto;text-align:center;">
+          <i class="fa-solid fa-circle-user" style="font-size:2.8rem;color:var(--primary);margin-bottom:.75rem;"></i>
+          <h2 style="font-size:1.3rem;margin:0 0 .4rem;">Inicia sesión para ver tus anuncios</h2>
+          <p style="color:var(--muted);margin:0 0 1.25rem;">Necesitas una cuenta para gestionar tus anuncios. Ingresa con Google o Microsoft.</p>
+          <div class="d-flex flex-column gap-2">
+            <a href="/auth/google/redirect" class="btn-google" style="justify-content:center;height:42px;">
+              <i class="fa-brands fa-google"></i> Ingresar con Google
+            </a>
+            <a href="/auth/microsoft/redirect" class="btn-microsoft" style="justify-content:center;height:42px;">
+              <i class="fa-brands fa-microsoft"></i> Ingresar con Microsoft
+            </a>
+          </div>
+          <a href="/" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Volver al inicio</a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Navbar con el usuario real
+  document.getElementById('navName').textContent = me.user.name;
+  if (me.user.avatar) {
+    const img = document.getElementById('navAvatar');
+    img.src = me.user.avatar;
+    img.style.display = '';
+  }
+  document.getElementById('navLogout').addEventListener('click', (e) => { e.preventDefault(); logout(); });
+
+  // 2) Cargar SUS anuncios desde la BD
+  try {
+    const res = await fetch('/mis-anuncios/datos', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    const data = await res.json();
+    MY_ADS = data.ads || [];
+  } catch (e) { MY_ADS = []; }
+
+  renderStats();
+  renderList();
+}
+
+init();
 </script>
 </body>
 </html>

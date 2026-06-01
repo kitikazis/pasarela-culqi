@@ -11,6 +11,34 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>
+  /* Menú de perfil (dropdown) */
+  .profile-menu { position: relative; }
+  .profile-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    min-width: 210px;
+    z-index: 200;
+    overflow: hidden;
+  }
+  .profile-dropdown.show { display: block; }
+  .pm-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .6rem .9rem;
+    font-size: .875rem;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .pm-item:hover { background: var(--bg-soft); color: var(--ink); text-decoration: none; }
+  .pm-item i { width: 16px; text-align: center; color: var(--muted); }
+
   /* Botón Pagar con Yape */
   .btn-yape {
     background: #742c8c;
@@ -52,7 +80,7 @@
 <nav class="app-navbar">
   <div class="container">
     <div class="d-flex align-items-center gap-3 flex-nowrap">
-      <a href="index.html" class="brand">
+      <a href="/" class="brand">
         <span class="brand-mark"><span>A</span></span>
         <span class="d-none d-sm-inline">Anuncios</span>
       </a>
@@ -97,7 +125,7 @@
           <i class="fa-solid fa-crown"></i>
           Destacar — Planes
         </a>
-        <a href="publicar.html" class="btn-primary-app">
+        <a href="/publicar" class="btn-primary-app">
           <i class="fa-solid fa-plus"></i>
           Publicar anuncio
         </a>
@@ -128,7 +156,7 @@
             <h1 class="h5 mb-0" id="resultsTitle">Todos los anuncios</h1>
             <small class="text-muted" id="resultsCount"></small>
           </div>
-          <a href="publicar.html" class="btn-primary-app d-md-none">
+          <a href="/publicar" class="btn-primary-app d-md-none">
             <i class="fa-solid fa-plus"></i> Publicar
           </a>
         </div>
@@ -149,7 +177,7 @@
   <div class="container">
     <div class="row g-4">
       <div class="col-md-4">
-        <a href="index.html" class="brand mb-2">
+        <a href="/" class="brand mb-2">
           <span class="brand-mark"><span>A</span></span>
           <span>Anuncios</span>
         </a>
@@ -164,9 +192,9 @@
       </div>
       <div class="col-6 col-md-2">
         <h6>Tu cuenta</h6>
-        <a href="completar-perfil.html">Mi perfil</a>
-        <a href="mis-anuncios.html">Mis anuncios</a>
-        <a href="publicar.html">Publicar</a>
+        <a href="/completar-perfil">Mi perfil</a>
+        <a href="/mis-anuncios">Mis anuncios</a>
+        <a href="/publicar">Publicar</a>
       </div>
       <div class="col-md-4">
         <h6>Soporte</h6>
@@ -371,23 +399,46 @@ async function renderAuth() {
         ? `<img src="${u.avatar}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
         : `<i class="fa-regular fa-circle-user" style="font-size:1.6rem;color:var(--muted);"></i>`;
       area.innerHTML = `
-        <div class="d-flex align-items-center gap-2">
-          ${avatar}
-          <span style="font-weight:500;font-size:.9rem;">${u.name}</span>
-          <form method="POST" action="/logout" style="margin:0;">
-            <input type="hidden" name="_token" value="${csrfToken()}">
-            <button type="submit" class="btn-outline-app" style="padding:.3rem .7rem;font-size:.8rem;">Salir</button>
-          </form>
+        <div class="profile-menu">
+          <button type="button" id="profileBtn" class="nav-avatar" style="cursor:pointer;">
+            ${avatar}
+            <span style="font-weight:500;font-size:.9rem;">${u.name}</span>
+            <i class="fa-solid fa-chevron-down" style="font-size:.7rem;color:var(--muted);"></i>
+          </button>
+          <div id="profileDropdown" class="profile-dropdown">
+            <a href="/mis-anuncios" class="pm-item"><i class="fa-regular fa-folder"></i> Mis anuncios</a>
+            <a href="/publicar" class="pm-item"><i class="fa-solid fa-plus"></i> Publicar anuncio</a>
+            <hr style="margin:0;border-color:var(--line);">
+            <a href="#" id="pmLogout" class="pm-item" style="color:var(--muted);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+          </div>
         </div>`;
+
+      const btn  = document.getElementById('profileBtn');
+      const menu = document.getElementById('profileDropdown');
+      btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('show'); });
+      document.addEventListener('click', () => menu.classList.remove('show'));
+      document.getElementById('pmLogout').addEventListener('click', (e) => { e.preventDefault(); logout(); });
     }
     // Si NO está autenticado, se quedan los botones de login que ya están en el HTML.
   } catch (e) { /* sin sesión: deja los botones de login */ }
 }
 
-/* Lee el CSRF token de la cookie XSRF-TOKEN (Laravel) para el logout */
+/* Lee el CSRF token de la cookie XSRF-TOKEN (Laravel) */
 function csrfToken() {
   const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
   return m ? decodeURIComponent(m[1]) : '';
+}
+
+/* Cierra sesión enviando el header X-XSRF-TOKEN (Laravel lo valida). */
+async function logout() {
+  try {
+    await fetch('/logout', {
+      method: 'POST',
+      headers: { 'X-XSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+      credentials: 'same-origin',
+    });
+  } catch (e) { /* ignorar */ }
+  window.location.href = '/';
 }
 
 /* ===== CARGA DE ANUNCIOS (desde la BD) ===== */

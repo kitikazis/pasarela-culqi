@@ -17,7 +17,7 @@
 <nav class="app-navbar">
   <div class="container">
     <div class="d-flex align-items-center justify-content-between">
-      <a href="index.html" class="brand">
+      <a href="/" class="brand">
         <span class="brand-mark"><span>A</span></span>
         <span>Anuncios</span>
       </a>
@@ -102,7 +102,7 @@
           </div>
 
           <div class="d-flex justify-content-end gap-2 mt-4 pt-3" style="border-top: 1px solid var(--line);">
-            <a href="index.html" class="btn-outline-app">Cancelar</a>
+            <a href="/" class="btn-outline-app">Cancelar</a>
             <button type="submit" class="btn-primary-app">
               Guardar y continuar
               <i class="fa-solid fa-arrow-right"></i>
@@ -171,7 +171,7 @@ document.getElementById('profileForm').addEventListener('submit', (e) => {
 
   if (valid) {
     alert('Perfil guardado correctamente. Te llevamos a tus anuncios.');
-    window.location.href = 'mis-anuncios.html';
+    window.location.href = '/mis-anuncios';
   }
 });
 </script>
