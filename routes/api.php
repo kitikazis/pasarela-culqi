@@ -30,6 +30,9 @@ Route::prefix('payment')->group(function () {
 
     // Crear orden (PagoEfectivo / Cuotéalo)
     Route::post('/order', [PaymentController::class, 'createOrder'])->middleware('throttle:10,1');
+
+    // Verificar estado de una orden
+    Route::post('/order/confirm', [PaymentController::class, 'confirmOrder'])->middleware('throttle:20,1');
 });
 
 // Consulta local de una transacción por charge_id o id interno

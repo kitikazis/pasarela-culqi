@@ -35,10 +35,25 @@ return [
         ],
     ],
 
+    // Culqi vive en config/culqi.php (esta entrada queda solo por compatibilidad).
     'culqi' => [
         'public_key'  => env('CULQI_PUBLIC_KEY'),
-        'private_key' => env('CULQI_PRIVATE_KEY'),
+        'private_key' => env('CULQI_SECRET_KEY', env('CULQI_PRIVATE_KEY')),
         'base_url'    => env('CULQI_BASE_URL', 'https://api.culqi.com/v2'),
+    ],
+
+    // ── Login social (Laravel Socialite) ──
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'microsoft' => [
+        'client_id'     => env('MICROSOFT_CLIENT_ID'),
+        'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
+        'redirect'      => env('MICROSOFT_REDIRECT_URI'),
+        'tenant'        => env('MICROSOFT_TENANT', 'common'),
     ],
 
 ];

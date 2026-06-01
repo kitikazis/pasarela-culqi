@@ -114,13 +114,15 @@
     {{-- SOLO CDN oficial de Culqi --}}
     <script src="https://checkout.culqi.com/js/v4"></script>
     <script>
-        const TITLE     = @json(config('app.name'));
-        const CSRF      = document.querySelector('meta[name="csrf-token"]').content;
-        const URL_CARGO = @json(route('pago.cargo'));
-        const URL_ORDEN = @json(route('pago.orden'));
+        const TITLE        = @json(config('app.name'));
+        const CSRF         = document.querySelector('meta[name="csrf-token"]').content;
+        const URL_CARGO    = @json(route('pago.cargo'));
+        const URL_ORDEN    = @json(route('pago.orden'));
+        const URL_CONFIRMAR = @json(route('pago.orden.confirmar'));
 
         let selectedPlan   = null;
         let selectedAmount = 0;   // céntimos (solo para mostrar en el widget)
+        let procesando     = false; // guard contra doble pago / doble disparo del callback
 
         Culqi.publicKey = @json(config('culqi.public_key'));
 
@@ -138,6 +140,7 @@
         });
 
         function configurarCheckout(orderId = null) {
+            
             const settings = { title: TITLE, currency: 'PEN', amount: selectedAmount };
             if (orderId) settings.order = orderId;
             Culqi.settings(settings);
@@ -164,6 +167,7 @@
 
         async function abrirCheckout() {
             if (!selectedPlan) return;
+            procesando = false;   // nuevo intento de pago
             const btn = document.getElementById('btnPay');
             btn.disabled = true; btn.textContent = 'Preparando...';
 
@@ -189,16 +193,49 @@
         }
 
         // ── Callback de Culqi v4 ──
+        // IMPORTANTE: si hay ORDEN, ELLA es el pago. NO se carga el token aparte
+        // (eso causaba el doble cobro). Solo se carga token cuando NO hubo orden.
         window.culqi = function () {
-            if (Culqi.token) {
-                enviarCargo(Culqi.token.id, Culqi.token.email);
-            } else if (Culqi.order) {
-                mostrar('ok', '🧾 Orden generada: ' + Culqi.order.id + '. Completa el pago con las instrucciones mostradas.');
+            if (procesando) return;           // evita doble disparo del callback
+            procesando = true;
+
+            if (Culqi.order) {
+                confirmarOrden(Culqi.order.id);                 // la orden es el pago
+            } else if (Culqi.token) {
+                enviarCargo(Culqi.token.id, Culqi.token.email); // fallback: sin orden
             } else if (Culqi.error) {
+                procesando = false;
                 mostrar('err', Culqi.error.user_message || 'No se pudo procesar el pago.');
+            } else {
+                procesando = false;
             }
         };
 
+        // Verifica el estado real de la orden en el backend (un solo pago)
+        async function confirmarOrden(orderId) {
+            mostrar('ok', 'Verificando pago...');
+            try {
+                const res = await fetch(URL_CONFIRMAR, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    body: JSON.stringify({ order_id: orderId }),
+                });
+                const data = await res.json();
+                if (data.success && data.paid) {
+                    mostrar('ok', '✅ Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
+                } else if (data.success) {
+                    mostrar('ok', '🧾 Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
+                } else {
+                    mostrar('err', '❌ ' + (data.message || 'No se pudo verificar el pago.'));
+                }
+            } catch (e) {
+                mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
+            } finally {
+                procesando = false;
+            }
+        }
+
+        // Fallback: cargo por token cuando NO se pudo crear la orden
         async function enviarCargo(tokenId, email) {
             mostrar('ok', 'Procesando pago...');
             try {
@@ -217,6 +254,8 @@
                     : mostrar('err', '❌ ' + (data.message || 'No se pudo procesar el pago.'));
             } catch (e) {
                 mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
+            } finally {
+                procesando = false;
             }
         }
 

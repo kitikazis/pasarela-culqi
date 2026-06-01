@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ProcessCulqiWebhook;
 use App\Http\Requests\ChargeRequest;
 use App\Http\Requests\CreateOrderRequest;
 use App\Http\Requests\RefundRequest;
@@ -263,6 +264,40 @@ class PaymentController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    //  POST /pago/orden/confirmar  — Verifica el estado de una orden
+    // ─────────────────────────────────────────────────────────────
+    // En el flujo multipago, LA ORDEN es el pago (no se carga token aparte).
+    // Tras pagar en el checkout, el front llama aquí para conocer el estado real.
+    public function confirmOrder(Request $request): JsonResponse
+    {
+        $orderId = (string) $request->input('order_id');
+
+        if (! str_starts_with($orderId, 'ord_')) {
+            return response()->json(['success' => false, 'message' => 'Orden inválida.'], 422);
+        }
+
+        $result = $this->culqi->getOrder($orderId);
+        if (! $result['success']) {
+            return response()->json(['success' => false, 'message' => $result['user_message']], 422);
+        }
+
+        $order = $result['data'];
+        $state = $order->state ?? 'unknown';            // created | pending | paid | expired | deleted
+        $paid  = $state === 'paid';
+
+        Transaction::where('metadata->order_id', $orderId)->update([
+            'status' => $paid ? 'paid' : 'pending',
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'paid'     => $paid,
+            'state'    => $state,
+            'order_id' => $orderId,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     //  Resolución segura de monto y descripción desde el plan
     // ─────────────────────────────────────────────────────────────
 
@@ -288,34 +323,21 @@ class PaymentController extends Controller
     // ─────────────────────────────────────────────────────────────
     //  POST /culqi/webhook  — Notificaciones de Culqi
     // ─────────────────────────────────────────────────────────────
-    public function webhook(Request $request): JsonResponse
+    public function webhook(Request $request, ProcessCulqiWebhook $processor): JsonResponse
     {
-        $event = $request->all();
-        $type  = $event['type'] ?? 'unknown';
-
-        // Validación anti-spoofing: NO confiamos en el payload.
-        // Re-consultamos el recurso directamente a Culqi con la llave secreta.
-        $resourceId = $event['data']['id'] ?? null;
-
-        if ($resourceId && str_starts_with($resourceId, 'chr_')) {
-            $verified = $this->culqi->getCharge($resourceId);
-
-            if ($verified['success']) {
-                $charge = $verified['data'];
-                $status = ($charge->outcome->type ?? null) === 'venta_exitosa' ? 'paid' : 'failed';
-
-                Transaction::where('charge_id', $charge->id)->update([
-                    'status'              => $status,
-                    'culqi_response_code' => $charge->outcome->code ?? null,
-                ]);
-
-                Log::info('Culqi webhook procesado', ['type' => $type, 'charge_id' => $charge->id]);
-            } else {
-                Log::warning('Culqi webhook no verificable', ['type' => $type, 'resource' => $resourceId]);
-            }
+        // El procesamiento (idempotencia, anti-spoofing, auditoría) vive en el Action.
+        try {
+            $result = $processor->handle($request->all());
+            Log::info('Culqi webhook', [
+                'result'   => $result,
+                'type'     => $request->input('type'),
+                'resource' => $request->input('data.id'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Culqi webhook error', ['message' => $e->getMessage()]);
         }
 
-        // Siempre respondemos 200 de inmediato.
+        // SIEMPRE 200 de inmediato, para que Culqi no reintente en bucle.
         return response()->json(['received' => true], 200);
     }
 

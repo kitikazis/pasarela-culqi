@@ -158,6 +158,14 @@ class CulqiService
         return $this->handle($response, 'order.create');
     }
 
+    /** Consulta una orden por su ID (ord_...) para verificar su estado de pago. */
+    public function getOrder(string $orderId): array
+    {
+        $response = $this->secretClient()->Orders->get($orderId);
+
+        return $this->handle($response, 'order.get');
+    }
+
     // ─────────────────────────────────────────────────────────────
     //  YAPE  (token con llave pública  +  cargo con llave secreta)
     // ─────────────────────────────────────────────────────────────

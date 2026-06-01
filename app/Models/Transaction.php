@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -19,6 +20,8 @@ class Transaction extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'user_id',
+        'ad_id',
         'charge_id',
         'order_number',
         'payment_method',     // card | yape | pagoefectivo
@@ -49,5 +52,15 @@ class Transaction extends Model
     public function getAmountInSolesAttribute(): float
     {
         return round($this->amount / 100, 2);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function ad(): BelongsTo
+    {
+        return $this->belongsTo(Ad::class);
     }
 }

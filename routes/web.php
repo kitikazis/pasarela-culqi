@@ -1,11 +1,21 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Autenticación social (Google / Microsoft)
+|--------------------------------------------------------------------------
+*/
+Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirect'])->name('auth.redirect');
+Route::get('/auth/{provider}/callback', [AuthController::class, 'callback'])->name('auth.callback');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +45,11 @@ Route::post('/pago/guardar-tarjeta', [PaymentController::class, 'saveCard'])
 Route::post('/pago/orden', [PaymentController::class, 'createOrder'])
     ->middleware('throttle:10,1')
     ->name('pago.orden');
+
+// Verificar estado de una orden tras pagar (multipago: la orden ES el pago)
+Route::post('/pago/orden/confirmar', [PaymentController::class, 'confirmOrder'])
+    ->middleware('throttle:20,1')
+    ->name('pago.orden.confirmar');
 
 // Webhook de Culqi — excluido de CSRF en bootstrap/app.php
 Route::post('/culqi/webhook', [PaymentController::class, 'webhook'])->name('culqi.webhook');
