@@ -156,7 +156,7 @@
                     buttonBackground: '#0d6efd',
                     menuColor: '#0d6efd',
                     linksColor: '#0d6efd',
-                    buttonText: 'Pagar S/ ' + (selectedAmount / 100).toFixed(2),
+                    buttonText: 'Pagar',   // Culqi le agrega el monto solo (ej: "Pagar S/ 1.00")
                     buttonTextColor: '#ffffff',
                     priceColor: '#1a1f36',
                 },
