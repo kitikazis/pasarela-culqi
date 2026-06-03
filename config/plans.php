@@ -17,7 +17,7 @@ return [
         'name'        => 'Plan Básico',
         'description' => 'Destaca tu anuncio durante 7 días',
         'days'        => 7,
-        'amount'      => 600,    // S/ 6.00  ← mínimo Culqi para billeteras. Producción: 1000
+        'amount'      => 100,    // S/ 1.00  ← prueba. OJO: billeteras/Yape exigen mín. S/ 6.00 (600)
         'features'    => ['Aparece primero en tu categoría', 'Insignia "Destacado"'],
     ],
 

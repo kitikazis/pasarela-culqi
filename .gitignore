@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+.env.produccion
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -19,6 +20,8 @@
 /storage/*.key
 /storage/pail
 /vendor
+/_deploy_cpanel
+config-enlix.zip
 Homestead.json
 Homestead.yaml
 Thumbs.db
