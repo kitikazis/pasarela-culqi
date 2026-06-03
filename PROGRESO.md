@@ -1,106 +1,81 @@
-# 📋 Progreso — Pasarela Culqi
+# 📋 Progreso — Pasarela Culqi / Clasificados
 
-> Última actualización: 2026-05-30. Estado: **sandbox (pruebas, sin dinero real)**.
+> Última actualización: 2026-06-03. Estado: **en producción (sandbox)** en `https://enlix.pe`.
 
 ---
 
 ## ✅ Lo que YA está hecho y funcionando
 
-### Backend (Laravel 12 + SDK Culqi + RSA)
+### Infraestructura / Despliegue
+- **Desplegado en producción** en `https://enlix.pe` (cPanel, hosting enlix)
+- **Flujo Git** montado: PC → GitHub (`kitikazis/pasarela-culqi`) → servidor (`~/public_html`)
+- Deploy = `git pull && php artisan migrate --force && php artisan optimize:clear`
+- `.htaccess` en `public_html` redirige a `public/` (el dominio principal no deja cambiar el Document Root)
+- Guía completa en [`DEPLOY.md`](DEPLOY.md)
 
+### Backend (Laravel 12 + SDK Culqi)
 - **CulqiService** — charge, yape, refund, customer, card, order, token, ping
-- **PaymentController** — showCheckout, charge, yape, refund, saveCard, createOrder, webhook, health
-- **Transaction** (modelo) — email encriptado, soft deletes
-- **Form Requests** — Charge, Yape, Refund, CreateOrder (con validación)
-- **config/culqi.php** y **config/plans.php** (precios autoritativos en backend)
-- **Rutas** web (`/pago/*` con CSRF) y API (`/api/payment/*` sin CSRF, para Postman)
-- **Seguridad** — `.htaccess` con HTTPS + headers, CSRF, RSA auto-activable
+- **PaymentController** — showCheckout, charge, yape, refund, saveCard, createOrder, confirmOrder, webhook, health
+- **Transaction** (modelo) — email encriptado, `customer_name`, soft deletes
+- **Form Requests** — Charge, Yape, Refund, CreateOrder
+- **config/plans.php** — precios autoritativos en backend
+- **webhook_events** — tabla para idempotencia/auditoría del webhook
 
-### Métodos de pago probados
+### Métodos de pago
+| Método | Estado |
+| --- | --- |
+| 💳 Tarjeta | ✅ Cobra en producción (sandbox) |
+| 📱 Yape | ✅ **Funciona** (cel. prueba `900000001`, OTP cualquiera 6 díg.) |
+| 🔁 Devolución | ✅ Código listo |
+| 📦 Orden (PagoEfectivo/Cuotéalo) | ✅ Se genera |
+| 💾 Guardar tarjeta | ✅ Código listo |
 
-| Método                                   | Estado                                                              |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| 💳 Tarjeta                               | ✅ Cobra (probado: chr*test*...)                                    |
-| 🔁 Devolución                            | ✅ Funciona                                                         |
-| 📦 Crear orden (PagoEfectivo/billeteras) | ✅ Se genera la orden                                               |
-| 💾 Guardar tarjeta                       | ✅ Código listo                                                     |
-| 📱 Yape                                  | ⚠️ Código OK, falta habilitar teléfono de prueba en tu cuenta Culqi |
-
-### Frontend
-
-- Página `/pago` — **Custom Checkout multipago v1.0** con planes y precios
-- Botón "Destacar — Planes" en `index.html`
-- Planes: Básico S/6 · Plus S/25 · Premium S/50
-
-### Git
-
-- `main` = todo el trabajo (sincronizado con GitHub) ✅
-- Respaldo del estado viejo en rama `backup-no-correr`
-- Pendiente de push: commit de `.env.example` ordenado (corre `git push origin main`)
+### Frontend / UI (clasificados)
+- Login social **Google** funcionando en producción (Microsoft pendiente de credenciales)
+- Home con anuncios reales desde la BD (`/api/ads`)
+- **Filtros de ubicación** Departamento → Provincia → Distrito (en navbar, responsive)
+- Categorías: Venta · Compra · **Empleo** · **Busco** (claves internas siguen `trabajo`/`busca`)
+- Página de planes responsive + botón de pago sticky en móvil
+- Publicar anuncio, Mis anuncios, Completar perfil
+- Nombre del comprador se captura y guarda (`transactions.customer_name`)
 
 ---
 
-## 🔜 EN LO QUE NOS QUEDAMOS (retomar aquí)
+## 🔜 PENDIENTES (orden sugerido)
 
-Estábamos por implementar el **WEBHOOK** (para que PagoEfectivo/billeteras/Cuotéalo se confirmen solos).
+### 🔴 Seguridad
+1. **Proteger endpoints abiertos** — `/pago/devolucion` y `/pago/guardar-tarjeta` están públicos. Añadir `auth` + rol admin (sobre todo la devolución).
+2. **Rotar secretos expuestos** — password de BD y `GOOGLE_CLIENT_SECRET` (quedaron a la vista cuando el proyecto estuvo en el webroot con `APP_DEBUG=true`).
 
-**Ya hecho:**
+### 🟡 Funcionalidad core
+3. **⭐ Ligar pago ↔ anuncio** — `FeatureAdOnPayment` destaca el anuncio solo si la transacción tiene `ad_id`, pero el checkout NO envía qué anuncio se destaca. Hoy se cobra pero **no se destaca ningún anuncio**. Falta pasar el `ad_id`: Mis anuncios → checkout → transacción.
+4. **Registrar webhook en producción** — en CulqiPanel → Desarrollo → Webhooks: `https://enlix.pe/culqi/webhook`.
+5. **Página de confirmación / recibo** tras el pago.
 
-- ✅ ngrok instalado en `C:\Users\luisk\ngrok\ngrok.exe` (v3.39.5)
-- ✅ Token de ngrok configurado
+### 🟢 Producción (go-live real)
+6. Llaves **live** (`pk_live`/`sk_live`) + **RSA** (`rs_live`) + **aprobación comercial** de Culqi.
+7. **Precios reales** de planes (hoy el básico está en **S/1.00** de prueba).
+8. **Correos** — `MAIL_MAILER=log` no envía nada; configurar SMTP para recibos/confirmaciones.
 
-**Pendiente (próximos pasos):**
-
-```
-1️⃣  Crear tabla webhook_events (idempotencia + auditoría)   ← lo hace Claude
-2️⃣  Mejorar el webhook para usarla                          ← lo hace Claude
-3️⃣  Levantar el túnel:  C:\Users\luisk\ngrok\ngrok.exe http 8000
-4️⃣  Copiar la URL pública (https://xxxx.ngrok.io)
-5️⃣  Registrarla en CulqiPanel → Desarrollo → Webhooks
-6️⃣  Pagar un QR sandbox → verificar que la BD marque "paid"
-```
-
----
-
-## 🚀 Cómo retomar (comandos)
-
-```powershell
-# 1. Levantar el servidor Laravel
-cd c:\Users\luisk\pasarela-culqi
-php artisan serve --port=8000
-
-# 2. (Para webhook) Levantar ngrok en otra terminal
-C:\Users\luisk\ngrok\ngrok.exe http 8000
-
-# 3. Abrir la pasarela
-#    http://127.0.0.1:8000/pago
-```
+### 🔵 Calidad
+9. **Tests** de los flujos de pago (hay phpunit, faltan pruebas).
+10. **Centralizar categorías** en `config/categories.php` (hoy las etiquetas viven en JS + form + validación).
 
 ---
 
-## 📝 Notas importantes
+## 📝 Datos de referencia (sandbox)
 
-- **RSA está DESACTIVADO** (sandbox). En `.env`: `CULQI_RSA_ID` vacío. Para producción se ponen las llaves `rs_live` reales (una línea, entre comillas).
 - **Tarjeta de prueba:** `4111 1111 1111 1111`, CVV `123`, exp `09/2028`.
-- **Mínimo Culqi para órdenes/billeteras:** S/ 6.00 (por eso el Plan Básico está en S/6).
-- **El QR de billeteras en sandbox NO mueve dinero real** — es simulación.
-
----
-
-## 🗺️ Roadmap para terminar (orden sugerido)
-
-```
-1. Webhook + ngrok          → cierra PagoEfectivo/billeteras/Cuotéalo   ← SIGUIENTE
-2. Conectar pago ↔ anuncio/usuario → que el pago active el plan de verdad
-3. Habilitar teléfono Yape  → cierra Yape
-4. Página de confirmación + idempotencia
-5. (Producción) llaves live + RSA real + 3DS + aprobación de Culqi
-```
+- **Yape de prueba:** celular `900000001`, OTP cualquier 6 dígitos (ej. `123456`).
+- **Mínimo Culqi para Yape/billeteras:** S/ 6.00 (en S/1.00 solo sale tarjeta).
+- **RSA desactivado** en sandbox (`CULQI_RSA_ID` vacío). Se activa solo con llaves reales.
+- **Sandbox = sin dinero real.** Todo es simulado.
 
 ---
 
 ## 📂 Tablas de BD
-
-- **`transactions`** ✅ (la tienes) — cada pago/intento
-- **`webhook_events`** 🔜 (la crearemos con el webhook) — idempotencia
-- **`saved_cards`** ⏳ (solo si harás cobros one-click/recurrentes)
+- **`users`** ✅ — login social (Google/Microsoft)
+- **`ads`** ✅ — anuncios (categoría, cobertura, ubicación, `featured_until`)
+- **`transactions`** ✅ — cada pago/intento (+ `customer_name`)
+- **`webhook_events`** ✅ — idempotencia del webhook
+- **`saved_cards`** ⏳ — solo si se harán cobros one-click/recurrentes
