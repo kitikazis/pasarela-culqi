@@ -70,6 +70,16 @@ class CulqiService
             'capture'       => true,
         ];
 
+        // Nombre del comprador (si lo enviaron) → metadata, para verlo en el panel.
+        $nombre = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+        if ($nombre !== '') {
+            $payload['metadata'] = [
+                'first_name' => $data['first_name'] ?? '',
+                'last_name'  => $data['last_name'] ?? '',
+                'nombre'     => $nombre,
+            ];
+        }
+
         if (! empty($auth3ds)) {
             $payload['authentication_3DS'] = $auth3ds;
         }

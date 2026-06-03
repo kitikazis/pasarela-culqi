@@ -263,6 +263,8 @@
                         token: tokenId,
                         plan: selectedPlan,          // el precio lo pone el backend
                         email: email || val('email'),
+                        first_name: val('firstName'),
+                        last_name: val('lastName'),
                     }),
                 });
                 const data = await res.json();

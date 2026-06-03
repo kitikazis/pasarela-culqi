@@ -30,6 +30,7 @@ class Transaction extends Model
         'status',             // pending | paid | failed | refunded
         'culqi_response_code',
         'customer_email',
+        'customer_name',
         'card_last4',
         'card_brand',
         'description',

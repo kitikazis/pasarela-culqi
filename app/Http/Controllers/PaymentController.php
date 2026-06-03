@@ -39,12 +39,17 @@ class PaymentController extends Controller
         $amount      = $this->resolveAmount($data);
         $description = $this->resolveDescription($data);
 
+        // Nombre del comprador (para Culqi y para la BD).
+        $customerName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')) ?: null;
+
         $result = $this->culqi->createCharge([
             'token'         => $data['token'],
             'amount'        => $amount,
             'currency_code' => $data['currency_code'] ?? 'PEN',
             'email'         => $data['email'],
             'description'   => $description,
+            'first_name'    => $data['first_name'] ?? null,
+            'last_name'     => $data['last_name'] ?? null,
         ]);
 
         if (! $result['success']) {
@@ -56,6 +61,7 @@ class PaymentController extends Controller
                 'status'              => 'failed',
                 'culqi_response_code' => $result['code'] ?? null,
                 'customer_email'      => $data['email'],
+                'customer_name'       => $customerName,
                 'description'         => $description,
                 'metadata'            => ['plan' => $data['plan'] ?? null],
             ]);
@@ -76,6 +82,7 @@ class PaymentController extends Controller
             'status'              => 'paid',
             'culqi_response_code' => $charge->outcome->code ?? null,
             'customer_email'      => $charge->email ?? $data['email'],
+            'customer_name'       => $customerName,
             'card_last4'          => $charge->source->last_four ?? null,
             'card_brand'          => $charge->source->iin->card_brand ?? null,
             'description'         => $description,

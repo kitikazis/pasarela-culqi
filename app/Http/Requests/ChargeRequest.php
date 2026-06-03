@@ -21,6 +21,8 @@ class ChargeRequest extends FormRequest
             'amount'        => ['required_without:plan', 'integer', 'min:100'],
             'currency_code' => ['nullable', 'string', 'in:PEN,USD'],
             'email'         => ['required', 'email'],
+            'first_name'    => ['nullable', 'string', 'max:50'],
+            'last_name'     => ['nullable', 'string', 'max:50'],
             'description'   => ['nullable', 'string', 'max:250'],
         ];
     }
