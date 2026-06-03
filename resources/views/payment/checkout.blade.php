@@ -55,6 +55,23 @@
         .result.ok { background:#e7f6ec; color:#0f7a37; border:1px solid #34a853; }
         .result.err { background:#fdecea; color:#b3261e; border:1px solid #ea4335; }
         .secure { text-align:center; font-size:.76rem; color:#9aa1ad; margin-top:1rem; }
+
+        /* ── Responsive móvil ── */
+        @media (max-width: 575.98px) {
+            body { padding:1rem .8rem; }
+            .head h1 { font-size:1.45rem; }
+            .plan { padding:1.2rem; }
+            .price { font-size:1.7rem; }
+            .checkout { padding:1.25rem; margin-top:1.25rem; }
+            /* Nombres y Apellidos apilados (no lado a lado) */
+            .row { flex-direction:column; gap:0; }
+            /* Botón de pago SIEMPRE visible en móvil */
+            #btnPay {
+                position:sticky;
+                bottom:10px;
+                box-shadow:0 6px 22px rgba(13,110,253,.4);
+            }
+        }
     </style>
 </head>
 <body>

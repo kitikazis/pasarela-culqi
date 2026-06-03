@@ -14,7 +14,8 @@ class ChargeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token'         => ['required', 'string', 'starts_with:tkn_live_,tkn_test_'],
+            // tkn_ = tarjeta · ype_ = Yape (ambos válidos como source_id en Culqi)
+            'token'         => ['required', 'string', 'starts_with:tkn_live_,tkn_test_,ype_live_,ype_test_'],
             // Se cobra por PLAN (precio resuelto en el backend) o por monto directo.
             'plan'          => ['nullable', 'string', 'in:' . implode(',', array_keys(config('plans')))],
             'amount'        => ['required_without:plan', 'integer', 'min:100'],
@@ -28,7 +29,7 @@ class ChargeRequest extends FormRequest
     {
         return [
             'token.required'        => 'El token de pago es obligatorio.',
-            'token.starts_with'     => 'El token debe comenzar con tkn_live_ o tkn_test_.',
+            'token.starts_with'     => 'El token debe comenzar con tkn_ (tarjeta) o ype_ (Yape).',
             'plan.in'               => 'El plan seleccionado no es válido.',
             'amount.required_without' => 'Debes indicar un plan o un monto.',
             'amount.min'            => 'El monto mínimo es 100 céntimos (S/1.00).',

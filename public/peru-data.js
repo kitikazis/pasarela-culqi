@@ -125,8 +125,8 @@ const DEPARTAMENTOS = Object.keys(PERU);
 const CAT_LABELS = {
   venta:   "Venta",
   compra:  "Compra",
-  trabajo: "Trabajo",
-  busca:   "Se busca"
+  trabajo: "Empleo",
+  busca:   "Busco"
 };
 
 /* Utilidades */
