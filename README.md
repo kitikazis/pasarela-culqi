@@ -130,3 +130,5 @@ resources/views/payment/checkout.blade.php   # Custom Checkout multipago v1.0
 3. `APP_ENV=production`, `APP_DEBUG=false`, HTTPS/SSL
 4. Webhook configurado en el panel de Culqi
 5. `composer install --no-dev --optimize-autoloader && php artisan migrate --force`
+
+> 📘 Despliegue paso a paso (SSH + Git + cPanel) y cómo subir cambios: [`DEPLOY.md`](DEPLOY.md)
