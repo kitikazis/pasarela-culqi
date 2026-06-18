@@ -225,14 +225,14 @@ h1, h2, h3, h4, h5 {
 }
 
 /* ---------- AD CARDS ---------- */
+/* Grilla fluida: las tarjetas se reacomodan solas según el ancho disponible.
+   minmax(min(100%, 250px), 1fr) => en móvil angosto 1 columna a todo el ancho,
+   y va sumando columnas (2, 3, 4...) conforme hay espacio, sin saltos bruscos. */
 .ad-grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
 }
-@media (min-width: 576px) { .ad-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 992px) { .ad-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1280px) { .ad-grid { grid-template-columns: repeat(4, 1fr); } }
 
 .ad-card {
   background: #fff;
@@ -276,6 +276,9 @@ h1, h2, h3, h4, h5 {
   margin: 0;
   flex: 1;
   text-wrap: pretty;
+  /* Evita que un texto/URL largo sin espacios desborde la tarjeta en móvil */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ad-meta {
