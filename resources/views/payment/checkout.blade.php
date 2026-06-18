@@ -341,11 +341,15 @@
         // ok=true: pago realizado → botón inutilizado (no se paga 2 veces).
         // ok=false: error → oculta overlay y permite reintentar.
         function finishPayment(ok) {
+            // Cierra el modal de Culqi (si sigue abierto) para que no se pague otra vez.
+            try { if (window.Culqi && typeof Culqi.close === 'function') Culqi.close(); } catch (e) {}
+
             setPaying(false);
             const btn = document.getElementById('btnPay');
             if (ok) {
                 btn.disabled = true;
                 btn.textContent = '✓ Pago realizado';
+                document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 procesando = false;
                 btn.disabled = false;
