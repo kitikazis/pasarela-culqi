@@ -1,49 +1,61 @@
 /* =========================================================
    anuncialo.pe — Design System
-   Estética: minimalista premium ("spa suizo de lujo").
-   Paleta ÚNICA: Greige & Bosque  ·  Tipografía: Inter (grotesca)
-   Iconografía: Lucide (los logos de login son marcas oficiales).
+   Estética: minimalista premium, marketplace moderno.
+   Paleta: Azul (primario) · Ámbar (secundario) · Verde (contacto)
+   Tipografía: Inter  ·  Iconografía: Lucide (logos de login = marcas).
    ========================================================= */
 
 :root {
-  /* ── Paleta única ──────────────────────────────────────── */
-  --bg:           #F7F7F5;   /* fondo de página (greige) */
+  /* ── Neutros / superficies ─────────────────────────────── */
+  --bg:           #F9FAFB;   /* fondo de página */
   --surface:      #FFFFFF;   /* tarjetas / barras */
-  --bg-soft:      #F1F1ED;   /* estados hover / deshabilitado */
+  --bg-soft:      #F3F4F6;   /* estados hover / deshabilitado */
 
-  --ink:          #1A1A1A;   /* texto principal (casi negro) */
-  --ink-2:        #3C3C39;   /* texto secundario */
-  --muted:        #797A72;   /* texto terciario / iconos */
-  --line:         #E7E7E2;   /* bordes sutiles */
-  --line-strong:  #D8D8D2;   /* bordes de control */
+  --ink:          #1F2937;   /* texto principal */
+  --ink-2:        #374151;   /* texto secundario */
+  --muted:        #6B7280;   /* texto terciario / iconos */
+  --line:         #E5E7EB;   /* bordes / divisores */
+  --line-strong:  #D1D5DB;   /* bordes de control */
 
-  /* Acento ÚNICO: verde bosque */
-  --accent:       #1F3D2F;
-  --accent-2:     #2E5641;
-  --accent-soft:  #EAF0EC;
-  --accent-ring:  rgba(31, 61, 47, .14);
+  /* Primario: azul (CTAs, enlaces, estados activos) */
+  --primary:      #2563EB;
+  --primary-2:    #1D4ED8;   /* hover */
+  --primary-soft: #EAF1FE;
+  --primary-ring: rgba(37, 99, 235, .16);
+  --primary-dark: var(--primary-2);   /* compat */
 
-  /* Alias de compatibilidad (otras páginas usan --primary*) */
-  --primary:      var(--accent);
-  --primary-dark: var(--accent-2);
-  --primary-soft: var(--accent-soft);
+  /* Secundario: ámbar (anuncios featured / urgencia) */
+  --secondary:      #F59E0B;
+  --secondary-2:    #D97706;
+  --secondary-soft: #FEF4E2;
 
-  /* Logos de proveedores (solo el icono, los botones son neutros) */
+  /* Éxito / contacto: verde (acciones positivas) */
+  --success:      #10B981;
+  --success-2:    #059669;
+  --success-soft: #E7F8F1;
+
+  /* Compat: el sistema usa --accent* para la acción primaria → azul */
+  --accent:       var(--primary);
+  --accent-2:     var(--primary-2);
+  --accent-soft:  var(--primary-soft);
+  --accent-ring:  var(--primary-ring);
+
+  /* Logos de proveedores (el botón es neutro; el color va solo en el logo) */
   --google:        #DB4437;
   --google-dark:   #c0392b;
   --microsoft:     #00a1f1;
   --microsoft-dark:#0086c8;
 
-  /* Categorías — tintes desaturados, cohesivos con la paleta */
-  --cat-venta-bg:#E7EFE9;  --cat-venta-fg:#2E5641;
-  --cat-compra-bg:#E8EDF2; --cat-compra-fg:#3C5266;
-  --cat-trabajo-bg:#F0EAE3;--cat-trabajo-fg:#6A5340;
-  --cat-busca-bg:#F2EDE0;  --cat-busca-fg:#7A641F;
+  /* Categorías — derivadas de la paleta */
+  --cat-venta-bg:#E7F8F1;  --cat-venta-fg:#059669;   /* Venta  → verde  */
+  --cat-compra-bg:#EAF1FE; --cat-compra-fg:#1D4ED8;  /* Compra → azul   */
+  --cat-trabajo-bg:#FEF4E2;--cat-trabajo-fg:#B45309; /* Empleo → ámbar  */
+  --cat-busca-bg:#F3F4F6;  --cat-busca-fg:#4B5563;   /* Busco  → neutro */
 
   /* Estados */
-  --ok-bg:#E7F0E9; --ok-fg:#2E5641;
-  --warn-fg:#8A6D1F;
-  --danger-bg:#F4E7E5; --danger-fg:#9B3A30;
+  --ok-bg:#E7F8F1; --ok-fg:#059669;
+  --warn-fg:#B45309;
+  --danger-bg:#FCEAEA; --danger-fg:#DC2626;
 
   /* ── Radios y sombras (suaves, premium) ────────────────── */
   --radius:    14px;
@@ -378,7 +390,8 @@ h1, h2, h3, h4, h5 {
 .ad-meta-row i { width: 14px; text-align: center; color: var(--muted); font-size: .85rem; flex-shrink: 0; }
 .ad-meta-row .lucide { width: 15px; height: 15px; color: var(--muted); }
 .ad-meta-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ad-meta-row .phone { color: var(--ink-2); font-weight: 500; }
+.ad-meta-row .phone { color: var(--success-2); font-weight: 600; }
+.ad-meta-row:has(.phone) .lucide { color: var(--success-2); }
 
 /* =========================================================
    SIDEBAR FILTER (Departamento)
