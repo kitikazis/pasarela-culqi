@@ -1,111 +1,157 @@
-# 📋 Progreso — Pasarela Culqi / Clasificados
+# 📋 Progreso — anuncialo.pe (Clasificados + Pasarela Culqi)
 
-> Última actualización: 2026-06-03. Estado: **en producción (sandbox)** en `https://anuncialo.pe`.
-
----
-
-## 🗓️ Qué hicimos en la sesión 2026-06-03
-
-- ✅ **Desplegado en producción** `https://anuncialo.pe` (cPanel) con flujo Git + SSH
-- ✅ **Login Google** funcionando en producción (redirect URIs configurados)
-- ✅ **Yape arreglado** — se aceptaban solo tokens `tkn_`; ahora también `ype_`
-- ✅ **UI clasificados** — filtros ubicación (Depto/Prov/Distrito) en navbar responsive, sin logo, grilla full-width
-- ✅ **Categorías** renombradas: Trabajo→Empleo, Se busca→Busco (solo etiqueta, BD intacta)
-- ✅ **Planes responsive** + botón de pago sticky en móvil
-- ✅ **Nombre del comprador** — se captura y guarda en `transactions.customer_name` (migración aplicada)
-- ✅ **Webhooks registrados** en CulqiPanel (charge→creation→succeeded · order→status→succeeded)
+> Última actualización: **2026-06-18**.
+> Estado: **en producción (sandbox Culqi)** en `https://anuncialo.pe`.
+> Modelo de negocio actual: **créditos de publicación** — el usuario nuevo recibe **20 créditos gratis** al registrarse; los planes de pago están **ocultos por ahora** (el checkout sigue funcionando por dentro).
 
 ---
 
-## ✅ Lo que YA está hecho y funcionando
+## 🗓️ Bitácora — del inicio al estado actual
+
+### 2026-05-29 — Arranque del proyecto
+- Estructura inicial del proyecto (Laravel) + Docker.
+- Primeras rutas de la API de pruebas:
+  `GET /api/health`, `POST /api/payment/charge`, `POST /api/payment/yape`, `GET /api/payment/{id}`.
+
+### 2026-05-30 — Integración Culqi base + conexión a cPanel
+- Integración de pagos **Yape** y tarjeta sobre el SDK `culqi/culqi-php`.
+- Comando que **verifica en terminal** la conexión a BD y a Culqi al levantar el server.
+- `.env.example` ordenado (Culqi + RSA + MySQL).
+- Primer README de la pasarela + guía de progreso (webhook + ngrok).
+- Conexión del proyecto con cPanel.
+
+### 2026-06-01 — Clasificados reales + login + moderación
+- **Login social OAuth** (Google / Microsoft) con Socialite.
+- **Anuncios en BD**: el home muestra anuncios reales y al usuario logueado (foto/nombre).
+- **Publicar anuncios reales**, URLs limpias, menú de perfil, login requerido para publicar.
+- **Webhook idempotente** (tabla `webhook_events`).
+- **Moderación de contenido** (groserías), fechas reales, anti-flash de sesión.
+
+### 2026-06-03 — Despliegue a producción + UI clasificados
+- **Desplegado en producción** `https://anuncialo.pe` (cPanel) vía Git + SSH.
+- **Login Google** funcionando en producción.
+- **Yape arreglado** (se aceptaban solo tokens `tkn_`; ahora también `ype_`).
+- **UI clasificados**: filtros de ubicación (Depto → Prov → Distrito) en navbar responsive; categorías Empleo/Busco.
+- Plan básico a **S/ 1.00** para pruebas; fix de precio duplicado en el widget.
+- Se captura el **nombre del comprador** (`transactions.customer_name`).
+- **Webhooks registrados** en CulqiPanel.
+- Guía de despliegue [`DEPLOY.md`](DEPLOY.md).
+
+### 2026-06-11 — Automatización del deploy
+- Script [`deploy.sh`](deploy.sh): setup automático en cPanel después del clone
+  (composer, migrate, optimize, permisos).
+
+### 2026-06-17 — Responsive, caché y robustez de la UI
+- **Grilla de anuncios fluida** (responsive de verdad) + descripción limitada a **144** en BD.
+- **Cache-busting automático** de assets (el usuario siempre ve lo último, sin incógnito).
+- No-cache en HTML + revalidación de CSS/JS en `.htaccess` + LiteSpeed desactivado.
+- Pulido **responsive móvil** (pills deslizables, tarjetas táctiles).
+- `Ad::MAX_DESCRIPTION` centralizado (DRY).
+- Fix: los anuncios **Nacional** ahora se muestran y filtran bien.
+- Fix: texto de filtros de ubicación y de "Mis anuncios" ya no se corta/monta.
+- **Modal de advertencia** al publicar contenido no permitido.
+
+### 2026-06-18 — Arquitectura, seguridad, pivote a créditos y rediseño
+- **Revisión y refactor de arquitectura** (pagos/anuncios): Actions, FormRequests, Events/Listeners, acciones reales (activar/eliminar con propiedad).
+- **Checkout anti doble-pago**: overlay "procesando", cierra el modal de Culqi al confirmar, "Tus datos" compacto, **confirmación animada** (check verde estilo compra).
+- ⭐ **Pivote del modelo de negocio**: los planes pasan de "destacar" a **créditos de publicación** (publicar gasta 1 crédito). Se eliminó el featuring (`FeatureAdOnPayment`) y se creó `GrantCreditsOnPayment`.
+- **Seguridad**: CORS restringido al dominio (`config/cors.php`), **rate limiting** por usuario/min, **XSS** (escape `e()` del texto de anuncios en la API).
+- **README** completo del proyecto.
+- **Aviso por correo al admin** cuando se confirma un pago (`NotifyAdminOnPayment` + `PaymentReceivedMail`).
+- Fix global de dominio `enlix.pe` → `anuncialo.pe`.
+- **Rediseño premium del frontend**: design system con paleta única (azul/ámbar/verde), tipografía **Inter**, iconos **Lucide** (sin Font Awesome ni emojis), logos oficiales de Google/Microsoft. Propagado a home, publicar, mis-anuncios, completar-perfil y checkout. Mis anuncios en **cuadrícula compacta**.
+- **20 créditos gratis** al registrarse + **planes ocultos** por ahora.
+
+---
+
+## ✅ Estado actual — hecho y funcionando
 
 ### Infraestructura / Despliegue
-- Producción en `https://anuncialo.pe` (cPanel, hosting enlix)
-- Flujo Git: PC → GitHub (`kitikazis/pasarela-culqi`) → servidor (`~/public_html`)
-- Deploy = `git pull && php artisan migrate --force && php artisan optimize:clear`
-- `.htaccess` en `public_html` redirige a `public/` (guía en [`DEPLOY.md`](DEPLOY.md))
+- Producción en `https://anuncialo.pe` (cPanel, hosting enlix).
+- Flujo: PC → GitHub (`kitikazis/pasarela-culqi`) → servidor (`~/public_html`).
+- Deploy con **`git pull && bash deploy.sh`**.
+- `.htaccess` raíz redirige a `public/` (ver [`DEPLOY.md`](DEPLOY.md)).
 
 ### Backend (Laravel 12 + SDK Culqi)
-- **CulqiService** — charge, yape, refund, customer, card, order, token, ping
-- **PaymentController** — checkout, charge, yape, refund, saveCard, createOrder, confirmOrder, webhook, health
-- **Transaction** — email encriptado, `customer_name`, soft deletes
-- **config/plans.php** — precios autoritativos en backend
-- **Webhook** — código listo + tabla `webhook_events` (idempotencia) + registrado en Culqi
+- `CulqiService` (charge, yape, refund, customer, card, order, token, ping).
+- `PaymentController` (cargo, orden, confirmar, refund, guardar-tarjeta, webhook).
+- Actions: `RecordTransaction` (persistencia atómica), `ProcessCulqiWebhook` (idempotencia + anti-spoofing).
+- Events/Listeners: `PaymentConfirmed` → `GrantCreditsOnPayment` + `NotifyAdminOnPayment`.
+- `config/plans.php` (precios autoritativos en backend).
 
-### Métodos de pago
+### Negocio (créditos)
+- **20 créditos gratis** al crear la cuenta (solo en alta, no resetea a existentes).
+- Publicar gasta **1 crédito** de forma atómica (transacción de BD).
+- Planes (checkout) **ocultos en la UI** por ahora; el flujo de compra sigue intacto por dentro.
+
+### Métodos de pago (sandbox)
 | Método | Estado |
 | --- | --- |
-| 💳 Tarjeta | ✅ Cobra en producción (sandbox) |
-| 📱 Yape | ✅ Funciona (cel. `900000001`, OTP 6 díg. cualquiera) |
-| 🔁 Devolución | ✅ Código listo |
-| 📦 Orden (PagoEfectivo/Cuotéalo) | ✅ Se genera |
-| 💾 Guardar tarjeta | ✅ Código listo |
+| Tarjeta | ✅ Cobra (sandbox) |
+| Yape | ✅ Funciona (cel. `999999999`, OTP `123456`) |
+| Orden (PagoEfectivo/Cuotéalo) | ✅ Se genera |
+| Devolución | ✅ Código listo (solo admin) |
+| Guardar tarjeta | ✅ Código listo |
 
-### Frontend / UI
-- Home con anuncios reales (`/api/ads`), filtros de ubicación, categorías Empleo/Busco
-- Publicar anuncio, Mis anuncios, Completar perfil
-- Página de planes responsive
+### Frontend
+- Rediseño premium aplicado a las 5 páginas (Inter + Lucide + paleta única).
+- Home con anuncios reales, filtros y búsqueda; Publicar, Mis anuncios, Completar perfil; Checkout Blade.
 
 ---
 
-## 🔜 PENDIENTES — retomar mañana (en orden)
+## 🔜 Pendientes (orden sugerido)
 
-> 👉 **EMPEZAR POR EL #1** (es lo que le da sentido al negocio).
+### 🔴 1. Correo en producción (SMTP)
+`MAIL_MAILER=log` → **no llegan** los avisos de pago. Configurar SMTP de cPanel
+(`mail.anuncialo.pe`, buzón `noreply@anuncialo.pe`). Ver checklist en [`DEPLOY.md`](DEPLOY.md).
 
-### 🟡 1. ⭐ Ligar pago ↔ anuncio  ← SIGUIENTE
-Hoy se cobra pero **no se destaca ningún anuncio**. `FeatureAdOnPayment` destaca el anuncio
-solo si la transacción tiene `ad_id`, pero el checkout **nunca envía qué anuncio** se destaca.
-Falta: pasar el `ad_id` desde "Mis anuncios" → checkout → guardarlo en la transacción.
+### 🔴 2. Rotar secretos expuestos
+Password de BD y `GOOGLE_CLIENT_SECRET` (se compartieron varias veces). Rotar por precaución.
 
-### 🟡 2. Probar el webhook end-to-end
-Los webhooks ya están registrados. Falta **comprobar** que una orden PagoEfectivo pase de
-`pending` → `paid` sola cuando Culqi avisa. (Hoy la fila 45 quedó `pending` esperando esto.)
+### 🟡 3. Paginación real de `/api/ads`
+Hoy hay un `->limit(500)` interino + paginación del lado del cliente. Hacer paginación en servidor (y ajustar el front).
 
-### 🔴 3. Seguridad
-- **Proteger endpoints abiertos** — `/pago/devolucion` y `/pago/guardar-tarjeta` están públicos.
-  Añadir `auth` + rol admin (sobre todo la devolución).
-- **Rotar secretos** — password de BD y `GOOGLE_CLIENT_SECRET` (quedaron expuestos cuando el
-  proyecto estuvo en el webroot con `APP_DEBUG=true`).
+### 🟡 4. Probar el webhook end-to-end
+Comprobar que una orden PagoEfectivo pase de `pending` → `paid` sola cuando Culqi avisa.
 
-### 🟢 4. Producción real (go-live)
-- Llaves **live** (`pk_live`/`sk_live`) + **RSA** (`rs_live`) + **aprobación comercial** de Culqi
-- **Precios reales** de planes (hoy el básico está en S/1.00 de prueba)
-- **Correos** — `MAIL_MAILER=log` no envía nada; configurar SMTP para recibos
-- Página de **confirmación / recibo** tras el pago
+### 🟢 5. Go-live real (cuando se quiera cobrar)
+- Llaves **live** (`pk_live`/`sk_live`) + **RSA** (`rs_live`) + aprobación comercial de Culqi.
+- **Reactivar los botones de planes** (hoy comentados en home y mis-anuncios).
+- Precios reales de planes (el básico está en S/ 1.00 de prueba).
 
-### 🔵 5. Calidad
-- **Tests** de los flujos de pago
-- **Centralizar categorías** en `config/categories.php`
+### 🔵 6. Calidad / limpieza
+- **Tests** de los flujos de pago.
+- Quitar/definir el `<img src="">` placeholder en `mis-anuncios.html`.
+- Actualizar [`API.md`](API.md) (quedó de la etapa de la API de pruebas).
 
 ---
 
 ## 📝 Datos de referencia (sandbox)
 
-- **Tarjeta:** `4111 1111 1111 1111`, CVV `123`, exp `09/2028`
-- **Yape:** celular `900000001`, OTP cualquier 6 dígitos (ej. `123456`)
-- **Mínimo Culqi para Yape/billeteras:** S/ 6.00 (en S/1.00 solo sale tarjeta)
-- **RSA desactivado** en sandbox; se activa solo con llaves reales
-- **Sandbox = sin dinero real** (todo simulado)
+- **Tarjeta:** `4111 1111 1111 1111`, CVV `123`, exp `09/2028`.
+- **Yape:** celular `999999999`, OTP `123456`.
+- **Mínimo Culqi para Yape/billeteras:** S/ 6.00 (con S/ 1.00 solo sale tarjeta).
+- **RSA desactivado** en sandbox; se activa solo con llaves reales.
+- **Sandbox = sin dinero real** (todo simulado).
 
 ---
 
 ## 📂 Tablas de BD
-- **`users`** ✅ — login social
-- **`ads`** ✅ — anuncios (categoría, cobertura, ubicación, `featured_until`)
-- **`transactions`** ✅ — cada pago/intento (+ `customer_name`)
-- **`webhook_events`** ✅ — idempotencia del webhook
-- **`saved_cards`** ⏳ — solo si se harán cobros one-click
+- **`users`** ✅ — login social + `publish_credits`.
+- **`ads`** ✅ — anuncios (categoría, cobertura, ubicación).
+- **`transactions`** ✅ — cada pago/intento (+ `customer_name`).
+- **`webhook_events`** ✅ — idempotencia del webhook.
+- **`saved_cards`** ⏳ — solo si se harán cobros one-click.
 
 ---
 
-## 🚀 Cómo retomar mañana
+## 🚀 Cómo retomar
 
 ```bash
 # Local (editar)
-cd c:\Users\luisk\pasarela-culqi
+cd c:\Users\luisk\cliente\pasarela-culqi
 php artisan serve            # http://localhost:8000
 
-# Subir cambios:  git add . && git commit -m "..." && git push
-# Desplegar (SSH):  cd ~/public_html && git pull && php artisan optimize:clear
-#   (agrega 'php artisan migrate --force' si hay migración nueva)
+# Subir cambios:   git add . && git commit -m "..." && git push origin main
+# Desplegar (SSH): cd ~/public_html && git pull && bash deploy.sh
 ```

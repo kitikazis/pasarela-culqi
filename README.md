@@ -2,7 +2,9 @@
 
 Plataforma de **anuncios clasificados** para Perú con **pasarela de pagos Culqi** integrada. Los usuarios inician sesión, **compran un plan** (paquete de créditos) y **publican anuncios** gastando 1 crédito por publicación. Construida en **Laravel 12**.
 
-> **Modelo de negocio:** comprar un plan da **créditos de publicación** (no vencen). Publicar un anuncio gasta **1 crédito**. Publicar **siempre** requiere créditos.
+> **Modelo de negocio:** publicar un anuncio gasta **1 crédito de publicación**. Cada usuario nuevo recibe **20 créditos gratis al registrarse**. Comprar un plan suma más créditos (no vencen).
+>
+> **Estado actual:** los botones de compra de planes están **ocultos por ahora** (los usuarios viven de los 20 créditos gratis). El checkout y el flujo de pago siguen **funcionando por dentro**; reactivarlos es descomentar los botones.
 
 ---
 
@@ -33,7 +35,8 @@ Plataforma de **anuncios clasificados** para Perú con **pasarela de pagos Culqi
 
 ### Como usuario registrado
 - **Iniciar sesión** con Google o Microsoft (OAuth, sin contraseñas).
-- **Comprar un plan** (paquete de créditos) pagando con **tarjeta, Yape, billeteras, banca móvil, agente, PagoEfectivo o Cuotéalo**.
+- **20 créditos gratis** al crear la cuenta (regalo de bienvenida).
+- **Comprar un plan** (paquete de créditos) pagando con **tarjeta, Yape, billeteras, banca móvil, agente, PagoEfectivo o Cuotéalo**. *(Botones ocultos por ahora; el flujo existe.)*
 - **Publicar anuncios** (gasta 1 crédito por anuncio). Incluye categoría, descripción (máx. 144 caracteres), teléfono y cobertura geográfica.
 - **Gestionar "Mis anuncios":** activar / desactivar / eliminar, ver vistas y saldo de créditos.
 
@@ -41,17 +44,25 @@ Plataforma de **anuncios clasificados** para Perú con **pasarela de pagos Culqi
 - Al publicar, el contenido pasa por un **filtro de moderación** (groserías + servicios para adultos) por listas locales, con **IA opcional (Google Perspective)**. Si el texto no se permite, aparece un **modal de advertencia** y no se publica.
 
 ### Como administrador
+- **Aviso por correo** cada vez que se confirma un pago (a los correos de `ADMIN_EMAILS`).
 - **Devoluciones (refunds)** de pagos — restringido a los correos definidos en `ADMIN_EMAILS`.
 
 ---
 
 ## Cómo funciona (flujos)
 
+### Registro (regalo de bienvenida)
+```
+Login OAuth (Google/Microsoft) → si la cuenta es NUEVA (wasRecentlyCreated)
+   → AuthController le asigna 20 créditos gratis (constante WELCOME_CREDITS)
+```
+
 ### Comprar créditos
 ```
 Usuario logueado → /pago → elige plan → paga con Culqi (tarjeta/Yape/orden)
    → pago confirmado → evento PaymentConfirmed
    → GrantCreditsOnPayment suma los créditos del plan al usuario
+   → NotifyAdminOnPayment envía un correo de aviso a ADMIN_EMAILS
 ```
 
 ### Publicar un anuncio
@@ -116,17 +127,24 @@ app/
 │   ├── CulqiService.php              # capa sobre el SDK culqi/culqi-php + RSA
 │   └── ContentModerator.php          # moderación (listas + Perspective IA)
 ├── Events/PaymentConfirmed.php       # se dispara al confirmar un pago
-├── Listeners/GrantCreditsOnPayment.php  # suma créditos al usuario
+├── Listeners/
+│   ├── GrantCreditsOnPayment.php     # suma créditos al usuario
+│   └── NotifyAdminOnPayment.php      # avisa por correo a ADMIN_EMAILS
+├── Mail/PaymentReceivedMail.php      # correo de aviso de pago (Mailable)
 ├── Rules/NoProfanity.php             # regla de validación de contenido
 ├── Models/Ad.php · User.php · Transaction.php · WebhookEvent.php
 └── Providers/AppServiceProvider.php  # eventos + rate limiters
 
 config/  plans.php · culqi.php · moderation.php · cors.php · app.php
 routes/  web.php (navegador, con CSRF) · api.php (API)
-resources/views/payment/checkout.blade.php
-public/  index.html · publicar.html · mis-anuncios.html · styles.css · peru-data.js
+resources/views/payment/checkout.blade.php · emails/payment-received.blade.php
+public/  index.html · publicar.html · mis-anuncios.html · completar-perfil.html · styles.css · peru-data.js
 database/migrations/
 ```
+
+> **Diseño:** el frontend usa un design system con paleta única (azul/ámbar/verde),
+> tipografía **Inter** e iconos **Lucide** (sin Font Awesome ni emojis). El registro
+> de usuarios nuevos otorga **20 créditos** vía `AuthController` (`WELCOME_CREDITS`).
 
 **Patrones clave:**
 - **Config-driven:** planes, moderación, CORS y admins se ajustan en `config/` o `.env` sin tocar código.
@@ -267,6 +285,12 @@ CORS_ALLOWED_ORIGINS="https://anuncialo.pe,https://www.anuncialo.pe"
 # Moderación IA (opcional)
 PERSPECTIVE_ENABLED=false
 PERSPECTIVE_API_KEY=
+
+# Correo — con "log" NO se envía (solo storage/logs). Para recibir avisos de pago,
+# pon SMTP real (ej. cPanel). Detalle en DEPLOY.md.
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS="noreply@anuncialo.pe"
+MAIL_FROM_NAME="Anuncialo"
 ```
 
 ---
@@ -292,8 +316,9 @@ git pull && bash deploy.sh
 **Checklist de producción:**
 - `APP_ENV=production`, `APP_DEBUG=false`, HTTPS/SSL activo.
 - Llaves `pk_live_` / `sk_live_` + RSA (`rs_live_`) reales.
-- `ADMIN_EMAILS` con tu correo (sin esto, nadie puede hacer devoluciones).
+- `ADMIN_EMAILS` con tu correo (sin esto, nadie puede hacer devoluciones **ni llegan los avisos de pago**).
 - `CORS_ALLOWED_ORIGINS` solo con tu dominio real.
+- **SMTP real** (`MAIL_MAILER=smtp` + buzón de cPanel) para recibir los avisos de pago.
 - Webhook configurado en el panel de Culqi apuntando a `https://tudominio/culqi/webhook`.
 
 ---
@@ -336,5 +361,3 @@ php artisan tinker --execute="App\Models\User::where('email','x@y.com')->first()
 - [`API.md`](API.md) — Referencia de la API de prueba (Postman, solo no-producción).
 - [`DEPLOY.md`](DEPLOY.md) — Despliegue paso a paso en cPanel.
 - [`PROGRESO.md`](PROGRESO.md) — Bitácora de avance del proyecto.
-</content>
-</invoke>

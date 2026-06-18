@@ -83,10 +83,15 @@ git push origin main
 **En el servidor** (por SSH, bajas los cambios):
 
 ```bash
-cd ~/public_html && git pull origin main && php artisan optimize:clear
+cd ~/public_html && git pull origin main && bash deploy.sh
 ```
 
-Listo. Recarga `anuncialo.pe` y verás los cambios.
+[`deploy.sh`](deploy.sh) corre `composer install --no-dev`, `migrate --force`,
+`optimize:clear`, `config:cache`, `route:cache` y ajusta permisos. Listo: recarga
+`anuncialo.pe` y verás los cambios.
+
+> Si solo cambiaste HTML/CSS/JS (sin tocar PHP ni migraciones), basta con
+> `git pull` — el cache-busting de assets se encarga de que el usuario vea lo último.
 
 ---
 
@@ -117,3 +122,83 @@ Culqi **oculta** métodos cuyo mínimo no alcanza el monto del plan:
 
 > Para que aparezcan **todos** los métodos en producción, usa **S/ 6.00 o más**
 > en [`config/plans.php`](config/plans.php). S/ 1.00 sirve solo para probar con tarjeta.
+
+---
+
+## Checklist del `.env` de producción
+
+El `.env` del servidor (en `~/public_html/.env`) **NO** está en Git: edítalo a mano.
+Debe tener, como mínimo:
+
+```env
+APP_NAME="Anuncialo"
+APP_ENV=production
+APP_DEBUG=false                 # ¡nunca true en producción!
+APP_URL=https://anuncialo.pe
+
+# Base de datos (en cPanel la BD está en el MISMO servidor)
+DB_HOST=localhost
+DB_DATABASE=...  DB_USERNAME=...  DB_PASSWORD=...
+
+# Culqi — para cobrar de verdad, llaves LIVE (pk_live_/sk_live_)
+CULQI_PUBLIC_KEY=pk_live_xxxx
+CULQI_SECRET_KEY=sk_live_xxxx
+
+# OAuth — callback al dominio real
+GOOGLE_REDIRECT_URI="https://anuncialo.pe/auth/google/callback"
+
+# Admin: avisos de pago + permiso de devoluciones (SIN esto no llegan correos ni hay refunds)
+ADMIN_EMAILS=tucorreo@gmail.com
+
+# CORS: solo tu dominio
+CORS_ALLOWED_ORIGINS="https://anuncialo.pe,https://www.anuncialo.pe"
+```
+
+> Después de editar el `.env` **siempre** corre:
+> `php artisan config:clear && php artisan config:cache`
+> (Laravel cachea la config; sin esto, tus cambios no se aplican.)
+
+---
+
+## Correo / SMTP (avisos de pago)
+
+Con `MAIL_MAILER=log` los correos **no se envían** (solo se escriben en `storage/logs`).
+Para recibir el aviso cuando se confirma un pago (a `ADMIN_EMAILS`):
+
+1. En cPanel → **Cuentas de correo**, crea `noreply@anuncialo.pe`.
+2. En el `.env` de producción:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=mail.anuncialo.pe
+MAIL_PORT=465
+MAIL_ENCRYPTION=ssl
+MAIL_USERNAME=noreply@anuncialo.pe
+MAIL_PASSWORD=la_contraseña_del_buzon
+MAIL_FROM_ADDRESS="noreply@anuncialo.pe"
+MAIL_FROM_NAME="Anuncialo"
+```
+
+3. `php artisan config:cache`.
+
+---
+
+## Login Microsoft (OAuth)
+
+Igual que Google, pero en [Azure Portal](https://portal.azure.com) → *Azure AD → Registros
+de aplicaciones*. El Redirect URI debe ser `https://anuncialo.pe/auth/microsoft/callback`
+y las variables `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` en el `.env`.
+
+---
+
+## Webhook de Culqi (confirmación asíncrona)
+
+Para que las órdenes (PagoEfectivo/Cuotéalo) pasen solas a "pagado", registra el webhook
+en **CulqiPanel → Desarrollo → Webhooks** apuntando a:
+
+```
+https://anuncialo.pe/culqi/webhook
+```
+
+Eventos: `charge.creation.succeeded` y `order.status.succeeded`.
+El endpoint ya valida idempotencia y re-consulta el recurso a Culqi (anti-spoofing).
