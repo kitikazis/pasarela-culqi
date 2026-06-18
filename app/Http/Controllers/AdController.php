@@ -63,6 +63,10 @@ class AdController extends Controller
     /**
      * Lista pública de anuncios activos.
      * Los DESTACADOS (featured vigente) aparecen primero.
+     *
+     * Los campos de texto del usuario (text/dep/prov/dist) se devuelven
+     * HTML-escapados con e() para prevenir XSS almacenado: el frontend los
+     * inserta con innerHTML. NO volver a escaparlos en el front (doble-encode).
      */
     public function index(): JsonResponse
     {
@@ -74,10 +78,10 @@ class AdController extends Controller
             ->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
                 'cat'      => $ad->category,
-                'text'     => $ad->description,
-                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : $ad->department,
-                'prov'     => $ad->province,
-                'dist'     => $ad->district,
+                'text'     => e($ad->description),
+                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
+                'prov'     => e($ad->province),
+                'dist'     => e($ad->district),
                 'phone'    => $ad->phone,
                 'date'     => $ad->created_at?->toDateString(),
                 'featured' => $ad->isFeatured(),
@@ -100,10 +104,10 @@ class AdController extends Controller
             ->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
                 'cat'      => $ad->category,
-                'text'     => $ad->description,
-                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : $ad->department,
-                'prov'     => $ad->province,
-                'dist'     => $ad->district,
+                'text'     => e($ad->description),
+                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
+                'prov'     => e($ad->province),
+                'dist'     => e($ad->district),
                 'phone'    => $ad->phone,
                 'date'     => $ad->created_at?->toDateString(),
                 'status'   => $ad->status === 'active' ? 'activo' : 'inactivo',
