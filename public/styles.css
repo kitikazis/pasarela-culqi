@@ -509,7 +509,14 @@ h1, h2, h3, h4, h5 {
 
 .my-ad-body { display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
 .my-ad-head { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; }
-.my-ad-text { margin: 0; font-size: .95rem; color: var(--ink); }
+.my-ad-text {
+  margin: 0;
+  font-size: .95rem;
+  color: var(--ink);
+  /* Evita que un texto/URL largo sin espacios se monte sobre los botones */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .my-ad-meta {
   display: flex;
   flex-wrap: wrap;
