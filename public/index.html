@@ -1,511 +1,464 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anuncios Perú — Clasificados</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-<link href="styles.css" rel="stylesheet">
-<style>
-  /* Menú de perfil (dropdown) */
-  .profile-menu { position: relative; }
-  .profile-dropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: var(--shadow-md);
-    min-width: 210px;
-    z-index: 200;
-    overflow: hidden;
-  }
-  .profile-dropdown.show { display: block; }
-  .pm-item {
-    display: flex;
-    align-items: center;
-    gap: .55rem;
-    padding: .6rem .9rem;
-    font-size: .875rem;
-    color: var(--ink-2);
-    text-decoration: none;
-  }
-  .pm-item:hover { background: var(--bg-soft); color: var(--ink); text-decoration: none; }
-  .pm-item i { width: 16px; text-align: center; color: var(--muted); }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>anuncialo.pe — Clasificados</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- ===== HEADER ===== -->
+    <nav class="app-navbar">
+      <div class="container">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <a href="/" class="brand">
+            <span class="brand-mark"><span>a</span></span>
+            <span class="d-none d-sm-inline">anuncialo</span>
+          </a>
 
-  /* Filtro de ubicación en el navbar (Departamento / Provincia / Distrito) */
-  .location-filter-nav .form-select {
-    min-width: 130px;
-    max-width: 175px;
-    font-size: .82rem;
-  }
-  .location-filter-nav .form-select:disabled {
-    background-color: var(--bg-soft);
-    color: var(--muted);
-  }
-  /* En móvil/tablet: los filtros ocupan todo el ancho y se apilan */
-  @media (max-width: 991.98px) {
-    .location-filter-nav {
-      order: 3;
-      width: 100%;
-      margin-top: .6rem;
-      flex-wrap: wrap;
-    }
-    .location-filter-nav .form-select {
-      flex: 1 1 100%;
-      max-width: none;
-      font-size: .9rem;
-    }
-  }
-
-  /* Botón Pagar con Yape */
-  .btn-yape {
-    background: #742c8c;
-    color: #fff;
-    border: none;
-    font-weight: 500;
-    padding: .45rem .85rem .45rem .5rem;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    height: 38px;
-    font-size: .875rem;
-    text-decoration: none;
-    transition: background .15s ease;
-  }
-  .btn-yape:hover, .btn-yape:focus {
-    background: #5c2370;
-    color: #fff;
-    text-decoration: none;
-  }
-  .btn-yape .yape-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px; height: 24px;
-    background: #fff;
-    color: #742c8c;
-    border-radius: 5px;
-    font-weight: 800;
-    font-size: .85rem;
-    letter-spacing: -.04em;
-  }
-</style>
-</head>
-<body>
-
-<!-- ===== HEADER ===== -->
-<nav class="app-navbar">
-  <div class="container">
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-      <div class="search-wrap d-none d-md-block">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" id="searchInput" class="form-control" placeholder="Buscar anuncios, productos, trabajos...">
-      </div>
-
-      <!-- Filtro de ubicación: Departamento → Provincia → Distrito -->
-      <div class="location-filter-nav d-flex align-items-center gap-2">
-        <select id="filtroDep" class="form-select form-select-sm" title="Departamento"></select>
-        <select id="filtroProv" class="form-select form-select-sm" title="Provincia" disabled></select>
-        <select id="filtroDist" class="form-select form-select-sm" title="Distrito" disabled></select>
-      </div>
-
-      <!-- Área de autenticación: la llena el JS (botones de login o usuario) -->
-      <div class="ms-auto d-flex align-items-center gap-2" id="authArea">
-        <a class="btn-google" href="/auth/google/redirect" title="Ingresar con Google">
-          <i class="fa-brands fa-google"></i>
-          <span>Google</span>
-        </a>
-        <a class="btn-microsoft" href="/auth/microsoft/redirect" title="Ingresar con Microsoft">
-          <i class="fa-brands fa-microsoft"></i>
-          <span>Microsoft</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Mobile search -->
-    <div class="search-wrap d-md-none mt-2">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" class="form-control" placeholder="Buscar anuncios...">
-    </div>
-  </div>
-</nav>
-
-<!-- ===== CATEGORY PILLS ===== -->
-<div class="category-bar">
-  <div class="container">
-    <div class="cat-pills" id="catPills">
-      <button class="cat-pill active" data-cat="todos">Todos</button>
-      <button class="cat-pill" data-cat="venta">Venta</button>
-      <button class="cat-pill" data-cat="compra">Compra</button>
-      <button class="cat-pill" data-cat="trabajo">Empleo</button>
-      <button class="cat-pill" data-cat="busca">Busco</button>
-      <div class="ms-auto d-none d-md-flex align-items-center gap-2">
-        <a href="/pago" class="btn-yape">
-          <i class="fa-solid fa-crown"></i>
-          Destacar — Planes
-        </a>
-        <a href="/publicar" class="btn-primary-app">
-          <i class="fa-solid fa-plus"></i>
-          Publicar anuncio
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MAIN ===== -->
-<main class="py-4">
-  <div class="container">
-    <!-- Ads grid -->
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <div>
-        <h1 class="h5 mb-0" id="resultsTitle">Todos los anuncios</h1>
-        <small class="text-muted" id="resultsCount"></small>
-      </div>
-      <div class="d-md-none d-flex gap-2">
-        <a href="/pago" class="btn-yape">
-          <i class="fa-solid fa-crown"></i> Planes
-        </a>
-        <a href="/publicar" class="btn-primary-app">
-          <i class="fa-solid fa-plus"></i> Publicar
-        </a>
-      </div>
-    </div>
-
-    <div class="ad-grid" id="adsGrid"></div>
-
-    <!-- Pagination -->
-    <nav aria-label="Paginación" class="mt-4">
-      <ul class="pagination justify-content-center" id="pagination"></ul>
-    </nav>
-  </div>
-</main>
-
-<!-- ===== FOOTER ===== -->
-<footer class="app-footer">
-  <div class="container">
-    <div class="row g-4">
-      <div class="col-md-4">
-        <a href="/" class="brand mb-2">
-          <span class="brand-mark"><span>A</span></span>
-          <span>Anuncios</span>
-        </a>
-        <p class="mb-0">Portal de anuncios clasificados gratuitos para todo el Perú. Compra, vende, busca trabajo o servicios.</p>
-      </div>
-      <div class="col-6 col-md-2">
-        <h6>Categorías</h6>
-        <a href="#">Venta</a>
-        <a href="#">Compra</a>
-        <a href="#">Empleo</a>
-        <a href="#">Busco</a>
-      </div>
-      <div class="col-6 col-md-2">
-        <h6>Tu cuenta</h6>
-        <a href="/completar-perfil">Mi perfil</a>
-        <a href="/mis-anuncios">Mis anuncios</a>
-        <a href="/publicar">Publicar</a>
-      </div>
-      <div class="col-md-4">
-        <h6>Soporte</h6>
-        <a href="#">Centro de ayuda</a>
-        <a href="#">Términos y condiciones</a>
-        <a href="#">Política de privacidad</a>
-        <a href="#">Contacto</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 Anuncios Perú. Todos los derechos reservados.</span>
-      <span>Hecho en Perú</span>
-    </div>
-  </div>
-</footer>
-
-<script src="peru-data.js"></script>
-<script>
-/* ===== STATE ===== */
-const STATE = {
-  category: 'todos',
-  departamento: '',   // '' = todos
-  provincia: '',
-  distrito: '',
-  search: '',
-  page: 1,
-  perPage: 12
-};
-
-/* Anuncios cargados desde la BD (vía /api/ads) */
-let ADS = [];
-
-/* ===== FILTRO DE UBICACIÓN (Departamento → Provincia → Distrito) ===== */
-function setupLocationFilter() {
-  const depSel  = document.getElementById('filtroDep');
-  const provSel = document.getElementById('filtroProv');
-  const distSel = document.getElementById('filtroDist');
-
-  // Helper: arma un select con su opción "Todos" + items
-  const buildOptions = (selectEl, todosLabel, items) => {
-    selectEl.innerHTML =
-      `<option value="">${todosLabel}</option>` +
-      items.map(v => `<option value="${v}">${v}</option>`).join('');
-  };
-
-  // Departamentos: "Todos" + Nacional + lista completa
-  buildOptions(depSel, 'Todos los departamentos', ['Nacional', ...DEPARTAMENTOS]);
-  // Provincia/Distrito arrancan con su texto (aunque estén deshabilitados)
-  provSel.innerHTML = '<option value="">Todas las provincias</option>';
-  distSel.innerHTML = '<option value="">Todos los distritos</option>';
-  provSel.disabled = true;
-  distSel.disabled = true;
-
-  // Cambio de departamento
-  depSel.addEventListener('change', () => {
-    STATE.departamento = depSel.value;
-    STATE.provincia = '';
-    STATE.distrito = '';
-    STATE.page = 1;
-
-    if (!depSel.value || depSel.value === 'Nacional') {
-      // Sin departamento o Nacional → no hay provincia/distrito
-      provSel.innerHTML = '<option value="">Todas las provincias</option>';
-      distSel.innerHTML = '<option value="">Todos los distritos</option>';
-      provSel.disabled = true;
-      distSel.disabled = true;
-    } else {
-      buildOptions(provSel, 'Todas las provincias', Object.keys(PERU[depSel.value]));
-      distSel.innerHTML = '<option value="">Todos los distritos</option>';
-      provSel.disabled = false;
-      distSel.disabled = true;
-    }
-    renderAds();
-  });
-
-  // Cambio de provincia
-  provSel.addEventListener('change', () => {
-    STATE.provincia = provSel.value;
-    STATE.distrito = '';
-    STATE.page = 1;
-
-    if (!provSel.value) {
-      distSel.innerHTML = '<option value="">Todos los distritos</option>';
-      distSel.disabled = true;
-    } else {
-      buildOptions(distSel, 'Todos los distritos', PERU[STATE.departamento][provSel.value]);
-      distSel.disabled = false;
-    }
-    renderAds();
-  });
-
-  // Cambio de distrito
-  distSel.addEventListener('change', () => {
-    STATE.distrito = distSel.value;
-    STATE.page = 1;
-    renderAds();
-  });
-}
-
-/* ===== FILTER ===== */
-function filteredAds() {
-  return ADS.filter(a => {
-    if (STATE.category !== 'todos' && a.cat !== STATE.category) return false;
-    if (STATE.departamento && a.dep !== STATE.departamento) return false;
-    if (STATE.provincia && a.prov !== STATE.provincia) return false;
-    if (STATE.distrito && a.dist !== STATE.distrito) return false;
-    if (STATE.search) {
-      const q = STATE.search.toLowerCase();
-      if (!a.text.toLowerCase().includes(q) &&
-          !(a.dep || '').toLowerCase().includes(q) &&
-          !(a.dist || '').toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
-}
-
-/* ===== RENDER ADS GRID ===== */
-function renderAds() {
-  const grid = document.getElementById('adsGrid');
-  const all = filteredAds();
-  const totalPages = Math.max(1, Math.ceil(all.length / STATE.perPage));
-  if (STATE.page > totalPages) STATE.page = totalPages;
-  const start = (STATE.page - 1) * STATE.perPage;
-  const ads = all.slice(start, start + STATE.perPage);
-
-  // Title — usa la ubicación más específica elegida
-  const catLabel = STATE.category === 'todos' ? 'Todos los anuncios' : CAT_LABELS[STATE.category];
-  const locLabel = STATE.distrito || STATE.provincia || STATE.departamento || '';
-  document.getElementById('resultsTitle').textContent =
-    locLabel ? `${catLabel} en ${locLabel}` : catLabel;
-  document.getElementById('resultsCount').textContent =
-    `${all.length} ${all.length === 1 ? 'anuncio encontrado' : 'anuncios encontrados'}`;
-
-  // Empty state
-  if (ads.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state" style="grid-column: 1/-1;">
-        <i class="fa-regular fa-folder-open"></i>
-        <h5>No hay anuncios que mostrar</h5>
-        <p>Prueba con otros filtros o publica el primero.</p>
-      </div>`;
-    document.getElementById('pagination').innerHTML = '';
-    return;
-  }
-
-  grid.innerHTML = ads.map(a => `
-    <article class="ad-card">
-      <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
-      <p class="ad-text">${a.text}</p>
-      <div class="ad-meta">
-        <div class="ad-meta-row">
-          <i class="fa-solid fa-location-dot"></i>
-          <span>${formatLocation(a)}</span>
-        </div>
-        <div class="ad-meta-row">
-          <i class="fa-solid fa-phone"></i>
-          <span class="phone">${a.phone}</span>
-        </div>
-        <div class="ad-meta-row">
-          <i class="fa-regular fa-clock"></i>
-          <span>${relativeDate(a.date)}</span>
-        </div>
-      </div>
-    </article>
-  `).join('');
-
-  renderPagination(totalPages);
-}
-
-/* ===== PAGINATION ===== */
-function renderPagination(totalPages) {
-  const pag = document.getElementById('pagination');
-  if (totalPages <= 1) { pag.innerHTML = ''; return; }
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) pages.push(i);
-
-  pag.innerHTML = `
-    <li class="page-item ${STATE.page === 1 ? 'disabled' : ''}">
-      <a class="page-link" href="#" data-page="${STATE.page - 1}" aria-label="Anterior">
-        <i class="fa-solid fa-chevron-left"></i>
-      </a>
-    </li>
-    ${pages.map(p => `
-      <li class="page-item ${p === STATE.page ? 'active' : ''}">
-        <a class="page-link" href="#" data-page="${p}">${p}</a>
-      </li>
-    `).join('')}
-    <li class="page-item ${STATE.page === totalPages ? 'disabled' : ''}">
-      <a class="page-link" href="#" data-page="${STATE.page + 1}" aria-label="Siguiente">
-        <i class="fa-solid fa-chevron-right"></i>
-      </a>
-    </li>
-  `;
-
-  pag.querySelectorAll('a.page-link').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      const p = parseInt(a.dataset.page);
-      if (p >= 1 && p <= totalPages) {
-        STATE.page = p;
-        renderAds();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    });
-  });
-}
-
-/* ===== CATEGORY PILLS ===== */
-document.querySelectorAll('.cat-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    STATE.category = pill.dataset.cat;
-    STATE.page = 1;
-    renderAds();
-  });
-});
-
-/* ===== SEARCH ===== */
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  STATE.search = e.target.value.trim();
-  STATE.page = 1;
-  renderAds();
-});
-
-/* ===== USUARIO (sesión) ===== */
-async function renderAuth() {
-  try {
-    const res = await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
-    const data = await res.json();
-    const area = document.getElementById('authArea');
-    if (data.authenticated) {
-      const u = data.user;
-      const avatar = u.avatar
-        ? `<img src="${u.avatar}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
-        : `<i class="fa-regular fa-circle-user" style="font-size:1.6rem;color:var(--muted);"></i>`;
-      area.innerHTML = `
-        <div class="profile-menu">
-          <button type="button" id="profileBtn" class="nav-avatar" style="cursor:pointer;">
-            ${avatar}
-            <span style="font-weight:500;font-size:.9rem;">${u.name}</span>
-            <i class="fa-solid fa-chevron-down" style="font-size:.7rem;color:var(--muted);"></i>
-          </button>
-          <div id="profileDropdown" class="profile-dropdown">
-            <a href="/mis-anuncios" class="pm-item"><i class="fa-regular fa-folder"></i> Mis anuncios</a>
-            <a href="/publicar" class="pm-item"><i class="fa-solid fa-plus"></i> Publicar anuncio</a>
-            <hr style="margin:0;border-color:var(--line);">
-            <a href="#" id="pmLogout" class="pm-item" style="color:var(--muted);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+          <div class="search-wrap d-none d-md-block">
+            <i data-lucide="search" class="search-icon"></i>
+            <input
+              type="text"
+              id="searchInput"
+              class="form-control"
+              placeholder="Buscar anuncios, productos, trabajos…"
+            />
           </div>
-        </div>`;
 
-      const btn  = document.getElementById('profileBtn');
-      const menu = document.getElementById('profileDropdown');
-      btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('show'); });
-      document.addEventListener('click', () => menu.classList.remove('show'));
-      document.getElementById('pmLogout').addEventListener('click', (e) => { e.preventDefault(); logout(); });
-    }
-    // Si NO está autenticado, se quedan los botones de login que ya están en el HTML.
-  } catch (e) { /* sin sesión: deja los botones de login */ }
-}
+          <!-- Filtro de ubicación: Departamento → Provincia → Distrito -->
+          <div class="location-filter-nav d-flex align-items-center gap-2">
+            <select id="filtroDep" class="form-select form-select-sm" title="Departamento"></select>
+            <select id="filtroProv" class="form-select form-select-sm" title="Provincia" disabled></select>
+            <select id="filtroDist" class="form-select form-select-sm" title="Distrito" disabled></select>
+          </div>
 
-/* Lee el CSRF token de la cookie XSRF-TOKEN (Laravel) */
-function csrfToken() {
-  const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : '';
-}
+          <!-- Autenticación: la llena el JS (login o usuario) -->
+          <div class="ms-auto d-flex align-items-center gap-2" id="authArea">
+            <a class="btn-google" href="/auth/google/redirect" title="Ingresar con Google">
+              <svg class="prov-ico" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              <span>Google</span>
+            </a>
+            <a class="btn-microsoft" href="/auth/microsoft/redirect" title="Ingresar con Microsoft">
+              <svg class="prov-ico" viewBox="0 0 21 21" width="16" height="16" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>
+              <span>Microsoft</span>
+            </a>
+          </div>
+        </div>
 
-/* Cierra sesión enviando el header X-XSRF-TOKEN (Laravel lo valida). */
-async function logout() {
-  try {
-    await fetch('/logout', {
-      method: 'POST',
-      headers: { 'X-XSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
-      credentials: 'same-origin',
-    });
-  } catch (e) { /* ignorar */ }
-  window.location.href = '/';
-}
+        <!-- Búsqueda móvil -->
+        <div class="search-wrap d-md-none mt-2">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="form-control" placeholder="Buscar anuncios…" />
+        </div>
+      </div>
+    </nav>
 
-/* ===== CARGA DE ANUNCIOS (desde la BD) ===== */
-async function loadAds() {
-  try {
-    const res = await fetch('/api/ads', { headers: { 'Accept': 'application/json' } });
-    ADS = await res.json();
-  } catch (e) {
-    ADS = [];
-  }
-  renderAds();
-}
+    <!-- ===== CATEGORÍAS ===== -->
+    <div class="category-bar">
+      <div class="container">
+        <div class="cat-pills" id="catPills">
+          <button class="cat-pill active" data-cat="todos">Todos</button>
+          <button class="cat-pill" data-cat="venta">Venta</button>
+          <button class="cat-pill" data-cat="compra">Compra</button>
+          <button class="cat-pill" data-cat="trabajo">Empleo</button>
+          <button class="cat-pill" data-cat="busca">Busco</button>
+          <div class="ms-auto d-none d-md-flex align-items-center gap-2">
+            <a href="/pago" class="btn-outline-app">
+              <i data-lucide="shopping-cart"></i>
+              Comprar publicaciones
+            </a>
+            <a href="/publicar" class="btn-primary-app">
+              <i data-lucide="plus"></i>
+              Publicar anuncio
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-/* ===== INIT ===== */
-renderAuth();
-setupLocationFilter();
-loadAds();
-</script>
-</body>
+    <!-- ===== MAIN ===== -->
+    <main class="py-5">
+      <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+          <div>
+            <h1 class="h4 mb-1" id="resultsTitle">Todos los anuncios</h1>
+            <small class="text-muted" id="resultsCount"></small>
+          </div>
+          <div class="d-md-none d-flex gap-2">
+            <a href="/pago" class="btn-outline-app">
+              <i data-lucide="shopping-cart"></i> Planes
+            </a>
+            <a href="/publicar" class="btn-primary-app">
+              <i data-lucide="plus"></i> Publicar
+            </a>
+          </div>
+        </div>
+
+        <div class="ad-grid" id="adsGrid"></div>
+
+        <nav aria-label="Paginación" class="mt-5">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+      </div>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="app-footer">
+      <div class="container">
+        <div class="row g-4">
+          <div class="col-md-4">
+            <a href="/" class="brand mb-3">
+              <span class="brand-mark"><span>a</span></span>
+              <span>anuncialo</span>
+            </a>
+            <p class="mb-0">
+              Clasificados para todo el Perú. Compra, vende, encuentra trabajo o
+              servicios — simple y al alcance de todos.
+            </p>
+          </div>
+          <div class="col-6 col-md-2">
+            <h6>Categorías</h6>
+            <a href="#">Venta</a>
+            <a href="#">Compra</a>
+            <a href="#">Empleo</a>
+            <a href="#">Busco</a>
+          </div>
+          <div class="col-6 col-md-2">
+            <h6>Tu cuenta</h6>
+            <a href="/completar-perfil">Mi perfil</a>
+            <a href="/mis-anuncios">Mis anuncios</a>
+            <a href="/publicar">Publicar</a>
+          </div>
+          <div class="col-md-4">
+            <h6>Soporte</h6>
+            <a href="#">Centro de ayuda</a>
+            <a href="#">Términos y condiciones</a>
+            <a href="#">Política de privacidad</a>
+            <a href="#">Contacto</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 anuncialo.pe — Todos los derechos reservados.</span>
+          <span>Hecho en Perú</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="peru-data.js"></script>
+    <script>
+      /* Render de iconos Lucide (también tras inyectar HTML dinámico). */
+      function renderIcons() {
+        if (window.lucide) lucide.createIcons();
+      }
+
+      /* ===== STATE ===== */
+      const STATE = {
+        category: "todos",
+        departamento: "",
+        provincia: "",
+        distrito: "",
+        search: "",
+        page: 1,
+        perPage: 12,
+      };
+
+      /* Anuncios cargados desde la BD (vía /api/ads) */
+      let ADS = [];
+
+      /* ===== FILTRO DE UBICACIÓN ===== */
+      function setupLocationFilter() {
+        const depSel = document.getElementById("filtroDep");
+        const provSel = document.getElementById("filtroProv");
+        const distSel = document.getElementById("filtroDist");
+
+        const buildOptions = (selectEl, todosLabel, items) => {
+          selectEl.innerHTML =
+            `<option value="">${todosLabel}</option>` +
+            items.map((v) => `<option value="${v}">${v}</option>`).join("");
+        };
+
+        buildOptions(depSel, "Todos los departamentos", ["Nacional", ...DEPARTAMENTOS]);
+        provSel.innerHTML = '<option value="">Todas las provincias</option>';
+        distSel.innerHTML = '<option value="">Todos los distritos</option>';
+        provSel.disabled = true;
+        distSel.disabled = true;
+
+        depSel.addEventListener("change", () => {
+          STATE.departamento = depSel.value;
+          STATE.provincia = "";
+          STATE.distrito = "";
+          STATE.page = 1;
+
+          if (!depSel.value || depSel.value === "Nacional") {
+            provSel.innerHTML = '<option value="">Todas las provincias</option>';
+            distSel.innerHTML = '<option value="">Todos los distritos</option>';
+            provSel.disabled = true;
+            distSel.disabled = true;
+          } else {
+            buildOptions(provSel, "Todas las provincias", Object.keys(PERU[depSel.value]));
+            distSel.innerHTML = '<option value="">Todos los distritos</option>';
+            provSel.disabled = false;
+            distSel.disabled = true;
+          }
+          renderAds();
+        });
+
+        provSel.addEventListener("change", () => {
+          STATE.provincia = provSel.value;
+          STATE.distrito = "";
+          STATE.page = 1;
+
+          if (!provSel.value) {
+            distSel.innerHTML = '<option value="">Todos los distritos</option>';
+            distSel.disabled = true;
+          } else {
+            buildOptions(distSel, "Todos los distritos", PERU[STATE.departamento][provSel.value]);
+            distSel.disabled = false;
+          }
+          renderAds();
+        });
+
+        distSel.addEventListener("change", () => {
+          STATE.distrito = distSel.value;
+          STATE.page = 1;
+          renderAds();
+        });
+      }
+
+      /* ===== FILTER ===== */
+      function filteredAds() {
+        return ADS.filter((a) => {
+          if (STATE.category !== "todos" && a.cat !== STATE.category) return false;
+          if (STATE.departamento && a.dep !== STATE.departamento) return false;
+          if (STATE.provincia && a.prov !== STATE.provincia) return false;
+          if (STATE.distrito && a.dist !== STATE.distrito) return false;
+          if (STATE.search) {
+            const q = STATE.search.toLowerCase();
+            if (
+              !a.text.toLowerCase().includes(q) &&
+              !(a.dep || "").toLowerCase().includes(q) &&
+              !(a.dist || "").toLowerCase().includes(q)
+            )
+              return false;
+          }
+          return true;
+        });
+      }
+
+      /* ===== RENDER ADS GRID ===== */
+      function renderAds() {
+        const grid = document.getElementById("adsGrid");
+        const all = filteredAds();
+        const totalPages = Math.max(1, Math.ceil(all.length / STATE.perPage));
+        if (STATE.page > totalPages) STATE.page = totalPages;
+        const start = (STATE.page - 1) * STATE.perPage;
+        const ads = all.slice(start, start + STATE.perPage);
+
+        const catLabel =
+          STATE.category === "todos" ? "Todos los anuncios" : CAT_LABELS[STATE.category];
+        const locLabel = STATE.distrito || STATE.provincia || STATE.departamento || "";
+        document.getElementById("resultsTitle").textContent = locLabel
+          ? `${catLabel} en ${locLabel}`
+          : catLabel;
+        document.getElementById("resultsCount").textContent = `${all.length} ${
+          all.length === 1 ? "anuncio encontrado" : "anuncios encontrados"
+        }`;
+
+        if (ads.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+              <i data-lucide="package-open"></i>
+              <h5>No hay anuncios que mostrar</h5>
+              <p>Prueba con otros filtros o publica el primero.</p>
+            </div>`;
+          document.getElementById("pagination").innerHTML = "";
+          renderIcons();
+          return;
+        }
+
+        grid.innerHTML = ads
+          .map(
+            (a) => `
+          <article class="ad-card">
+            <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
+            <p class="ad-text">${a.text}</p>
+            <div class="ad-meta">
+              <div class="ad-meta-row">
+                <i data-lucide="map-pin"></i>
+                <span>${formatLocation(a)}</span>
+              </div>
+              <div class="ad-meta-row">
+                <i data-lucide="phone"></i>
+                <span class="phone">${a.phone}</span>
+              </div>
+              <div class="ad-meta-row">
+                <i data-lucide="clock"></i>
+                <span>${relativeDate(a.date)}</span>
+              </div>
+            </div>
+          </article>`
+          )
+          .join("");
+
+        renderPagination(totalPages);
+        renderIcons();
+      }
+
+      /* ===== PAGINATION ===== */
+      function renderPagination(totalPages) {
+        const pag = document.getElementById("pagination");
+        if (totalPages <= 1) {
+          pag.innerHTML = "";
+          return;
+        }
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+
+        pag.innerHTML = `
+          <li class="page-item ${STATE.page === 1 ? "disabled" : ""}">
+            <a class="page-link" href="#" data-page="${STATE.page - 1}" aria-label="Anterior">
+              <i data-lucide="chevron-left"></i>
+            </a>
+          </li>
+          ${pages
+            .map(
+              (p) => `
+            <li class="page-item ${p === STATE.page ? "active" : ""}">
+              <a class="page-link" href="#" data-page="${p}">${p}</a>
+            </li>`
+            )
+            .join("")}
+          <li class="page-item ${STATE.page === totalPages ? "disabled" : ""}">
+            <a class="page-link" href="#" data-page="${STATE.page + 1}" aria-label="Siguiente">
+              <i data-lucide="chevron-right"></i>
+            </a>
+          </li>`;
+
+        pag.querySelectorAll("a.page-link").forEach((a) => {
+          a.addEventListener("click", (e) => {
+            e.preventDefault();
+            const p = parseInt(a.dataset.page);
+            if (p >= 1 && p <= totalPages) {
+              STATE.page = p;
+              renderAds();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          });
+        });
+      }
+
+      /* ===== CATEGORY PILLS ===== */
+      document.querySelectorAll(".cat-pill").forEach((pill) => {
+        pill.addEventListener("click", () => {
+          document.querySelectorAll(".cat-pill").forEach((p) => p.classList.remove("active"));
+          pill.classList.add("active");
+          STATE.category = pill.dataset.cat;
+          STATE.page = 1;
+          renderAds();
+        });
+      });
+
+      /* ===== SEARCH ===== */
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        STATE.search = e.target.value.trim();
+        STATE.page = 1;
+        renderAds();
+      });
+
+      /* ===== USUARIO (sesión) ===== */
+      async function renderAuth() {
+        try {
+          const res = await fetch("/me", {
+            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+          });
+          const data = await res.json();
+          const area = document.getElementById("authArea");
+          if (data.authenticated) {
+            const u = data.user;
+            const avatar = u.avatar
+              ? `<img src="${u.avatar}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
+              : `<i data-lucide="circle-user" style="color:var(--muted);width:26px;height:26px;"></i>`;
+            area.innerHTML = `
+              <div class="profile-menu">
+                <button type="button" id="profileBtn" class="nav-avatar" style="cursor:pointer;">
+                  ${avatar}
+                  <span style="font-weight:500;font-size:.9rem;">${u.name}</span>
+                  <i data-lucide="chevron-down" style="width:15px;height:15px;color:var(--muted);"></i>
+                </button>
+                <div id="profileDropdown" class="profile-dropdown">
+                  <a href="/mis-anuncios" class="pm-item"><i data-lucide="folder"></i> Mis anuncios</a>
+                  <a href="/publicar" class="pm-item"><i data-lucide="plus"></i> Publicar anuncio</a>
+                  <hr class="pm-divider">
+                  <a href="#" id="pmLogout" class="pm-item" style="color:var(--muted);"><i data-lucide="log-out"></i> Cerrar sesión</a>
+                </div>
+              </div>`;
+            renderIcons();
+
+            const btn = document.getElementById("profileBtn");
+            const menu = document.getElementById("profileDropdown");
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              menu.classList.toggle("show");
+            });
+            document.addEventListener("click", () => menu.classList.remove("show"));
+            document.getElementById("pmLogout").addEventListener("click", (e) => {
+              e.preventDefault();
+              logout();
+            });
+          }
+          // Si NO está autenticado, quedan los botones de login del HTML.
+        } catch (e) {
+          /* sin sesión: deja los botones de login */
+        }
+      }
+
+      function csrfToken() {
+        const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : "";
+      }
+
+      async function logout() {
+        try {
+          await fetch("/logout", {
+            method: "POST",
+            headers: { "X-XSRF-TOKEN": csrfToken(), Accept: "application/json" },
+            credentials: "same-origin",
+          });
+        } catch (e) {
+          /* ignorar */
+        }
+        window.location.href = "/";
+      }
+
+      /* ===== CARGA DE ANUNCIOS ===== */
+      async function loadAds() {
+        try {
+          const res = await fetch("/api/ads", { headers: { Accept: "application/json" } });
+          ADS = await res.json();
+        } catch (e) {
+          ADS = [];
+        }
+        renderAds();
+      }
+
+      /* ===== INIT ===== */
+      renderIcons();
+      renderAuth();
+      setupLocationFilter();
+      loadAds();
+    </script>
+  </body>
 </html>
