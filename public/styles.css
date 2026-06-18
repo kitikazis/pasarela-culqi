@@ -677,3 +677,16 @@ h1, h2, h3, h4, h5 {
   /* Título de resultados más equilibrado en móvil */
   #resultsTitle { font-size: 1.1rem; }
 }
+
+/* ── Filtros de ubicación del navbar (desktop) ──────────────────
+   El texto completo ("Todos los departamentos") debe caber sin cortarse
+   ni chocar con la flecha del select. Si un valor es muy largo (ej. un
+   distrito), se corta limpio con "…". (En móvil ya van a todo el ancho.) */
+@media (min-width: 992px) {
+  .app-navbar .location-filter-nav .form-select {
+    min-width: 155px;
+    max-width: 215px;
+    padding-right: 1.9rem;   /* espacio para la flecha */
+    text-overflow: ellipsis;
+  }
+}
