@@ -8,11 +8,17 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Páginas (URLs limpias, sin .html)
 |--------------------------------------------------------------------------
+| Se sirven con "no-cache" para que el usuario SIEMPRE reciba la última
+| versión de la página (nunca una copia vieja guardada en el navegador).
+| Estas páginas son cascarones que cargan su contenido por JS, así que no
+| cachearlas no afecta el rendimiento.
 */
-Route::get('/',                fn () => response()->file(public_path('index.html')));
-Route::get('/publicar',        fn () => response()->file(public_path('publicar.html')))->name('publicar');
-Route::get('/mis-anuncios',    fn () => response()->file(public_path('mis-anuncios.html')))->name('mis-anuncios');
-Route::get('/completar-perfil', fn () => response()->file(public_path('completar-perfil.html')))->name('completar-perfil');
+$noCache = ['Cache-Control' => 'no-cache, no-store, must-revalidate'];
+
+Route::get('/',                fn () => response()->file(public_path('index.html'), $noCache));
+Route::get('/publicar',        fn () => response()->file(public_path('publicar.html'), $noCache))->name('publicar');
+Route::get('/mis-anuncios',    fn () => response()->file(public_path('mis-anuncios.html'), $noCache))->name('mis-anuncios');
+Route::get('/completar-perfil', fn () => response()->file(public_path('completar-perfil.html'), $noCache))->name('completar-perfil');
 
 /*
 |--------------------------------------------------------------------------

@@ -51,6 +51,17 @@
     </FilesMatch>
 </IfModule>
 
+# ── Desactiva la caché de página de LiteSpeed (cPanel) ──────────
+# "El otro caché": muchos hostings con cPanel usan LiteSpeed, que guarda
+# una copia de la página y la sirve a todos. Esto la desactiva para que cada
+# usuario reciba siempre la última versión. (Si el server no usa LiteSpeed,
+# este bloque simplemente se ignora.)
+<IfModule LiteSpeed>
+    CacheDisable public /
+    RewriteEngine On
+    RewriteRule .* - [E=Cache-Control:no-cache]
+</IfModule>
+
 # ── Proteger archivos sensibles ─────────────────────────────────
 <FilesMatch "^\.env">
     Require all denied
