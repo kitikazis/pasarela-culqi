@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,17 +9,16 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Páginas (URLs limpias, sin .html)
 |--------------------------------------------------------------------------
-| Se sirven con "no-cache" para que el usuario SIEMPRE reciba la última
-| versión de la página (nunca una copia vieja guardada en el navegador).
-| Estas páginas son cascarones que cargan su contenido por JS, así que no
-| cachearlas no afecta el rendimiento.
+| Se sirven SIEMPRE a través de Laravel (PageController) para inyectarles
+| cache-busting automático en sus assets (styles.css?v=..., *.js?v=...) y
+| cabeceras no-cache. Así cada usuario ve el último cambio sin limpiar caché
+| ni entrar en incógnito. (Requiere "DirectoryIndex index.php" en .htaccess
+| para que la home tampoco se sirva como index.html estático.)
 */
-$noCache = ['Cache-Control' => 'no-cache, no-store, must-revalidate'];
-
-Route::get('/',                fn () => response()->file(public_path('index.html'), $noCache));
-Route::get('/publicar',        fn () => response()->file(public_path('publicar.html'), $noCache))->name('publicar');
-Route::get('/mis-anuncios',    fn () => response()->file(public_path('mis-anuncios.html'), $noCache))->name('mis-anuncios');
-Route::get('/completar-perfil', fn () => response()->file(public_path('completar-perfil.html'), $noCache))->name('completar-perfil');
+Route::get('/',                 [PageController::class, 'show'])->defaults('file', 'index.html');
+Route::get('/publicar',         [PageController::class, 'show'])->defaults('file', 'publicar.html')->name('publicar');
+Route::get('/mis-anuncios',     [PageController::class, 'show'])->defaults('file', 'mis-anuncios.html')->name('mis-anuncios');
+Route::get('/completar-perfil', [PageController::class, 'show'])->defaults('file', 'completar-perfil.html')->name('completar-perfil');
 
 /*
 |--------------------------------------------------------------------------

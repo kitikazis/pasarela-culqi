@@ -1,3 +1,9 @@
+# La home (/) la maneja Laravel (index.php), NO el index.html estático.
+# Esto permite inyectar el cache-busting automático en los assets.
+<IfModule mod_dir.c>
+    DirectoryIndex index.php index.html
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
