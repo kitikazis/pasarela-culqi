@@ -486,42 +486,52 @@ h1, h2, h3, h4, h5 {
 }
 
 /* ---------- MIS ANUNCIOS LIST ---------- */
-.my-ad-row {
+/* Cuadrícula de tarjetas compactas: se ajustan solas según el ancho. */
+.my-ad-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 1rem;
-  padding: 1.1rem;
+  align-items: stretch;
+}
+.my-ad-row {
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  padding: 1rem;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  transition: border-color .15s ease;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
-.my-ad-row:hover { border-color: #d2d6db; }
-.my-ad-row.inactive { opacity: .65; background: var(--bg-soft); }
-
-@media (min-width: 768px) {
-  .my-ad-row {
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
+.my-ad-row:hover {
+  border-color: #d2d6db;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, .08);
+  transform: translateY(-2px);
 }
+.my-ad-row.inactive { opacity: .7; background: var(--bg-soft); }
 
-.my-ad-body { display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
-.my-ad-head { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; }
+.my-ad-body { display: flex; flex-direction: column; gap: .5rem; min-width: 0; flex: 1; }
+.my-ad-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .my-ad-text {
   margin: 0;
-  font-size: .95rem;
+  font-size: .9rem;
+  line-height: 1.4;
   color: var(--ink);
-  /* Evita que un texto/URL largo sin espacios se monte sobre los botones */
+  /* Recorta a 2 líneas para que todas las tarjetas queden parejas. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* Evita que un texto/URL largo sin espacios desborde la tarjeta. */
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 .my-ad-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: .25rem 1.1rem;
-  font-size: .8rem;
+  gap: .2rem .9rem;
+  font-size: .76rem;
   color: var(--muted);
 }
 .my-ad-meta i { margin-right: .3rem; }
@@ -529,11 +539,15 @@ h1, h2, h3, h4, h5 {
 .my-ad-actions {
   display: flex;
   gap: .4rem;
-  flex-wrap: wrap;
+  margin-top: auto;           /* empuja los botones al pie de la tarjeta */
+  padding-top: .7rem;
+  border-top: 1px solid var(--line);
 }
 .my-ad-actions .btn {
-  font-size: .8125rem;
-  padding: .4rem .75rem;
+  flex: 1;                    /* botones de igual ancho, sin desbordar */
+  justify-content: center;
+  font-size: .78rem;
+  padding: .42rem .5rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
