@@ -30,10 +30,12 @@ Route::get('/auth/{provider}/callback', [AuthController::class, 'callback'])->na
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Usuario autenticado (sesión web) — para que el frontend muestre nombre/foto.
-Route::get('/me', [AuthController::class, 'me'])->name('me');
+Route::get('/me', [AuthController::class, 'me'])->middleware('throttle:per-user')->name('me');
 
 // Anuncios del usuario logueado (sesión web).
-Route::get('/mis-anuncios/datos', [App\Http\Controllers\AdController::class, 'mine'])->name('ads.mine');
+Route::get('/mis-anuncios/datos', [App\Http\Controllers\AdController::class, 'mine'])
+    ->middleware('throttle:per-user')
+    ->name('ads.mine');
 
 // Publicar un anuncio nuevo (sesión web).
 Route::post('/anuncios', [App\Http\Controllers\AdController::class, 'store'])
@@ -41,10 +43,14 @@ Route::post('/anuncios', [App\Http\Controllers\AdController::class, 'store'])
     ->name('ads.store');
 
 // Activar/desactivar un anuncio propio (la propiedad se valida en el controlador).
-Route::patch('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'update'])->name('ads.update');
+Route::patch('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'update'])
+    ->middleware('throttle:per-user')
+    ->name('ads.update');
 
 // Eliminar un anuncio propio.
-Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'destroy'])->name('ads.destroy');
+Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'destroy'])
+    ->middleware('throttle:per-user')
+    ->name('ads.destroy');
 
 /*
 |--------------------------------------------------------------------------

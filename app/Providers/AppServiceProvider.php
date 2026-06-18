@@ -5,7 +5,10 @@ namespace App\Providers;
 use App\Events\PaymentConfirmed;
 use App\Listeners\GrantCreditsOnPayment;
 use App\Support\ConnectionCheck;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -19,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configureRateLimiting();
+
         // Pago confirmado → suma créditos de publicación al usuario.
         Event::listen(PaymentConfirmed::class, GrantCreditsOnPayment::class);
 
@@ -35,5 +40,23 @@ class AppServiceProvider extends ServiceProvider
                 // Si el check falla, no impedir que el servidor arranque.
             }
         }
+    }
+
+    /**
+     * Límites de peticiones POR USUARIO (o por IP si es invitado).
+     * Aplicados con throttle:<nombre> en las rutas.
+     */
+    private function configureRateLimiting(): void
+    {
+        // Clave: id del usuario autenticado; si es invitado, su IP.
+        $byUser = fn (Request $request) => $request->user()?->id ?: $request->ip();
+
+        // Lectura general / API (navegar, filtrar anuncios, /me, etc.).
+        RateLimiter::for('api', fn (Request $request) =>
+            Limit::perMinute(120)->by($byUser($request)));
+
+        // Acciones del usuario (publicar, activar/eliminar, datos privados).
+        RateLimiter::for('per-user', fn (Request $request) =>
+            Limit::perMinute(60)->by($byUser($request)));
     }
 }
