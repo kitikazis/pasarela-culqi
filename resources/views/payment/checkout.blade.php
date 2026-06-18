@@ -56,6 +56,24 @@
         .result.err { background:#fdecea; color:#b3261e; border:1px solid #ea4335; }
         .secure { text-align:center; font-size:.76rem; color:#9aa1ad; margin-top:1rem; }
 
+        /* ── Overlay "procesando pago" (bloquea la pantalla, evita pagar 2 veces) ── */
+        .paying-overlay {
+            position:fixed; inset:0; z-index:9999;
+            background:rgba(17,24,39,.55); backdrop-filter:blur(2px);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:1.1rem; color:#fff; text-align:center;
+            opacity:0; visibility:hidden; transition:opacity .2s ease;
+        }
+        .paying-overlay.show { opacity:1; visibility:visible; }
+        .paying-overlay .spinner {
+            width:56px; height:56px; border-radius:50%;
+            border:5px solid rgba(255,255,255,.3); border-top-color:#fff;
+            animation:spin .8s linear infinite;
+        }
+        .paying-overlay p { margin:0; font-size:1.05rem; font-weight:600; }
+        .paying-overlay small { color:rgba(255,255,255,.75); font-size:.85rem; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
         /* ── Responsive móvil ── */
         @media (max-width: 575.98px) {
             body { padding:1rem .8rem; }
@@ -126,6 +144,13 @@
             <div class="result" id="result"></div>
             <p class="secure">🔒 Pago seguro con Culqi. Tus datos de tarjeta nunca pasan por este sitio.</p>
         </div>
+    </div>
+
+    {{-- Overlay de pago en proceso: bloquea la pantalla para no pagar dos veces --}}
+    <div class="paying-overlay" id="payingOverlay" role="alert" aria-live="assertive" aria-hidden="true">
+        <div class="spinner"></div>
+        <p id="payingText">Procesando tu pago...</p>
+        <small>No cierres ni recargues esta página.</small>
     </div>
 
     {{-- SOLO CDN oficial de Culqi --}}
@@ -235,8 +260,10 @@
             procesando = true;
 
             if (Culqi.order) {
+                setPaying(true);                                // bloquea la pantalla
                 confirmarOrden(Culqi.order.id);                 // la orden es el pago
             } else if (Culqi.token) {
+                setPaying(true);                                // bloquea la pantalla
                 enviarCargo(Culqi.token.id, Culqi.token.email); // fallback: sin orden
             } else if (Culqi.error) {
                 procesando = false;
@@ -248,7 +275,6 @@
 
         // Verifica el estado real de la orden en el backend (un solo pago)
         async function confirmarOrden(orderId) {
-            mostrar('ok', 'Verificando pago...');
             try {
                 const res = await fetch(URL_CONFIRMAR, {
                     method: 'POST',
@@ -258,21 +284,22 @@
                 const data = await res.json();
                 if (data.success && data.paid) {
                     mostrar('ok', '✅ Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
+                    finishPayment(true);
                 } else if (data.success) {
                     mostrar('ok', '🧾 Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
+                    finishPayment(true);
                 } else {
                     mostrar('err', '❌ ' + (data.message || 'No se pudo verificar el pago.'));
+                    finishPayment(false);
                 }
             } catch (e) {
                 mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
-            } finally {
-                procesando = false;
+                finishPayment(false);
             }
         }
 
         // Fallback: cargo por token cuando NO se pudo crear la orden
         async function enviarCargo(tokenId, email) {
-            mostrar('ok', 'Procesando pago...');
             try {
                 const res = await fetch(URL_CARGO, {
                     method: 'POST',
@@ -288,17 +315,43 @@
                     }),
                 });
                 const data = await res.json();
-                data.success
-                    ? mostrar('ok', '✅ ' + data.message + ' (cargo ' + data.charge_id + ')')
-                    : mostrar('err', '❌ ' + (data.message || 'No se pudo procesar el pago.'));
+                if (data.success) {
+                    mostrar('ok', '✅ ' + data.message + ' (cargo ' + data.charge_id + ')');
+                    finishPayment(true);
+                } else {
+                    mostrar('err', '❌ ' + (data.message || 'No se pudo procesar el pago.'));
+                    finishPayment(false);
+                }
             } catch (e) {
                 mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
-            } finally {
-                procesando = false;
+                finishPayment(false);
             }
         }
 
         function val(id) { return document.getElementById(id).value.trim(); }
+
+        // Muestra/oculta el overlay de "procesando pago".
+        function setPaying(show, text) {
+            const ov = document.getElementById('payingOverlay');
+            if (text) document.getElementById('payingText').textContent = text;
+            ov.classList.toggle('show', show);
+            ov.setAttribute('aria-hidden', show ? 'false' : 'true');
+        }
+
+        // ok=true: pago realizado → botón inutilizado (no se paga 2 veces).
+        // ok=false: error → oculta overlay y permite reintentar.
+        function finishPayment(ok) {
+            setPaying(false);
+            const btn = document.getElementById('btnPay');
+            if (ok) {
+                btn.disabled = true;
+                btn.textContent = '✓ Pago realizado';
+            } else {
+                procesando = false;
+                btn.disabled = false;
+                btn.textContent = selectedAmount ? 'Pagar S/ ' + (selectedAmount / 100).toFixed(2) : 'Selecciona un plan';
+            }
+        }
         function mostrar(tipo, msg) {
             const box = document.getElementById('result');
             box.className = 'result show ' + tipo;
