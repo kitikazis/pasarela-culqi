@@ -83,6 +83,30 @@
         .paying-overlay small { color:rgba(255,255,255,.75); font-size:.85rem; }
         @keyframes spin { to { transform:rotate(360deg); } }
 
+        /* Bloques del overlay (spinner / éxito) */
+        .overlay-block { display:flex; flex-direction:column; align-items:center; gap:1rem; text-align:center; }
+
+        /* Check de éxito animado (estilo confirmación de compra) */
+        .success-circle {
+            width:92px; height:92px; border-radius:50%; background:#16a34a;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 8px 24px rgba(22,163,74,.45);
+            animation:pop .4s cubic-bezier(.2,.8,.3,1.4);
+        }
+        @keyframes pop { 0%{transform:scale(0)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+        .success-circle svg { width:50px; height:50px; }
+        .success-circle svg path {
+            fill:none; stroke:#fff; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;
+            stroke-dasharray:48; stroke-dashoffset:48; animation:draw .4s .28s ease forwards;
+        }
+        @keyframes draw { to { stroke-dashoffset:0; } }
+        .pay-success-btn {
+            margin-top:.5rem; background:#fff; color:#16a34a; font-weight:700;
+            padding:.7rem 1.5rem; border-radius:10px; text-decoration:none; font-size:.95rem;
+            transition:background .15s ease;
+        }
+        .pay-success-btn:hover { background:#f0fdf4; }
+
         /* ── Responsive móvil ── */
         @media (max-width: 575.98px) {
             body { padding:1rem .8rem; }
@@ -172,9 +196,19 @@
 
     {{-- Overlay de pago en proceso: bloquea la pantalla para no pagar dos veces --}}
     <div class="paying-overlay" id="payingOverlay" role="alert" aria-live="assertive" aria-hidden="true">
-        <div class="spinner"></div>
-        <p id="payingText">Procesando tu pago...</p>
-        <small>No cierres ni recargues esta página.</small>
+        <div id="payingSpinner" class="overlay-block">
+            <div class="spinner"></div>
+            <p id="payingText">Procesando tu pago...</p>
+            <small>No cierres ni recargues esta página.</small>
+        </div>
+        <div id="paySuccess" class="overlay-block" style="display:none;">
+            <div class="success-circle">
+                <svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>
+            </div>
+            <p style="font-size:1.3rem;">¡Pago realizado!</p>
+            <small id="paySuccessMsg">Tu anuncio se destacará en breve.</small>
+            <a href="/mis-anuncios" id="paySuccessBtn" class="pay-success-btn">Ir a Mis anuncios</a>
+        </div>
     </div>
 
     {{-- SOLO CDN oficial de Culqi --}}
@@ -320,7 +354,7 @@
                 const data = await res.json();
                 if (data.success && data.paid) {
                     mostrar('ok', '✅ Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
-                    finishPayment(true);
+                    showPaidOverlay();
                 } else if (data.success) {
                     mostrar('ok', '🧾 Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
                     finishPayment(true);
@@ -353,7 +387,7 @@
                 const data = await res.json();
                 if (data.success) {
                     mostrar('ok', '✅ ' + data.message + ' (cargo ' + data.charge_id + ')');
-                    finishPayment(true);
+                    showPaidOverlay();
                 } else {
                     mostrar('err', '❌ ' + (data.message || 'No se pudo procesar el pago.'));
                     finishPayment(false);
@@ -366,29 +400,47 @@
 
         function val(id) { return document.getElementById(id).value.trim(); }
 
-        // Muestra/oculta el overlay de "procesando pago".
+        function closeCulqi() {
+            try { if (window.Culqi && typeof Culqi.close === 'function') Culqi.close(); } catch (e) {}
+        }
+
+        // Muestra/oculta el overlay; al mostrarlo vuelve al estado "spinner".
         function setPaying(show, text) {
             const ov = document.getElementById('payingOverlay');
+            if (show) {
+                document.getElementById('payingSpinner').style.display = 'flex';
+                document.getElementById('paySuccess').style.display = 'none';
+            }
             if (text) document.getElementById('payingText').textContent = text;
             ov.classList.toggle('show', show);
             ov.setAttribute('aria-hidden', show ? 'false' : 'true');
         }
 
-        // ok=true: pago realizado → botón inutilizado (no se paga 2 veces).
-        // ok=false: error → oculta overlay y permite reintentar.
-        function finishPayment(ok) {
-            // Cierra el modal de Culqi (si sigue abierto) para que no se pague otra vez.
-            try { if (window.Culqi && typeof Culqi.close === 'function') Culqi.close(); } catch (e) {}
+        // Pago CONFIRMADO → check verde animado + botón para continuar (no se paga 2 veces).
+        function showPaidOverlay() {
+            closeCulqi();
+            const btn = document.getElementById('btnPay');
+            btn.disabled = true; btn.textContent = '✓ Pago realizado';
+            document.getElementById('paySuccessMsg').textContent = adId ? 'Tu anuncio se destacará en breve.' : '¡Gracias por tu compra!';
+            const go = document.getElementById('paySuccessBtn');
+            go.href = adId ? '/mis-anuncios' : '/';
+            go.textContent = adId ? 'Ir a Mis anuncios' : 'Volver al inicio';
+            document.getElementById('payingSpinner').style.display = 'none';
+            document.getElementById('paySuccess').style.display = 'flex';
+            const ov = document.getElementById('payingOverlay');
+            ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+        }
 
+        // ok=true: orden generada (pago pendiente). ok=false: error → permite reintentar.
+        function finishPayment(ok) {
+            closeCulqi();
             setPaying(false);
             const btn = document.getElementById('btnPay');
             if (ok) {
-                btn.disabled = true;
-                btn.textContent = '✓ Pago realizado';
+                btn.disabled = true; btn.textContent = '✓ Orden generada';
                 document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-                procesando = false;
-                btn.disabled = false;
+                procesando = false; btn.disabled = false;
                 btn.textContent = selectedAmount ? 'Pagar S/ ' + (selectedAmount / 100).toFixed(2) : 'Selecciona un plan';
             }
         }
