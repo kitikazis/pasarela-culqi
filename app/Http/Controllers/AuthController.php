@@ -17,6 +17,9 @@ class AuthController extends Controller
 {
     private const PROVIDERS = ['google', 'microsoft'];
 
+    /** Créditos de publicación de regalo para usuarios nuevos. */
+    private const WELCOME_CREDITS = 20;
+
     /** Redirige al proveedor para autenticarse. */
     public function redirect(string $provider): RedirectResponse
     {
@@ -53,6 +56,12 @@ class AuthController extends Controller
                 'email_verified_at' => now(),
             ],
         );
+
+        // Regalo de bienvenida: solo al CREARSE la cuenta (no en cada login),
+        // el usuario nuevo recibe créditos gratis para publicar.
+        if ($user->wasRecentlyCreated) {
+            $user->update(['publish_credits' => self::WELCOME_CREDITS]);
+        }
 
         Auth::login($user, remember: true);
 
