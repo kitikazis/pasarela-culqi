@@ -73,7 +73,7 @@ class AdController extends Controller
         $ads = Ad::where('status', 'active')
             ->orderByRaw('CASE WHEN featured_until IS NOT NULL AND featured_until > NOW() THEN 0 ELSE 1 END')
             ->orderByDesc('created_at')
-            ->limit(100)
+            ->limit(500)   // interino: la home pagina del lado del cliente. TODO: paginación real en servidor.
             ->get()
             ->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
