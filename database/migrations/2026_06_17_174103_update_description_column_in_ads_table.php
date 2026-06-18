@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,6 +17,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Recorta a 144 las descripciones existentes que se pasen del límite,
+        // para que MySQL no rechace el cambio de columna por truncamiento.
+        // (Los anuncios nuevos ya vienen limitados a 144 por la validación.)
+        DB::table('ads')
+            ->whereRaw('CHAR_LENGTH(description) > 144')
+            ->update(['description' => DB::raw('LEFT(description, 144)')]);
+
         Schema::table('ads', function (Blueprint $table) {
             $table->string('description', 144)->change();
         });
