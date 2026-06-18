@@ -35,7 +35,7 @@ if [ ! -f .env ]; then
     echo
     echo " Cambia como minimo:"
     echo "   APP_ENV=production   APP_DEBUG=false"
-    echo "   APP_URL=https://enlix.pe"
+    echo "   APP_URL=https://anuncialo.pe"
     echo "   DB_DATABASE / DB_USERNAME / DB_PASSWORD  (tu MySQL de cPanel)"
     echo "   CULQI_PUBLIC_KEY / CULQI_SECRET_KEY      (llaves pk_live_ / sk_live_)"
     echo "   CULQI_RSA_ID / CULQI_RSA_PUBLIC_KEY      (CulqiPanel -> RSA Keys)"
@@ -78,4 +78,4 @@ echo ">> Permisos de storage y cache..."
 chmod -R 775 storage bootstrap/cache
 
 echo
-echo ">> Listo. Recarga https://enlix.pe"
+echo ">> Listo. Recarga https://anuncialo.pe"

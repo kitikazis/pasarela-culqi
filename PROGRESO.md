@@ -1,12 +1,12 @@
 # 📋 Progreso — Pasarela Culqi / Clasificados
 
-> Última actualización: 2026-06-03. Estado: **en producción (sandbox)** en `https://enlix.pe`.
+> Última actualización: 2026-06-03. Estado: **en producción (sandbox)** en `https://anuncialo.pe`.
 
 ---
 
 ## 🗓️ Qué hicimos en la sesión 2026-06-03
 
-- ✅ **Desplegado en producción** `https://enlix.pe` (cPanel) con flujo Git + SSH
+- ✅ **Desplegado en producción** `https://anuncialo.pe` (cPanel) con flujo Git + SSH
 - ✅ **Login Google** funcionando en producción (redirect URIs configurados)
 - ✅ **Yape arreglado** — se aceptaban solo tokens `tkn_`; ahora también `ype_`
 - ✅ **UI clasificados** — filtros ubicación (Depto/Prov/Distrito) en navbar responsive, sin logo, grilla full-width
@@ -20,7 +20,7 @@
 ## ✅ Lo que YA está hecho y funcionando
 
 ### Infraestructura / Despliegue
-- Producción en `https://enlix.pe` (cPanel, hosting enlix)
+- Producción en `https://anuncialo.pe` (cPanel, hosting enlix)
 - Flujo Git: PC → GitHub (`kitikazis/pasarela-culqi`) → servidor (`~/public_html`)
 - Deploy = `git pull && php artisan migrate --force && php artisan optimize:clear`
 - `.htaccess` en `public_html` redirige a `public/` (guía en [`DEPLOY.md`](DEPLOY.md))

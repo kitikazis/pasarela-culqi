@@ -1,4 +1,4 @@
-# Despliegue en cPanel (enlix.pe)
+# Despliegue en cPanel (anuncialo.pe)
 
 Guía de cómo está desplegado el proyecto y cómo subir cambios a producción.
 
@@ -29,7 +29,7 @@ ambos pasan por **GitHub**, que actúa de intermediario.
 ## Particularidades del servidor
 
 ### Document Root → carpeta `public/`
-El dominio principal `enlix.pe` apunta a `/public_html` (no se puede cambiar en el
+El dominio principal `anuncialo.pe` apunta a `/public_html` (no se puede cambiar en el
 dominio principal de cPanel). Como el `index.php` de Laravel vive en `public/`, hay un
 **`.htaccess` en la raíz de `public_html`** que redirige todo el tráfico hacia `public/`:
 
@@ -43,7 +43,7 @@ dominio principal de cPanel). Como el `index.php` de Laravel vive en `public/`, 
 > Este `.htaccess` **no está en Git** (es específico del servidor). No lo borres.
 
 ### Archivos que NO están en Git (viven solo en el servidor)
-- **`.env`** — configuración de producción (credenciales, `APP_URL=https://enlix.pe`, etc.).
+- **`.env`** — configuración de producción (credenciales, `APP_URL=https://anuncialo.pe`, etc.).
 - **`vendor/`** — se genera con `composer install`.
 - **`public_html/.htaccess`** — el redirector de arriba.
 
@@ -86,7 +86,7 @@ git push origin main
 cd ~/public_html && git pull origin main && php artisan optimize:clear
 ```
 
-Listo. Recarga `enlix.pe` y verás los cambios.
+Listo. Recarga `anuncialo.pe` y verás los cambios.
 
 ---
 
@@ -98,7 +98,7 @@ Cada entorno usa su propia URL (debe coincidir **exacta**: sin barra final, con/
 
 | Entorno | Redirect URI autorizado | JS Origin |
 |---------|-------------------------|-----------|
-| Producción | `https://enlix.pe/auth/google/callback` | `https://enlix.pe` |
+| Producción | `https://anuncialo.pe/auth/google/callback` | `https://anuncialo.pe` |
 | Local | `http://localhost:8000/auth/google/callback` | `http://localhost:8000` |
 
 > El valor lo toma de `GOOGLE_REDIRECT_URI` en el `.env` de cada entorno.
