@@ -11,6 +11,9 @@ class Ad extends Model
 {
     use SoftDeletes;
 
+    /** Largo máximo de la descripción (fuente única de verdad: validación y formulario). */
+    public const MAX_DESCRIPTION = 144;
+
     protected $fillable = [
         'user_id',
         'category',
