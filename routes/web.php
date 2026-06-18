@@ -40,6 +40,12 @@ Route::post('/anuncios', [App\Http\Controllers\AdController::class, 'store'])
     ->middleware('throttle:20,1')
     ->name('ads.store');
 
+// Activar/desactivar un anuncio propio (la propiedad se valida en el controlador).
+Route::patch('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'update'])->name('ads.update');
+
+// Eliminar un anuncio propio.
+Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'destroy'])->name('ads.destroy');
+
 /*
 |--------------------------------------------------------------------------
 | Pasarela de pago Culqi
@@ -54,9 +60,9 @@ Route::post('/pago/cargo', [PaymentController::class, 'charge'])
     ->middleware('throttle:5,1')
     ->name('pago.cargo');
 
-// Devolución — En producción protéjase con 'auth' y permisos de administrador.
+// Devolución — solo administradores (config('app.admins')).
 Route::post('/pago/devolucion', [PaymentController::class, 'refund'])
-    ->middleware('throttle:10,1')
+    ->middleware(['throttle:10,1', 'admin'])
     ->name('pago.devolucion');
 
 // Guardar tarjeta (cliente + card para cobros one-click)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAdRequest;
 use App\Models\Ad;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AdController extends Controller
@@ -84,6 +85,40 @@ class AdController extends Controller
             ]);
 
         return response()->json(['authenticated' => true, 'ads' => $ads]);
+    }
+
+    /** Activa o desactiva un anuncio propio. */
+    public function update(Request $request, Ad $ad): JsonResponse
+    {
+        if (! $this->ownsAd($ad)) {
+            return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:active,inactive'],
+        ]);
+
+        $ad->update(['status' => $validated['status']]);
+
+        return response()->json(['success' => true, 'status' => $ad->status]);
+    }
+
+    /** Elimina (soft delete) un anuncio propio. */
+    public function destroy(Ad $ad): JsonResponse
+    {
+        if (! $this->ownsAd($ad)) {
+            return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        $ad->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /** ¿El anuncio pertenece al usuario autenticado? */
+    private function ownsAd(Ad $ad): bool
+    {
+        return Auth::check() && $ad->user_id === Auth::id();
     }
 }
 

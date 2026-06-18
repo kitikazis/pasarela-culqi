@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\OwnedAd;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -25,6 +26,8 @@ class CreateOrderRequest extends FormRequest
             'last_name'    => ['required', 'string', 'max:50'],
             'phone_number' => ['required', 'string', 'max:15'],
             'description'  => ['nullable', 'string', 'max:250'],
+            // Anuncio a destacar (opcional). Si viene, debe pertenecer al usuario.
+            'ad_id'        => ['nullable', 'integer', new OwnedAd()],
         ];
     }
 

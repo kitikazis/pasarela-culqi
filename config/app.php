@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Administradores
+    |--------------------------------------------------------------------------
+    |
+    | Correos con permisos de administrador (acciones sensibles como las
+    | devoluciones). Se definen en ADMIN_EMAILS del .env, separados por comas.
+    | Ej.: ADMIN_EMAILS="tu@correo.com,otro@correo.com"
+    |
+    */
+
+    'admins' => array_filter(array_map('trim', explode(',', (string) env('ADMIN_EMAILS', '')))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

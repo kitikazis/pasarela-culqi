@@ -53,12 +53,16 @@ class ProcessCulqiWebhook
         [$transaction, $paid] = $resolved;
 
         if ($transaction) {
+            // Idempotencia de negocio: solo dispara el evento en la TRANSICIÓN a
+            // "paid". Evita destacar el anuncio dos veces si el cargo/confirmación
+            // y el webhook marcan el pago como pagado por separado.
+            $wasPaid = $transaction->status === 'paid';
+
             $transaction->update([
                 'status' => $paid ? 'paid' : $transaction->status,
             ]);
 
-            if ($paid) {
-                // Punto de extensión para la lógica de negocio (#2).
+            if ($paid && ! $wasPaid) {
                 event(new PaymentConfirmed($transaction->fresh()));
             }
         }

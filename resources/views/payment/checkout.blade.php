@@ -109,17 +109,17 @@
             <div class="row">
                 <div>
                     <label for="firstName">Nombres</label>
-                    <input type="text" id="firstName" value="Juan" autocomplete="given-name">
+                    <input type="text" id="firstName" placeholder="Tus nombres" autocomplete="given-name">
                 </div>
                 <div>
                     <label for="lastName">Apellidos</label>
-                    <input type="text" id="lastName" value="Pérez" autocomplete="family-name">
+                    <input type="text" id="lastName" placeholder="Tus apellidos" autocomplete="family-name">
                 </div>
             </div>
             <label for="email">Correo electrónico</label>
-            <input type="email" id="email" value="cliente@test.com" autocomplete="email">
+            <input type="email" id="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
             <label for="phone">Celular</label>
-            <input type="tel" id="phone" value="999888777" maxlength="9" inputmode="numeric">
+            <input type="tel" id="phone" placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric">
 
             <button id="btnPay" type="button" disabled>Selecciona un plan</button>
 
@@ -142,6 +142,22 @@
         let procesando     = false; // guard contra doble pago / doble disparo del callback
 
         Culqi.publicKey = @json(config('culqi.public_key'));
+
+        // Anuncio a destacar (viene de "Mis anuncios" → /pago?ad=ID). null si es pago genérico.
+        const adId = new URLSearchParams(location.search).get('ad');
+
+        // Prellena los datos con el usuario logueado (sin datos de prueba).
+        (async () => {
+            try {
+                const me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
+                if (me.authenticated) {
+                    const parts = (me.user.name || '').trim().split(/\s+/);
+                    if (parts[0]) document.getElementById('firstName').value = parts.shift();
+                    if (parts.length) document.getElementById('lastName').value = parts.join(' ');
+                    if (me.user.email) document.getElementById('email').value = me.user.email;
+                }
+            } catch (e) { /* sin sesión: campos vacíos */ }
+        })();
 
         // ── Selección de plan ──
         document.querySelectorAll('.plan').forEach(card => {
@@ -193,10 +209,12 @@
                 const res = await fetch(URL_ORDEN, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         plan: selectedPlan,
                         email: val('email'), first_name: val('firstName'),
                         last_name: val('lastName'), phone_number: val('phone'),
+                        ad_id: adId,
                     }),
                 });
                 const data = await res.json();
@@ -259,12 +277,14 @@
                 const res = await fetch(URL_CARGO, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         token: tokenId,
                         plan: selectedPlan,          // el precio lo pone el backend
                         email: email || val('email'),
                         first_name: val('firstName'),
                         last_name: val('lastName'),
+                        ad_id: adId,
                     }),
                 });
                 const data = await res.json();

@@ -169,6 +169,7 @@ function renderList() {
           <span class="status-badge ${a.status === 'activo' ? 'active' : 'inactive'}">
             <span class="dot"></span>${a.status === 'activo' ? 'Activo' : 'Inactivo'}
           </span>
+          ${a.featured ? `<span class="status-badge" style="background:#fff4e5;color:#b06000;"><i class="fa-solid fa-crown"></i> Destacado</span>` : ''}
         </div>
         <p class="my-ad-text">${a.text}</p>
         <div class="my-ad-meta">
@@ -179,7 +180,10 @@ function renderList() {
       </div>
       <div class="my-ad-actions">
         ${a.status === 'activo'
-          ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
+          ? `<a class="btn btn-warning" href="/pago?ad=${a.id}">
+               <i class="fa-solid fa-crown"></i> ${a.featured ? 'Renovar' : 'Destacar'}
+             </a>
+             <button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
                <i class="fa-regular fa-circle-pause"></i> Desactivar
              </button>`
           : `<button class="btn btn-outline-success" data-action="toggle" data-id="${a.id}">
@@ -195,10 +199,28 @@ function renderList() {
 
   // Wire actions
   list.querySelectorAll('[data-action="toggle"]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const ad = MY_ADS.find(a => a.id == btn.dataset.id);
-      ad.status = ad.status === 'activo' ? 'inactivo' : 'activo';
-      renderStats(); renderList();
+      const nuevo = ad.status === 'activo' ? 'inactive' : 'active';   // valor de BD
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/anuncios/${ad.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': csrfToken() },
+          credentials: 'same-origin',
+          body: JSON.stringify({ status: nuevo }),
+        });
+        if (res.ok) {
+          ad.status = nuevo === 'active' ? 'activo' : 'inactivo';
+          renderStats(); renderList();
+        } else {
+          alert('No se pudo actualizar el anuncio.');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        alert('Error de conexión. Intenta nuevamente.');
+        btn.disabled = false;
+      }
     });
   });
   list.querySelectorAll('[data-action="delete"]').forEach(btn => {
@@ -212,10 +234,27 @@ function renderList() {
   });
 }
 
-document.getElementById('confirmDelete').addEventListener('click', () => {
-  const idx = MY_ADS.findIndex(a => a.id === STATE.deleteId);
-  if (idx >= 0) MY_ADS.splice(idx, 1);
+document.getElementById('confirmDelete').addEventListener('click', async () => {
+  const id  = STATE.deleteId;
+  const btn = document.getElementById('confirmDelete');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/anuncios/${id}`, {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': csrfToken() },
+      credentials: 'same-origin',
+    });
+    if (res.ok) {
+      const idx = MY_ADS.findIndex(a => a.id === id);
+      if (idx >= 0) MY_ADS.splice(idx, 1);
+    } else {
+      alert('No se pudo eliminar el anuncio.');
+    }
+  } catch (e) {
+    alert('Error de conexión. Intenta nuevamente.');
+  }
   bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+  btn.disabled = false;
   renderStats(); renderList();
 });
 
