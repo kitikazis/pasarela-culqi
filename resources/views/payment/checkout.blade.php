@@ -56,6 +56,15 @@
         .result.err { background:#fdecea; color:#b3261e; border:1px solid #ea4335; }
         .secure { text-align:center; font-size:.76rem; color:#9aa1ad; margin-top:1rem; }
 
+        /* Resumen compacto de "Tus datos" cuando hay sesión */
+        .identity-summary {
+            display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem;
+            background:#f5f7fb; border:1px solid var(--line); border-radius:10px;
+            padding:.75rem .9rem; margin-bottom:.4rem;
+        }
+        .identity-summary a { color:var(--brand); font-size:.82rem; text-decoration:none; white-space:nowrap; }
+        .identity-summary a:hover { text-decoration:underline; }
+
         /* ── Overlay "procesando pago" (bloquea la pantalla, evita pagar 2 veces) ── */
         .paying-overlay {
             position:fixed; inset:0; z-index:9999;
@@ -124,18 +133,33 @@
         {{-- ── Checkout ── --}}
         <div class="checkout">
             <h2>Tus datos</h2>
-            <div class="row">
+
+            {{-- Resumen compacto cuando hay sesión (lo llena el JS) --}}
+            <div id="identitySummary" class="identity-summary" style="display:none;">
                 <div>
-                    <label for="firstName">Nombres</label>
-                    <input type="text" id="firstName" placeholder="Tus nombres" autocomplete="given-name">
+                    <div style="font-size:.72rem; color:var(--muted); font-weight:600;">PAGAS COMO</div>
+                    <div id="sumName" style="font-weight:600;"></div>
+                    <div id="sumEmail" style="color:var(--muted); font-size:.85rem;"></div>
                 </div>
-                <div>
-                    <label for="lastName">Apellidos</label>
-                    <input type="text" id="lastName" placeholder="Tus apellidos" autocomplete="family-name">
-                </div>
+                <a href="#" id="editIdentity">Editar</a>
             </div>
-            <label for="email">Correo electrónico</label>
-            <input type="email" id="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+
+            {{-- Campos completos (se ocultan si hay sesión; se pueden reabrir con "Editar") --}}
+            <div id="identityFields">
+                <div class="row">
+                    <div>
+                        <label for="firstName">Nombres</label>
+                        <input type="text" id="firstName" placeholder="Tus nombres" autocomplete="given-name">
+                    </div>
+                    <div>
+                        <label for="lastName">Apellidos</label>
+                        <input type="text" id="lastName" placeholder="Tus apellidos" autocomplete="family-name">
+                    </div>
+                </div>
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+            </div>
+
             <label for="phone">Celular</label>
             <input type="tel" id="phone" placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric">
 
@@ -180,9 +204,21 @@
                     if (parts[0]) document.getElementById('firstName').value = parts.shift();
                     if (parts.length) document.getElementById('lastName').value = parts.join(' ');
                     if (me.user.email) document.getElementById('email').value = me.user.email;
+                    // Vista compacta: resumen del usuario y se ocultan los campos.
+                    document.getElementById('sumName').textContent  = me.user.name || '';
+                    document.getElementById('sumEmail').textContent = me.user.email || '';
+                    document.getElementById('identityFields').style.display = 'none';
+                    document.getElementById('identitySummary').style.display = 'flex';
                 }
-            } catch (e) { /* sin sesión: campos vacíos */ }
+            } catch (e) { /* sin sesión: se muestran los campos completos */ }
         })();
+
+        // "Editar" → reabre los campos completos.
+        document.getElementById('editIdentity').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('identityFields').style.display = '';
+            document.getElementById('identitySummary').style.display = 'none';
+        });
 
         // ── Selección de plan ──
         document.querySelectorAll('.plan').forEach(card => {
