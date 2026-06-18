@@ -640,3 +640,40 @@ h1, h2, h3, h4, h5 {
   .btn-google span, .btn-microsoft span { display: none; }
   .btn-google, .btn-microsoft { padding: .5rem .65rem; }
 }
+
+/* =========================================================
+   RESPONSIVE MÓVIL — pulido UX/UI para pantallas chicas
+   ========================================================= */
+
+/* ── Tablet y abajo: pills de categoría en UNA fila deslizable (estilo app) ── */
+@media (max-width: 767.98px) {
+  .cat-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;              /* Firefox: sin barra */
+    -webkit-overflow-scrolling: touch;  /* scroll suave en iOS */
+    margin-inline: -.75rem;             /* se desliza de borde a borde */
+    padding-inline: .75rem;
+  }
+  .cat-pills::-webkit-scrollbar { display: none; }  /* Chrome/Safari: sin barra */
+  .cat-pill { flex: 0 0 auto; }
+}
+
+/* ── Móvil (≤575px) ── */
+@media (max-width: 575.98px) {
+  /* Tarjetas: alto natural (sin forzar 220px), más compactas y táctiles */
+  .ad-grid { gap: .75rem; }
+  .ad-card {
+    min-height: auto;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  .ad-card:active { transform: scale(.99); }   /* feedback al tocar */
+  .ad-text { font-size: .925rem; }
+
+  /* Pills un poco más altas para tocar cómodo */
+  .cat-pill { padding: .5rem 1rem; }
+
+  /* Título de resultados más equilibrado en móvil */
+  #resultsTitle { font-size: 1.1rem; }
+}
