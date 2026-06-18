@@ -371,16 +371,22 @@ h1, h2, h3, h4, h5 {
   font-size: .95rem;
   line-height: 1.5;
   margin: 0;
-  flex: 1;
   text-wrap: pretty;
   overflow-wrap: anywhere;
   word-break: break-word;
+  /* Recorta a 4 líneas para que la grilla quede pareja y un texto largo
+     (o spam sin espacios) no estire la tarjeta. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .ad-meta {
   display: flex;
   flex-direction: column;
   gap: .45rem;
+  margin-top: auto;      /* fija la meta al pie: todas las tarjetas alineadas */
   padding-top: .85rem;
   border-top: 1px solid var(--line);
   font-size: .8125rem;
