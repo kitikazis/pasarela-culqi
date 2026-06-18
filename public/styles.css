@@ -697,3 +697,43 @@ h1, h2, h3, h4, h5 {
     text-overflow: ellipsis;
   }
 }
+
+/* ---------- MODAL (genérico, sin depender de Bootstrap JS) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 33, 36, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease;
+}
+.modal-overlay.show { opacity: 1; visibility: visible; }
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+  max-width: 420px;
+  width: 100%;
+  padding: 1.75rem;
+  text-align: center;
+  transform: translateY(10px) scale(.98);
+  transition: transform .18s ease;
+}
+.modal-overlay.show .modal-box { transform: none; }
+.modal-box .mod-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #fce8e6;
+  color: #c5221f;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 1rem;
+}
+.modal-box h2 { font-size: 1.25rem; margin: 0 0 .5rem; }
+.modal-box p { color: var(--muted); margin: 0 0 1.4rem; line-height: 1.5; }
+.modal-box .btn-primary-app { width: 100%; justify-content: center; height: 44px; }

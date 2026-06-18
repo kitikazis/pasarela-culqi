@@ -156,6 +156,16 @@
   </div>
 </footer>
 
+<!-- Modal de advertencia de moderación (contenido no permitido) -->
+<div class="modal-overlay" id="moderationOverlay" aria-hidden="true">
+  <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="modTitle" aria-describedby="moderationMsg">
+    <div class="mod-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h2 id="modTitle">Contenido no permitido</h2>
+    <p id="moderationMsg"></p>
+    <button type="button" class="btn-primary-app" id="modClose">Entendido, lo corrijo</button>
+  </div>
+</div>
+
 <script src="peru-data.js"></script>
 <script>
 /* ===== Sesión: exige login y muestra el usuario real ===== */
@@ -321,7 +331,15 @@ document.getElementById('adForm').addEventListener('submit', async (e) => {
       window.location.href = '/mis-anuncios';   // ya aparece publicado
     } else {
       const data = await res.json().catch(() => ({}));
-      alert(data.message || 'No se pudo publicar el anuncio.');
+      const descErr = data.errors?.description?.[0];
+      // Rechazo por moderación (groserías / contenido no permitido) → modal de aviso.
+      if (res.status === 422 && descErr) {
+        showModerationModal(descErr);
+        descripcion.classList.add('is-invalid');
+        descripcion.focus();
+      } else {
+        alert(data.message || 'No se pudo publicar el anuncio.');
+      }
       btn.disabled = false;
     }
   } catch (err) {
@@ -334,6 +352,20 @@ function csrfToken() {
   const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
   return m ? decodeURIComponent(m[1]) : '';
 }
+
+/* ===== Modal de advertencia de moderación ===== */
+function showModerationModal(message) {
+  document.getElementById('moderationMsg').textContent = message;
+  document.getElementById('moderationOverlay').classList.add('show');
+}
+function hideModerationModal() {
+  document.getElementById('moderationOverlay').classList.remove('show');
+}
+document.getElementById('modClose').addEventListener('click', hideModerationModal);
+document.getElementById('moderationOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'moderationOverlay') hideModerationModal();   // clic fuera = cerrar
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideModerationModal(); });
 </script>
 </body>
 </html>
