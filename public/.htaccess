@@ -40,6 +40,17 @@
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
 
+# ── Autocache de estáticos: CSS/JS siempre revalidados ──────────
+# El navegador puede guardar el archivo, pero ANTES de usarlo pregunta al
+# servidor si cambió (ETag / Last-Modified). Si no cambió => 304 (rápido);
+# si cambió => baja la versión nueva. Así el responsive y cualquier cambio
+# de estilo se ven al instante en cada deploy, sin limpiar caché a mano.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
 # ── Proteger archivos sensibles ─────────────────────────────────
 <FilesMatch "^\.env">
     Require all denied
