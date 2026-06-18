@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Events\PaymentConfirmed;
-use App\Listeners\FeatureAdOnPayment;
+use App\Listeners\GrantCreditsOnPayment;
 use App\Support\ConnectionCheck;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -19,8 +19,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Pago confirmado → destacar el anuncio (lógica de negocio #2).
-        Event::listen(PaymentConfirmed::class, FeatureAdOnPayment::class);
+        // Pago confirmado → suma créditos de publicación al usuario.
+        Event::listen(PaymentConfirmed::class, GrantCreditsOnPayment::class);
 
         // Registra el proveedor Microsoft en Socialite (Google es nativo).
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {

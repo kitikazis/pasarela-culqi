@@ -55,9 +55,9 @@ Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'dest
 // Vista de checkout (Culqi Checkout v4)
 Route::get('/pago', [PaymentController::class, 'showCheckout'])->name('checkout');
 
-// Cargo con tarjeta — Rate limit 5 req/min por IP. Añadir 'auth' si aplica.
+// Cargo con tarjeta — requiere sesión (la compra acredita al usuario).
 Route::post('/pago/cargo', [PaymentController::class, 'charge'])
-    ->middleware('throttle:5,1')
+    ->middleware(['throttle:5,1', 'auth'])
     ->name('pago.cargo');
 
 // Devolución — solo administradores (config('app.admins')).
@@ -65,14 +65,14 @@ Route::post('/pago/devolucion', [PaymentController::class, 'refund'])
     ->middleware(['throttle:10,1', 'admin'])
     ->name('pago.devolucion');
 
-// Guardar tarjeta (cliente + card para cobros one-click)
+// Guardar tarjeta (cliente + card para cobros one-click) — requiere sesión.
 Route::post('/pago/guardar-tarjeta', [PaymentController::class, 'saveCard'])
-    ->middleware('throttle:5,1')
+    ->middleware(['throttle:5,1', 'auth'])
     ->name('pago.guardar_tarjeta');
 
-// Crear orden (habilita PagoEfectivo / Cuotéalo en el Checkout)
+// Crear orden (habilita PagoEfectivo / Cuotéalo en el Checkout) — requiere sesión.
 Route::post('/pago/orden', [PaymentController::class, 'createOrder'])
-    ->middleware('throttle:10,1')
+    ->middleware(['throttle:10,1', 'auth'])
     ->name('pago.orden');
 
 // Verificar estado de una orden tras pagar (multipago: la orden ES el pago)

@@ -58,10 +58,11 @@
         <h1>Mis anuncios</h1>
         <p>Administra tus publicaciones: actívalas, pausálas o elimínalas.</p>
       </div>
-      <a href="/publicar" class="btn-primary-app">
-        <i class="fa-solid fa-plus"></i>
-        Publicar nuevo anuncio
-      </a>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span id="creditsBadge" class="status-badge" style="background:#e8f0fe;color:#1a73e8;display:none;"></span>
+        <a href="/pago" class="btn-outline-app"><i class="fa-solid fa-cart-shopping"></i> Comprar publicaciones</a>
+        <a href="/publicar" class="btn-primary-app"><i class="fa-solid fa-plus"></i> Publicar nuevo anuncio</a>
+      </div>
     </div>
   </div>
 </section>
@@ -169,7 +170,6 @@ function renderList() {
           <span class="status-badge ${a.status === 'activo' ? 'active' : 'inactive'}">
             <span class="dot"></span>${a.status === 'activo' ? 'Activo' : 'Inactivo'}
           </span>
-          ${a.featured ? `<span class="status-badge" style="background:#fff4e5;color:#b06000;"><i class="fa-solid fa-crown"></i> Destacado</span>` : ''}
         </div>
         <p class="my-ad-text">${a.text}</p>
         <div class="my-ad-meta">
@@ -180,10 +180,7 @@ function renderList() {
       </div>
       <div class="my-ad-actions">
         ${a.status === 'activo'
-          ? `<a class="btn btn-warning" href="/pago?ad=${a.id}">
-               <i class="fa-solid fa-crown"></i> ${a.featured ? 'Renovar' : 'Destacar'}
-             </a>
-             <button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
+          ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
                <i class="fa-regular fa-circle-pause"></i> Desactivar
              </button>`
           : `<button class="btn btn-outline-success" data-action="toggle" data-id="${a.id}">
@@ -322,6 +319,14 @@ async function init() {
     img.style.display = '';
   }
   document.getElementById('navLogout').addEventListener('click', (e) => { e.preventDefault(); logout(); });
+
+  // Saldo de créditos de publicación.
+  const credits = me.user.credits || 0;
+  const badge = document.getElementById('creditsBadge');
+  if (badge) {
+    badge.textContent = `${credits} publicación${credits === 1 ? '' : 'es'} disponible${credits === 1 ? '' : 's'}`;
+    badge.style.display = '';
+  }
 
   // 2) Cargar SUS anuncios desde la BD
   try {

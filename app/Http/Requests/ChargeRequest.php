@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\OwnedAd;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ChargeRequest extends FormRequest
@@ -25,8 +24,6 @@ class ChargeRequest extends FormRequest
             'first_name'    => ['nullable', 'string', 'max:50'],
             'last_name'     => ['nullable', 'string', 'max:50'],
             'description'   => ['nullable', 'string', 'max:250'],
-            // Anuncio a destacar (opcional). Si viene, debe pertenecer al usuario.
-            'ad_id'         => ['nullable', 'integer', new OwnedAd()],
         ];
     }
 

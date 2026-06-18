@@ -42,7 +42,7 @@
           <span>Publicar nuevo</span>
         </div>
         <h1>Publicar anuncio</h1>
-        <p>Describe lo que ofreces o buscas. Llega gratis a todo el Perú.</p>
+        <p id="publicarSubtitle">Describe lo que ofreces o buscas. Llega a todo el Perú.</p>
       </div>
     </div>
   </div>
@@ -203,6 +203,28 @@
     img.src = me.user.avatar;
     img.style.display = '';
   }
+
+  // Publicar gasta 1 crédito. Sin créditos → CTA a comprar un plan.
+  const credits = me.user.credits || 0;
+  if (credits < 1) {
+    document.querySelector('main').innerHTML = `
+      <div class="container">
+        <div class="form-card" style="max-width:480px;margin:1rem auto;text-align:center;">
+          <i class="fa-solid fa-ticket" style="font-size:2.6rem;color:var(--primary);margin-bottom:.75rem;"></i>
+          <h2 style="font-size:1.3rem;margin:0 0 .4rem;">Necesitas publicaciones</h2>
+          <p style="color:var(--muted);margin:0 0 1.25rem;">No te quedan créditos para publicar. Compra un plan y publica tus anuncios (los créditos no vencen).</p>
+          <a href="/pago" class="btn-primary-app" style="justify-content:center;"><i class="fa-solid fa-cart-shopping"></i> Comprar un plan</a>
+          <a href="/mis-anuncios" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Mis anuncios</a>
+        </div>
+      </div>`;
+    document.querySelector('main').style.visibility = 'visible';
+    return;
+  }
+
+  // Tiene créditos → mostrar el saldo disponible.
+  const sub = document.getElementById('publicarSubtitle');
+  if (sub) sub.textContent = `Tienes ${credits} publicación${credits === 1 ? '' : 'es'} disponible${credits === 1 ? '' : 's'}.`;
+
   document.querySelector('main').style.visibility = 'visible';
 })();
 /* ===== Selects encadenados ===== */
@@ -337,6 +359,12 @@ document.getElementById('adForm').addEventListener('submit', async (e) => {
         showModerationModal(descErr);
         descripcion.classList.add('is-invalid');
         descripcion.focus();
+      } else if (res.status === 402 || data.need_plan) {
+        // Sin créditos → ofrecer comprar un plan.
+        if (confirm((data.message || 'Necesitas un plan para publicar.') + '\n\n¿Comprar un plan ahora?')) {
+          window.location.href = '/pago';
+          return;
+        }
       } else {
         alert(data.message || 'No se pudo publicar el anuncio.');
       }

@@ -16,6 +16,7 @@ class User extends Authenticatable
         'avatar',
         'provider',
         'provider_id',
+        'publish_credits',
     ];
 
     protected $hidden = [
@@ -28,7 +29,14 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'publish_credits'   => 'integer',
         ];
+    }
+
+    /** Suma créditos de publicación (al confirmarse un pago). */
+    public function addCredits(int $amount): void
+    {
+        $this->increment('publish_credits', $amount);
     }
 
     public function ads(): HasMany

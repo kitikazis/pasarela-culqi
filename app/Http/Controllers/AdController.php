@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAdRequest;
 use App\Models\Ad;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdController extends Controller
 {
@@ -14,22 +16,47 @@ class AdController extends Controller
     public function store(StoreAdRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $user = Auth::user();
 
-        $ad = Auth::user()->ads()->create([
-            'category'    => $data['category'],
-            'description' => $data['description'],
-            'phone'       => $data['phone'],
-            'coverage'    => $data['coverage'],
-            'department'  => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
-            'province'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
-            'district'    => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
-            'status'      => 'active',
-        ]);
+        // Publicar gasta 1 crédito. Crédito + anuncio en una transacción atómica:
+        // el decremento condicional evita doble gasto / carreras.
+        $ad = null;
+        $ok = DB::transaction(function () use ($user, $data, &$ad): bool {
+            $spent = User::whereKey($user->id)
+                ->where('publish_credits', '>', 0)
+                ->decrement('publish_credits');
+
+            if (! $spent) {
+                return false;   // sin créditos
+            }
+
+            $ad = $user->ads()->create([
+                'category'    => $data['category'],
+                'description' => $data['description'],
+                'phone'       => $data['phone'],
+                'coverage'    => $data['coverage'],
+                'department'  => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
+                'province'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
+                'district'    => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
+                'status'      => 'active',
+            ]);
+
+            return true;
+        });
+
+        if (! $ok) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'No te quedan créditos. Compra un plan para publicar.',
+                'need_plan' => true,
+            ], 402);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Anuncio publicado.',
             'ad_id'   => $ad->id,
+            'credits' => $user->fresh()->publish_credits,
         ], 201);
     }
 

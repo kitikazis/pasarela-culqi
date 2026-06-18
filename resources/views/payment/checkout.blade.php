@@ -130,12 +130,22 @@
         <a class="back" href="/"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
 
         <div class="head">
-            <h1>Destaca tu anuncio</h1>
-            <p>Elige un plan y aparece en los primeros resultados.</p>
+            <h1>Compra publicaciones</h1>
+            <p>Elige un plan y publica tus anuncios. Los créditos no vencen.</p>
+        </div>
+
+        {{-- Aviso si no hay sesión (lo controla el JS) --}}
+        <div id="needLogin" style="display:none; max-width:460px; margin:0 auto; background:#fff; border-radius:16px; padding:1.75rem; text-align:center; box-shadow:0 6px 28px rgba(0,0,0,.08);">
+            <h2 style="font-size:1.2rem; margin:0 0 .4rem;">Inicia sesión para comprar</h2>
+            <p style="color:var(--muted); margin:0 0 1.25rem;">Necesitas una cuenta para comprar un plan y publicar. Ingresa con Google o Microsoft.</p>
+            <div style="display:flex; flex-direction:column; gap:.6rem;">
+                <a href="/auth/google/redirect" style="background:#DB4437; color:#fff; padding:.7rem; border-radius:8px; text-decoration:none; font-weight:600;">Ingresar con Google</a>
+                <a href="/auth/microsoft/redirect" style="background:#00a1f1; color:#fff; padding:.7rem; border-radius:8px; text-decoration:none; font-weight:600;">Ingresar con Microsoft</a>
+            </div>
         </div>
 
         {{-- ── Planes (precios desde el backend) ── --}}
-        <div class="plans">
+        <div class="plans" id="plansSection">
             @foreach (config('plans') as $id => $plan)
                 <div class="plan {{ ($plan['popular'] ?? false) ? 'popular' : '' }}" data-plan="{{ $id }}" data-amount="{{ $plan['amount'] }}">
                     @if ($plan['popular'] ?? false)
@@ -155,7 +165,7 @@
         </div>
 
         {{-- ── Checkout ── --}}
-        <div class="checkout">
+        <div class="checkout" id="checkoutSection">
             <h2>Tus datos</h2>
 
             {{-- Resumen compacto cuando hay sesión (lo llena el JS) --}}
@@ -206,8 +216,8 @@
                 <svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>
             </div>
             <p style="font-size:1.3rem;">¡Pago realizado!</p>
-            <small id="paySuccessMsg">Tu anuncio se destacará en breve.</small>
-            <a href="/mis-anuncios" id="paySuccessBtn" class="pay-success-btn">Ir a Mis anuncios</a>
+            <small id="paySuccessMsg">Tus créditos se agregaron a tu cuenta.</small>
+            <a href="/publicar" id="paySuccessBtn" class="pay-success-btn">Publicar anuncio</a>
         </div>
     </div>
 
@@ -226,25 +236,28 @@
 
         Culqi.publicKey = @json(config('culqi.public_key'));
 
-        // Anuncio a destacar (viene de "Mis anuncios" → /pago?ad=ID). null si es pago genérico.
-        const adId = new URLSearchParams(location.search).get('ad');
-
-        // Prellena los datos con el usuario logueado (sin datos de prueba).
+        // Exige sesión (la compra acredita al usuario) y prellena sus datos.
         (async () => {
+            let me;
             try {
-                const me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
-                if (me.authenticated) {
-                    const parts = (me.user.name || '').trim().split(/\s+/);
-                    if (parts[0]) document.getElementById('firstName').value = parts.shift();
-                    if (parts.length) document.getElementById('lastName').value = parts.join(' ');
-                    if (me.user.email) document.getElementById('email').value = me.user.email;
-                    // Vista compacta: resumen del usuario y se ocultan los campos.
-                    document.getElementById('sumName').textContent  = me.user.name || '';
-                    document.getElementById('sumEmail').textContent = me.user.email || '';
-                    document.getElementById('identityFields').style.display = 'none';
-                    document.getElementById('identitySummary').style.display = 'flex';
-                }
-            } catch (e) { /* sin sesión: se muestran los campos completos */ }
+                me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
+            } catch (e) { return; }
+
+            if (!me.authenticated) {
+                document.getElementById('plansSection').style.display = 'none';
+                document.getElementById('checkoutSection').style.display = 'none';
+                document.getElementById('needLogin').style.display = 'block';
+                return;
+            }
+
+            const parts = (me.user.name || '').trim().split(/\s+/);
+            if (parts[0]) document.getElementById('firstName').value = parts.shift();
+            if (parts.length) document.getElementById('lastName').value = parts.join(' ');
+            if (me.user.email) document.getElementById('email').value = me.user.email;
+            document.getElementById('sumName').textContent  = me.user.name || '';
+            document.getElementById('sumEmail').textContent = me.user.email || '';
+            document.getElementById('identityFields').style.display = 'none';
+            document.getElementById('identitySummary').style.display = 'flex';
         })();
 
         // "Editar" → reabre los campos completos.
@@ -309,7 +322,6 @@
                         plan: selectedPlan,
                         email: val('email'), first_name: val('firstName'),
                         last_name: val('lastName'), phone_number: val('phone'),
-                        ad_id: adId,
                     }),
                 });
                 const data = await res.json();
@@ -381,7 +393,6 @@
                         email: email || val('email'),
                         first_name: val('firstName'),
                         last_name: val('lastName'),
-                        ad_id: adId,
                     }),
                 });
                 const data = await res.json();
@@ -417,14 +428,25 @@
         }
 
         // Pago CONFIRMADO → check verde animado + botón para continuar (no se paga 2 veces).
-        function showPaidOverlay() {
+        async function showPaidOverlay() {
             closeCulqi();
             const btn = document.getElementById('btnPay');
             btn.disabled = true; btn.textContent = '✓ Pago realizado';
-            document.getElementById('paySuccessMsg').textContent = adId ? 'Tu anuncio se destacará en breve.' : '¡Gracias por tu compra!';
+
+            // Muestra el saldo de publicaciones ya actualizado.
+            let saldo = null;
+            try {
+                const me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
+                if (me.authenticated) saldo = me.user.credits;
+            } catch (e) {}
+
+            document.getElementById('paySuccessMsg').textContent = saldo != null
+                ? `Ya tienes ${saldo} publicación${saldo === 1 ? '' : 'es'} disponible${saldo === 1 ? '' : 's'}.`
+                : 'Tus créditos se agregaron a tu cuenta.';
             const go = document.getElementById('paySuccessBtn');
-            go.href = adId ? '/mis-anuncios' : '/';
-            go.textContent = adId ? 'Ir a Mis anuncios' : 'Volver al inicio';
+            go.href = '/publicar';
+            go.textContent = 'Publicar anuncio';
+
             document.getElementById('payingSpinner').style.display = 'none';
             document.getElementById('paySuccess').style.display = 'flex';
             const ov = document.getElementById('payingOverlay');

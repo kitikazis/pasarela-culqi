@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\OwnedAd;
 use Illuminate\Foundation\Http\FormRequest;
 
 class YapeRequest extends FormRequest
@@ -20,7 +19,6 @@ class YapeRequest extends FormRequest
             'amount'       => ['required', 'integer', 'min:100'],
             'email'        => ['required', 'email'],
             'description'  => ['nullable', 'string', 'max:500'],
-            'ad_id'        => ['nullable', 'integer', new OwnedAd()],
         ];
     }
 
