@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Planes — {{ config('app.name') }}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --brand:#0d6efd; --brand-dark:#0b5ed7; --line:#e6e9ef; --ink:#1a1f36; --muted:#6b7280; }
-        * { box-sizing:border-box; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-        body { background:#eef1f6; margin:0; padding:2.5rem 1rem; color:var(--ink); }
+        :root { --brand:#2563EB; --brand-dark:#1D4ED8; --line:#E5E7EB; --ink:#1F2937; --muted:#6B7280; --success:#10B981; }
+        * { box-sizing:border-box; font-family:'Inter',system-ui,-apple-system,Segoe UI,sans-serif; }
+        body { background:#F9FAFB; margin:0; padding:2.5rem 1rem; color:var(--ink); -webkit-font-smoothing:antialiased; }
+        .lucide { width:18px; height:18px; vertical-align:middle; flex-shrink:0; }
         .wrap { max-width:960px; margin:0 auto; }
         .head { text-align:center; margin-bottom:2rem; }
         .head h1 { font-size:1.8rem; margin:0 0 .4rem; }
@@ -23,7 +26,7 @@
         .plan { background:#fff; border:2px solid var(--line); border-radius:16px; padding:1.5rem;
                 cursor:pointer; transition:all .15s ease; position:relative; display:flex; flex-direction:column; }
         .plan:hover { border-color:#b9c4d4; transform:translateY(-2px); }
-        .plan.selected { border-color:var(--brand); box-shadow:0 8px 24px rgba(13,110,253,.15); }
+        .plan.selected { border-color:var(--brand); box-shadow:0 8px 24px rgba(37,99,235,.15); }
         .plan.popular { border-color:var(--brand); }
         .tag { position:absolute; top:-12px; left:50%; transform:translateX(-50%);
                background:var(--brand); color:#fff; font-size:.7rem; font-weight:700;
@@ -34,7 +37,7 @@
         .price small { font-size:.85rem; font-weight:500; color:var(--muted); }
         .features { list-style:none; padding:0; margin:1rem 0 0; flex:1; }
         .features li { font-size:.85rem; color:#3c4043; padding:.3rem 0; display:flex; gap:.5rem; align-items:flex-start; }
-        .features li i { color:#34a853; margin-top:.2rem; }
+        .features li svg { color:var(--success); margin-top:.1rem; }
         .pick { margin-top:1.25rem; text-align:center; font-weight:600; font-size:.85rem;
                 color:var(--brand); border:1px dashed var(--brand); border-radius:8px; padding:.5rem; }
         .plan.selected .pick { background:var(--brand); color:#fff; border-style:solid; }
@@ -44,7 +47,7 @@
         .checkout h2 { font-size:1.1rem; margin:0 0 1rem; }
         label { display:block; font-size:.78rem; font-weight:600; color:#3c4043; margin:.7rem 0 .3rem; }
         input { width:100%; padding:.6rem .7rem; border:1px solid #d9dee5; border-radius:8px; font-size:.95rem; }
-        input:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(13,110,253,.15); }
+        input:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
         .row { display:flex; gap:.6rem; } .row>div { flex:1; }
         button { width:100%; border:none; border-radius:10px; padding:.95rem; font-size:1rem;
                  font-weight:700; cursor:pointer; margin-top:1.25rem; background:var(--brand); color:#fff; }
@@ -120,14 +123,14 @@
             #btnPay {
                 position:sticky;
                 bottom:10px;
-                box-shadow:0 6px 22px rgba(13,110,253,.4);
+                box-shadow:0 6px 22px rgba(37,99,235,.4);
             }
         }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <a class="back" href="/"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</a>
+        <a class="back" href="/"><i data-lucide="arrow-left"></i> Volver al inicio</a>
 
         <div class="head">
             <h1>Compra publicaciones</h1>
@@ -139,8 +142,8 @@
             <h2 style="font-size:1.2rem; margin:0 0 .4rem;">Inicia sesión para comprar</h2>
             <p style="color:var(--muted); margin:0 0 1.25rem;">Necesitas una cuenta para comprar un plan y publicar. Ingresa con Google o Microsoft.</p>
             <div style="display:flex; flex-direction:column; gap:.6rem;">
-                <a href="/auth/google/redirect" style="background:#DB4437; color:#fff; padding:.7rem; border-radius:8px; text-decoration:none; font-weight:600;">Ingresar con Google</a>
-                <a href="/auth/microsoft/redirect" style="background:#00a1f1; color:#fff; padding:.7rem; border-radius:8px; text-decoration:none; font-weight:600;">Ingresar con Microsoft</a>
+                <a href="/auth/google/redirect" style="display:inline-flex;align-items:center;justify-content:center;gap:.55rem;background:#fff;color:#1F2937;border:1px solid #D1D5DB;padding:.7rem;border-radius:10px;text-decoration:none;font-weight:500;"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Ingresar con Google</a>
+                <a href="/auth/microsoft/redirect" style="display:inline-flex;align-items:center;justify-content:center;gap:.55rem;background:#fff;color:#1F2937;border:1px solid #D1D5DB;padding:.7rem;border-radius:10px;text-decoration:none;font-weight:500;"><svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg> Ingresar con Microsoft</a>
             </div>
         </div>
 
@@ -156,7 +159,7 @@
                     <div class="price">S/ {{ number_format($plan['amount'] / 100, 2) }}</div>
                     <ul class="features">
                         @foreach ($plan['features'] as $f)
-                            <li><i class="fa-solid fa-check"></i> {{ $f }}</li>
+                            <li><i data-lucide="check"></i> {{ $f }}</li>
                         @endforeach
                     </ul>
                     <div class="pick">Seleccionar</div>
@@ -200,7 +203,7 @@
             <button id="btnPay" type="button" disabled>Selecciona un plan</button>
 
             <div class="result" id="result"></div>
-            <p class="secure">🔒 Pago seguro con Culqi. Tus datos de tarjeta nunca pasan por este sitio.</p>
+            <p class="secure" style="display:flex;align-items:center;justify-content:center;gap:.35rem;"><i data-lucide="lock" style="width:13px;height:13px;"></i> Pago seguro con Culqi. Tus datos de tarjeta nunca pasan por este sitio.</p>
         </div>
     </div>
 
@@ -221,9 +224,11 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     {{-- SOLO CDN oficial de Culqi --}}
     <script src="https://checkout.culqi.com/js/v4"></script>
     <script>
+        if (window.lucide) lucide.createIcons();
         const TITLE        = @json(config('app.name'));
         const CSRF         = document.querySelector('meta[name="csrf-token"]').content;
         const URL_CARGO    = @json(route('pago.cargo'));
@@ -293,13 +298,13 @@
                     bancaMovil: true, agente: true, cuotealo: true,
                 },
                 style: {
-                    bannerColor: '#0d6efd',
-                    buttonBackground: '#0d6efd',
-                    menuColor: '#0d6efd',
-                    linksColor: '#0d6efd',
+                    bannerColor: '#2563EB',
+                    buttonBackground: '#2563EB',
+                    menuColor: '#2563EB',
+                    linksColor: '#2563EB',
                     buttonText: 'Pagar',   // Culqi le agrega el monto solo (ej: "Pagar S/ 1.00")
                     buttonTextColor: '#ffffff',
-                    priceColor: '#1a1f36',
+                    priceColor: '#1F2937',
                 },
             });
         }
@@ -365,17 +370,17 @@
                 });
                 const data = await res.json();
                 if (data.success && data.paid) {
-                    mostrar('ok', '✅ Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
+                    mostrar('ok', 'Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
                     showPaidOverlay();
                 } else if (data.success) {
-                    mostrar('ok', '🧾 Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
+                    mostrar('ok', 'Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
                     finishPayment(true);
                 } else {
-                    mostrar('err', '❌ ' + (data.message || 'No se pudo verificar el pago.'));
+                    mostrar('err', data.message || 'No se pudo verificar el pago.');
                     finishPayment(false);
                 }
             } catch (e) {
-                mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
+                mostrar('err', 'Error de conexión. Intenta nuevamente.');
                 finishPayment(false);
             }
         }
@@ -397,14 +402,14 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    mostrar('ok', '✅ ' + data.message + ' (cargo ' + data.charge_id + ')');
+                    mostrar('ok', data.message + ' (cargo ' + data.charge_id + ')');
                     showPaidOverlay();
                 } else {
-                    mostrar('err', '❌ ' + (data.message || 'No se pudo procesar el pago.'));
+                    mostrar('err', data.message || 'No se pudo procesar el pago.');
                     finishPayment(false);
                 }
             } catch (e) {
-                mostrar('err', '❌ Error de conexión. Intenta nuevamente.');
+                mostrar('err', 'Error de conexión. Intenta nuevamente.');
                 finishPayment(false);
             }
         }
@@ -431,7 +436,7 @@
         async function showPaidOverlay() {
             closeCulqi();
             const btn = document.getElementById('btnPay');
-            btn.disabled = true; btn.textContent = '✓ Pago realizado';
+            btn.disabled = true; btn.textContent = 'Pago realizado';
 
             // Muestra el saldo de publicaciones ya actualizado.
             let saldo = null;
@@ -459,7 +464,7 @@
             setPaying(false);
             const btn = document.getElementById('btnPay');
             if (ok) {
-                btn.disabled = true; btn.textContent = '✓ Orden generada';
+                btn.disabled = true; btn.textContent = 'Orden generada';
                 document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 procesando = false; btn.disabled = false;

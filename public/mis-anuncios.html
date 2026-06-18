@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mis anuncios — Anuncios Perú</title>
+<title>Mis anuncios — anuncialo.pe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 </head>
 <body>
@@ -18,31 +17,31 @@
   <div class="container">
     <div class="d-flex align-items-center gap-3 flex-nowrap">
       <a href="/" class="brand">
-        <span class="brand-mark"><span>A</span></span>
-        <span class="d-none d-sm-inline">Anuncios</span>
+        <span class="brand-mark"><span>a</span></span>
+        <span class="d-none d-sm-inline">anuncialo</span>
       </a>
 
       <div class="search-wrap d-none d-md-block">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <i data-lucide="search" class="search-icon"></i>
         <input type="text" class="form-control" placeholder="Buscar en mis anuncios...">
       </div>
 
       <div class="ms-auto d-flex align-items-center gap-2">
         <a href="/publicar" class="btn-primary-app d-none d-md-inline-flex">
-          <i class="fa-solid fa-plus"></i>
+          <i data-lucide="plus"></i>
           Publicar
         </a>
         <div class="dropdown">
           <a href="#" class="nav-avatar" data-bs-toggle="dropdown" aria-expanded="false">
             <img id="navAvatar" src="" alt="Avatar" style="display:none;">
             <span class="d-none d-sm-inline" id="navName">Usuario</span>
-            <i class="fa-solid fa-chevron-down" style="font-size:.7rem; color: var(--muted);"></i>
+            <i data-lucide="chevron-down" style="width:15px;height:15px;color:var(--muted);"></i>
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:.9rem;">
-            <li><a class="dropdown-item" href="/mis-anuncios"><i class="fa-regular fa-folder me-2"></i>Mis anuncios</a></li>
-            <li><a class="dropdown-item" href="/publicar"><i class="fa-solid fa-plus me-2"></i>Publicar anuncio</a></li>
+            <li><a class="dropdown-item d-flex align-items-center gap-2" href="/mis-anuncios"><i data-lucide="folder"></i>Mis anuncios</a></li>
+            <li><a class="dropdown-item d-flex align-items-center gap-2" href="/publicar"><i data-lucide="plus"></i>Publicar anuncio</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-muted" href="#" id="navLogout"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Cerrar sesión</a></li>
+            <li><a class="dropdown-item d-flex align-items-center gap-2 text-muted" href="#" id="navLogout"><i data-lucide="log-out"></i>Cerrar sesión</a></li>
           </ul>
         </div>
       </div>
@@ -59,9 +58,9 @@
         <p>Administra tus publicaciones: actívalas, pausálas o elimínalas.</p>
       </div>
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span id="creditsBadge" class="status-badge" style="background:#e8f0fe;color:#1a73e8;display:none;"></span>
-        <a href="/pago" class="btn-outline-app"><i class="fa-solid fa-cart-shopping"></i> Comprar publicaciones</a>
-        <a href="/publicar" class="btn-primary-app"><i class="fa-solid fa-plus"></i> Publicar nuevo anuncio</a>
+        <span id="creditsBadge" class="status-badge" style="background:var(--primary-soft);color:var(--primary);display:none;"></span>
+        <a href="/pago" class="btn-outline-app"><i data-lucide="shopping-cart"></i> Comprar publicaciones</a>
+        <a href="/publicar" class="btn-primary-app"><i data-lucide="plus"></i> Publicar nuevo anuncio</a>
       </div>
     </div>
   </div>
@@ -114,8 +113,8 @@
       </div>
       <div class="modal-footer" style="border-top: 1px solid var(--line);">
         <button type="button" class="btn-outline-app" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete">
-          <i class="fa-regular fa-trash-can me-1"></i> Eliminar
+        <button type="button" class="btn btn-danger d-inline-flex align-items-center gap-2" id="confirmDelete">
+          <i data-lucide="trash-2"></i> Eliminar
         </button>
       </div>
     </div>
@@ -126,15 +125,24 @@
 <footer class="app-footer">
   <div class="container">
     <div class="footer-bottom" style="border-top:none; margin:0; padding:0;">
-      <span>© 2026 Anuncios Perú. Todos los derechos reservados.</span>
+      <span>© 2026 anuncialo.pe — Todos los derechos reservados.</span>
       <span>Hecho en Perú</span>
     </div>
   </div>
 </footer>
 
+<script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="peru-data.js"></script>
 <script>
+/* Render de iconos Lucide (también tras inyectar HTML dinámico). */
+function renderIcons() { if (window.lucide) lucide.createIcons(); }
+renderIcons();
+
+/* Logos oficiales de proveedores (marcas, no librería de iconos). */
+const GOOGLE_SVG = '<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="true" style="flex-shrink:0"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>';
+
 /* Anuncios del usuario — se cargan desde la BD (/mis-anuncios/datos) */
 let MY_ADS = [];
 
@@ -153,12 +161,13 @@ function renderList() {
 
   if (ads.length === 0) {
     list.innerHTML = `
-      <div class="empty-state">
-        <i class="fa-regular fa-folder-open"></i>
+      <div class="empty-state" style="grid-column:1/-1;">
+        <i data-lucide="package-open"></i>
         <h5>No tienes anuncios en esta sección</h5>
-        <p class="mb-3">Publica tu primer anuncio gratis y llega a miles de personas.</p>
-        <a href="/publicar" class="btn-primary-app"><i class="fa-solid fa-plus"></i> Publicar anuncio</a>
+        <p class="mb-3">Publica tu primer anuncio y llega a miles de personas.</p>
+        <a href="/publicar" class="btn-primary-app"><i data-lucide="plus"></i> Publicar anuncio</a>
       </div>`;
+    renderIcons();
     return;
   }
 
@@ -173,26 +182,28 @@ function renderList() {
         </div>
         <p class="my-ad-text">${a.text}</p>
         <div class="my-ad-meta">
-          <span><i class="fa-solid fa-location-dot"></i>${formatLocation(a)}</span>
-          <span><i class="fa-regular fa-clock"></i>${relativeDate(a.date)}</span>
-          <span><i class="fa-regular fa-eye"></i>${a.views} vistas</span>
+          <span><i data-lucide="map-pin"></i>${formatLocation(a)}</span>
+          <span><i data-lucide="clock"></i>${relativeDate(a.date)}</span>
+          <span><i data-lucide="eye"></i>${a.views} vistas</span>
         </div>
       </div>
       <div class="my-ad-actions">
         ${a.status === 'activo'
           ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
-               <i class="fa-regular fa-circle-pause"></i> Desactivar
+               <i data-lucide="circle-pause"></i> Desactivar
              </button>`
           : `<button class="btn btn-outline-success" data-action="toggle" data-id="${a.id}">
-               <i class="fa-regular fa-circle-play"></i> Activar
+               <i data-lucide="circle-play"></i> Activar
              </button>`
         }
         <button class="btn btn-outline-danger" data-action="delete" data-id="${a.id}">
-          <i class="fa-regular fa-trash-can"></i> Eliminar
+          <i data-lucide="trash-2"></i> Eliminar
         </button>
       </div>
     </article>
   `).join('');
+
+  renderIcons();
 
   // Wire actions
   list.querySelectorAll('[data-action="toggle"]').forEach(btn => {
@@ -293,21 +304,18 @@ async function init() {
     document.querySelector('main').innerHTML = `
       <div class="container">
         <div class="form-card" style="max-width:460px;margin:1rem auto;text-align:center;">
-          <i class="fa-solid fa-circle-user" style="font-size:2.8rem;color:var(--primary);margin-bottom:.75rem;"></i>
+          <i data-lucide="circle-user" style="width:46px;height:46px;color:var(--primary);margin-bottom:.75rem;"></i>
           <h2 style="font-size:1.3rem;margin:0 0 .4rem;">Inicia sesión para ver tus anuncios</h2>
           <p style="color:var(--muted);margin:0 0 1.25rem;">Necesitas una cuenta para gestionar tus anuncios. Ingresa con Google o Microsoft.</p>
           <div class="d-flex flex-column gap-2">
-            <a href="/auth/google/redirect" class="btn-google" style="justify-content:center;height:42px;">
-              <i class="fa-brands fa-google"></i> Ingresar con Google
-            </a>
-            <a href="/auth/microsoft/redirect" class="btn-microsoft" style="justify-content:center;height:42px;">
-              <i class="fa-brands fa-microsoft"></i> Ingresar con Microsoft
-            </a>
+            <a href="/auth/google/redirect" class="btn-google" style="justify-content:center;">${GOOGLE_SVG} Ingresar con Google</a>
+            <a href="/auth/microsoft/redirect" class="btn-microsoft" style="justify-content:center;">${MS_SVG} Ingresar con Microsoft</a>
           </div>
           <a href="/" style="display:inline-block;margin-top:1.1rem;font-size:.85rem;">← Volver al inicio</a>
         </div>
       </div>`;
     document.querySelector('main').style.visibility = 'visible';
+    renderIcons();
     return;
   }
 
