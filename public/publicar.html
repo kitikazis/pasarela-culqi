@@ -226,9 +226,9 @@ const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="tru
     return;
   }
 
-  // Tiene créditos → mostrar el saldo disponible.
-  const sub = document.getElementById('publicarSubtitle');
-  if (sub) sub.textContent = `Tienes ${credits} publicación${credits === 1 ? '' : 'es'} disponible${credits === 1 ? '' : 's'}.`;
+  // Saldo de publicaciones oculto por ahora (no se muestra a ningún usuario).
+  // const sub = document.getElementById('publicarSubtitle');
+  // if (sub) sub.textContent = `Tienes ${credits} publicación${credits === 1 ? '' : 'es'} disponible${credits === 1 ? '' : 's'}.`;
 
   document.querySelector('main').style.visibility = 'visible';
 })();
