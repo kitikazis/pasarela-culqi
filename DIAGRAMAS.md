@@ -2,7 +2,7 @@
 
 > Diagramas en **Mermaid**. Se renderizan automáticamente al abrir este archivo en
 > **GitHub**. También puedes verlos/editarlos en [mermaid.live](https://mermaid.live)
-> o en VS Code con la extensión *Markdown Preview Mermaid Support*.
+> o en VS Code con la extensión _Markdown Preview Mermaid Support_.
 
 ---
 
@@ -10,9 +10,9 @@
 
 ```mermaid
 flowchart TD
-    A["Usuario"] -->|"Ingresar con Google / Microsoft"| B["GET /auth/{provider}/redirect"]
+    A["Usuario"] -->|"Ingresar con Google / Microsoft"| B["GET /auth/:provider/redirect"]
     B --> C["El proveedor valida la identidad"]
-    C --> D["GET /auth/{provider}/callback"]
+    C --> D["GET /auth/:provider/callback"]
     D --> E{"¿Cuenta nueva?"}
     E -->|"Sí"| F["Crea usuario + 20 créditos gratis"]
     E -->|"No"| G["Actualiza datos del usuario"]
@@ -65,11 +65,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Usuario elimina un anuncio"] --> B["DELETE /anuncios/{id}"]
+    A["Usuario elimina un anuncio"] --> B["DELETE /anuncios/:id"]
     B --> C["Soft delete:<br/>deleted_at = ahora"]
     C --> D["Aparece en la Papelera"]
     D --> E{"¿Dentro de 30 días?"}
-    E -->|"Restaurar"| F["PATCH /anuncios/{id}/restaurar<br/>deleted_at = null"]
+    E -->|"Restaurar"| F["PATCH /anuncios/:id/restaurar<br/>deleted_at = null"]
     E -->|"Pasan 30 días"| G["Cron diario → ads:purge-trash"]
     F --> H["Vuelve a Mis anuncios"]
     G --> I["forceDelete:<br/>borrado definitivo"]
