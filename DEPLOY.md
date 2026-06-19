@@ -233,15 +233,25 @@ El endpoint ya valida idempotencia y re-consulta el recurso a Culqi (anti-spoofi
 
 La **purga automática de la Papelera** (borra los anuncios con +30 días eliminados)
 corre vía el scheduler de Laravel. Para que se ejecute, hace falta **un único cron**
-en cPanel → **Cron Jobs** que dispare el scheduler cada minuto:
+en cPanel → **Cron Jobs** que dispare el scheduler **cada minuto**.
+
+### En el formulario de cPanel → Cron Jobs
+
+1. **Configuración común:** elige **"Una vez por minuto"** (rellena los 5 campos con `*`).
+   O ponlos a mano: Minuto `*` · Hora `*` · Día `*` · Mes `*` · Día de la semana `*`.
+2. **Comando** (ruta real de esta cuenta — usuario `anuncial`):
 
 ```
-* * * * * cd ~/public_html && php artisan schedule:run >> /dev/null 2>&1
+/usr/local/bin/php /home/anuncial/public_html/artisan schedule:run >> /dev/null 2>&1
 ```
+
+3. Clic en **"Añadir nuevo trabajo de cron"**. Debe aparecer en *Trabajos de cron actuales*.
 
 > Ese cron maneja **todas** las tareas programadas (`routes/console.php`), no solo la purga.
-> Si `php` no está en el PATH, usa la ruta completa (ej. `/usr/local/bin/php` o la que
-> indique cPanel → *Select PHP Version*).
+> La ruta del PHP (`/usr/local/bin/php`) la indica la propia página de Cron Jobs en
+> *"PHP command examples"*; si cambia, usa la que muestre ahí.
+> Para depurar, reemplaza `>> /dev/null 2>&1` por
+> `>> /home/anuncial/public_html/storage/logs/cron.log 2>&1` y revisa ese archivo.
 
 ### Comandos de mantenimiento (papelera de anuncios)
 
