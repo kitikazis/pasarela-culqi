@@ -296,10 +296,9 @@
                             .join("");
                 };
 
-                buildOptions(depSel, "Todos los departamentos", [
-                    "Nacional",
-                    ...DEPARTAMENTOS,
-                ]);
+                // "Todos los departamentos" ya incluye los anuncios nacionales,
+                // por eso no se lista "Nacional" como una opción aparte.
+                buildOptions(depSel, "Todos los departamentos", [...DEPARTAMENTOS]);
                 provSel.innerHTML =
                     '<option value="">Todas las provincias</option>';
                 distSel.innerHTML =
