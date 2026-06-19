@@ -15,7 +15,7 @@ use Illuminate\Database\Seeder;
 class AdsSeeder extends Seeder
 {
     /** Cuántos anuncios crear. */
-    private const CUANTOS = 200;
+    private const CUANTOS = 2;
 
     public function run(): void
     {
