@@ -70,6 +70,30 @@ chmod -R 775 storage bootstrap/cache
 
 ---
 
+## Conectarse al servidor por SSH
+
+Desde PowerShell / Git CMD en tu PC:
+
+```bash
+ssh anuncial@192.250.227.240
+```
+
+- **Usuario:** `anuncial`  ·  **Host:** `192.250.227.240`  ·  **Puerto:** 22 (por defecto).
+- Te pedirá la **contraseña de esa cuenta** (al escribirla no se ve nada; es normal).
+- La primera vez pregunta `Are you sure you want to continue connecting?` → escribe **`yes`**.
+
+> ⚠️ El usuario es **`anuncial`**, NO `enlixpe` (ese es el de la base de datos).
+> Si prefieres no usar la terminal local, también puedes entrar por **cPanel → Terminal**.
+
+Una vez dentro, despliega:
+
+```bash
+cd public_html
+git pull && bash deploy.sh
+```
+
+---
+
 ## Día a día: subir cambios a producción
 
 **En tu PC** (editas y subes a GitHub):
