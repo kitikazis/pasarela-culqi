@@ -52,6 +52,7 @@ flowchart TD
     E --> F{"¿Pagado?"}
     F -->|"Sí"| G["Evento PaymentConfirmed"]
     F -->|"Pendiente"| J["Orden generada<br/>(se confirma por webhook)"]
+    F -->|"No / rechazado"| M["Muestra error<br/>(permite reintentar)"]
     G --> H["GrantCreditsOnPayment:<br/>suma créditos al usuario"]
     G --> I["NotifyAdminOnPayment:<br/>correo al administrador"]
 
