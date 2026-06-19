@@ -38,7 +38,8 @@ Plataforma de **anuncios clasificados** para Perú con **pasarela de pagos Culqi
 - **20 créditos gratis** al crear la cuenta (regalo de bienvenida).
 - **Comprar un plan** (paquete de créditos) pagando con **tarjeta, Yape, billeteras, banca móvil, agente, PagoEfectivo o Cuotéalo**. *(Botones ocultos por ahora; el flujo existe.)*
 - **Publicar anuncios** (gasta 1 crédito por anuncio). Incluye categoría, descripción (máx. 144 caracteres), teléfono y cobertura geográfica.
-- **Gestionar "Mis anuncios":** activar / desactivar / eliminar, ver vistas y saldo de créditos.
+- **Gestionar "Mis anuncios":** activar / desactivar / eliminar, ver vistas y saldo de créditos. La lista está **paginada** (escala a miles de anuncios).
+- **Papelera:** al eliminar, el anuncio no se borra de verdad (*soft delete*); va a la **Papelera**, donde se puede **restaurar dentro de 30 días**. Después se borra solo.
 
 ### Moderación automática
 - Al publicar, el contenido pasa por un **filtro de moderación** (groserías + servicios para adultos) por listas locales, con **IA opcional (Google Perspective)**. Si el texto no se permite, aparece un **modal de advertencia** y no se publica.
@@ -46,6 +47,7 @@ Plataforma de **anuncios clasificados** para Perú con **pasarela de pagos Culqi
 ### Como administrador
 - **Aviso por correo** cada vez que se confirma un pago (a los correos de `ADMIN_EMAILS`).
 - **Devoluciones (refunds)** de pagos — restringido a los correos definidos en `ADMIN_EMAILS`.
+- **Control de la Papelera** desde el terminal: `php artisan ads:trash` (listar / restaurar / purgar). Los anuncios eliminados quedan en BD (`onlyTrashed()`) listos para un futuro panel admin.
 
 ---
 
@@ -131,6 +133,9 @@ app/
 │   ├── GrantCreditsOnPayment.php     # suma créditos al usuario
 │   └── NotifyAdminOnPayment.php      # avisa por correo a ADMIN_EMAILS
 ├── Mail/PaymentReceivedMail.php      # correo de aviso de pago (Mailable)
+├── Console/Commands/                 # tareas de admin (papelera de anuncios)
+│   ├── PurgeTrashedAds.php           # purga los eliminados de +30 días (cron diario)
+│   └── TrashAds.php                  # ads:trash → listar / restaurar / purgar
 ├── Rules/NoProfanity.php             # regla de validación de contenido
 ├── Models/Ad.php · User.php · Transaction.php · WebhookEvent.php
 └── Providers/AppServiceProvider.php  # eventos + rate limiters
@@ -215,11 +220,13 @@ Defensa en capas, ya implementada:
 ### Anuncios
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/api/ads` | Lista pública de anuncios (JSON) |
-| GET | `/mis-anuncios/datos` | Anuncios del usuario logueado |
+| GET | `/api/ads` | Lista pública (JSON) — **paginada y filtrada en servidor** (`cat`, `dep`, `prov`, `dist`, `q`, `page`) |
+| GET | `/mis-anuncios/datos` | Anuncios del usuario (paginado + conteos; `status`, `page`) |
+| GET | `/mis-anuncios/papelera` | Papelera del usuario (eliminados ≤ 30 días) |
 | POST | `/anuncios` | Publicar (gasta 1 crédito) |
 | PATCH | `/anuncios/{ad}` | Activar / desactivar (propio) |
-| DELETE | `/anuncios/{ad}` | Eliminar (propio) |
+| DELETE | `/anuncios/{ad}` | Eliminar → soft delete (Papelera) |
+| PATCH | `/anuncios/{id}/restaurar` | Restaurar un anuncio de la Papelera |
 
 ### Pagos (web, con CSRF)
 | Método | Ruta | Descripción |
@@ -353,6 +360,17 @@ php artisan tinker --execute="App\Models\User::where('email','x@y.com')->first()
 **Editar palabras bloqueadas:** edita los arrays en [`config/moderation.php`](config/moderation.php).
 
 **Activar la IA de moderación:** `PERSPECTIVE_ENABLED=true` + `PERSPECTIVE_API_KEY=...` en `.env`.
+
+**Papelera de anuncios (soft delete):**
+```bash
+php artisan ads:trash                 # lista los eliminados (con días restantes)
+php artisan ads:trash --restore=ID    # restaura uno
+php artisan ads:trash --purge=ID      # lo borra definitivamente
+php artisan ads:purge-trash           # borra todos los de +30 días (lo hace el cron diario)
+```
+> La purga automática necesita el cron del scheduler en cPanel — ver [`DEPLOY.md`](DEPLOY.md).
+
+**Poblar anuncios de demo:** `php artisan db:seed --class=AdsSeeder` (la cantidad se ajusta en el seeder).
 
 ---
 

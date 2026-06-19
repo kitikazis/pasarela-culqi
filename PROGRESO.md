@@ -1,6 +1,6 @@
 # 📋 Progreso — anuncialo.pe (Clasificados + Pasarela Culqi)
 
-> Última actualización: **2026-06-18**.
+> Última actualización: **2026-06-19**.
 > Estado: **en producción (sandbox Culqi)** en `https://anuncialo.pe`.
 > Modelo de negocio actual: **créditos de publicación** — el usuario nuevo recibe **20 créditos gratis** al registrarse; los planes de pago están **ocultos por ahora** (el checkout sigue funcionando por dentro).
 
@@ -62,6 +62,16 @@
 - **Rediseño premium del frontend**: design system con paleta única (azul/ámbar/verde), tipografía **Inter**, iconos **Lucide** (sin Font Awesome ni emojis), logos oficiales de Google/Microsoft. Propagado a home, publicar, mis-anuncios, completar-perfil y checkout. Mis anuncios en **cuadrícula compacta**.
 - **20 créditos gratis** al registrarse + **planes ocultos** por ahora.
 
+### 2026-06-19 — Migración de hosting, rendimiento y Papelera
+- **Migración a un cPanel nuevo** (cuenta `anuncial`): base `anuncial_culqi_bd` creada, `.env` actualizado, tablas migradas. SSH/Terminal documentado (usuario `anuncial`).
+- **Rendimiento (escala a miles de anuncios):**
+  - `/api/ads` ahora **filtra y pagina en el servidor** (24 por página) en vez de mandar cientos al navegador. Búsqueda con *debounce* y paginación con ventana.
+  - `/mis-anuncios/datos` también **paginado** + conteos calculados en BD.
+  - **Índices compuestos** en `ads` (`status,created_at` · `status,category,created_at` · `status,department` · `coverage`).
+- **Papelera de anuncios:** eliminar = **soft delete** (`deleted_at`, queda en BD para el futuro panel admin). Pestaña **Papelera** con restaurar dentro de **30 días**; luego el comando `ads:purge-trash` (programado a diario) los borra de verdad.
+- **Herramientas de admin (terminal):** `ads:trash` (listar/restaurar/purgar) y `ads:purge-trash`.
+- **Seeder de demo** `AdsSeeder` (`php artisan db:seed --class=AdsSeeder`) para poblar anuncios de prueba.
+
 ---
 
 ## ✅ Estado actual — hecho y funcionando
@@ -95,7 +105,9 @@
 
 ### Frontend
 - Rediseño premium aplicado a las 5 páginas (Inter + Lucide + paleta única).
-- Home con anuncios reales, filtros y búsqueda; Publicar, Mis anuncios, Completar perfil; Checkout Blade.
+- Home con anuncios reales, filtros y búsqueda **paginados en el servidor**.
+- Mis anuncios paginado + pestaña **Papelera** (restaurar / días restantes).
+- Publicar, Completar perfil; Checkout Blade.
 
 ---
 
@@ -108,10 +120,14 @@
 ### 🔴 2. Rotar secretos expuestos
 Password de BD y `GOOGLE_CLIENT_SECRET` (se compartieron varias veces). Rotar por precaución.
 
-### 🟡 3. Paginación real de `/api/ads`
-Hoy hay un `->limit(500)` interino + paginación del lado del cliente. Hacer paginación en servidor (y ajustar el front).
+### ✅ 3. Paginación real de `/api/ads` — HECHO (2026-06-19)
+Server-side en home y mis-anuncios + índices compuestos. (Pendiente menor: índice FULLTEXT para la búsqueda, hoy usa `LIKE`.)
 
-### 🟡 4. Probar el webhook end-to-end
+### 🔴 4. Configurar el CRON del scheduler en cPanel
+La purga de la Papelera (`ads:purge-trash`) necesita un cron que dispare el scheduler:
+`* * * * * cd ~/public_html && php artisan schedule:run >> /dev/null 2>&1`. Ver [`DEPLOY.md`](DEPLOY.md).
+
+### 🟡 5. Probar el webhook end-to-end
 Comprobar que una orden PagoEfectivo pase de `pending` → `paid` sola cuando Culqi avisa.
 
 ### 🟢 5. Go-live real (cuando se quiera cobrar)

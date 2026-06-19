@@ -226,3 +226,35 @@ https://anuncialo.pe/culqi/webhook
 
 Eventos: `charge.creation.succeeded` y `order.status.succeeded`.
 El endpoint ya valida idempotencia y re-consulta el recurso a Culqi (anti-spoofing).
+
+---
+
+## Tareas programadas (cron del scheduler)
+
+La **purga automática de la Papelera** (borra los anuncios con +30 días eliminados)
+corre vía el scheduler de Laravel. Para que se ejecute, hace falta **un único cron**
+en cPanel → **Cron Jobs** que dispare el scheduler cada minuto:
+
+```
+* * * * * cd ~/public_html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+> Ese cron maneja **todas** las tareas programadas (`routes/console.php`), no solo la purga.
+> Si `php` no está en el PATH, usa la ruta completa (ej. `/usr/local/bin/php` o la que
+> indique cPanel → *Select PHP Version*).
+
+### Comandos de mantenimiento (papelera de anuncios)
+
+```bash
+php artisan ads:trash                  # lista los anuncios eliminados (papelera)
+php artisan ads:trash --user=x@y.com   # solo los de un usuario
+php artisan ads:trash --restore=ID     # restaura uno
+php artisan ads:trash --purge=ID       # lo borra definitivamente
+php artisan ads:purge-trash            # borra todos los de +30 días (lo hace el cron)
+```
+
+### Poblar anuncios de demostración
+
+```bash
+php artisan db:seed --class=AdsSeeder  # crea anuncios de prueba (cantidad en el seeder)
+```
