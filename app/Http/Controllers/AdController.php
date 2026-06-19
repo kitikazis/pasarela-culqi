@@ -63,6 +63,9 @@ class AdController extends Controller
     /** Cuántos anuncios por página devuelve la API pública. */
     private const PER_PAGE = 24;
 
+    /** Días que un anuncio eliminado vive en la Papelera antes del borrado definitivo. */
+    private const TRASH_DAYS = 30;
+
     /**
      * Lista pública de anuncios activos — FILTRADA y PAGINADA en el servidor.
      * Acepta query params: cat, dep, prov, dist, q (búsqueda), page.
@@ -172,7 +175,10 @@ class AdController extends Controller
         return response()->json(['success' => true, 'status' => $ad->status]);
     }
 
-    /** Elimina (soft delete) un anuncio propio. */
+    /**
+     * Elimina un anuncio propio. NO se borra de verdad: es un soft delete
+     * (se llena deleted_at). Queda en la Papelera 30 días y luego se purga.
+     */
     public function destroy(Ad $ad): JsonResponse
     {
         if (! $this->ownsAd($ad)) {
@@ -180,6 +186,56 @@ class AdController extends Controller
         }
 
         $ad->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Papelera: anuncios que el usuario eliminó en los últimos 30 días
+     * (recuperables). Paginado, como las demás listas.
+     */
+    public function trashed(): JsonResponse
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['authenticated' => false], 401);
+        }
+
+        $ads = $user->ads()
+            ->onlyTrashed()
+            ->where('deleted_at', '>=', now()->subDays(self::TRASH_DAYS))
+            ->orderByDesc('deleted_at')
+            ->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'authenticated' => true,
+            'ads' => collect($ads->items())->map(fn (Ad $ad) => [
+                'id'     => $ad->id,
+                'cat'    => $ad->category,
+                'text'   => e($ad->description),
+                'dep'    => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
+                'prov'   => e($ad->province),
+                'dist'   => e($ad->district),
+                'phone'  => $ad->phone,
+                'date'   => $ad->created_at?->toDateString(),
+                // Días que faltan para el borrado definitivo.
+                'expira' => max(0, self::TRASH_DAYS - (int) $ad->deleted_at->diffInDays(now())),
+            ]),
+            'page'  => $ads->currentPage(),
+            'pages' => $ads->lastPage(),
+            'total' => $ads->total(),
+        ]);
+    }
+
+    /** Restaura un anuncio que el usuario había eliminado (mientras siga en la Papelera). */
+    public function restore(int $id): JsonResponse
+    {
+        $ad = Ad::withTrashed()->find($id);
+        if (! $ad || ! $this->ownsAd($ad)) {
+            return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        $ad->restore();
 
         return response()->json(['success' => true]);
     }

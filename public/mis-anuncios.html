@@ -93,6 +93,7 @@
       <button class="cat-pill active" data-status="todos">Todos</button>
       <button class="cat-pill" data-status="activo">Activos</button>
       <button class="cat-pill" data-status="inactivo">Inactivos</button>
+      <button class="cat-pill" data-status="papelera">Papelera</button>
     </div>
 
     <!-- Lista -->
@@ -225,7 +226,7 @@ function renderList() {
           body: JSON.stringify({ status: nuevo }),
         });
         if (res.ok) {
-          loadPage();   // refresca la página actual + conteos desde la BD
+          reload();   // refresca la página actual + conteos desde la BD
         } else {
           alert('No se pudo actualizar el anuncio.');
           btn.disabled = false;
@@ -270,7 +271,7 @@ function renderMyPagination() {
   pag.querySelectorAll('a.page-link').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
     const p = parseInt(a.dataset.page);
-    if (!isNaN(p) && p >= 1 && p <= totalPages && p !== current) { STATE.page = p; loadPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (!isNaN(p) && p >= 1 && p <= totalPages && p !== current) { STATE.page = p; reload(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   }));
 }
 
@@ -294,6 +295,82 @@ async function loadPage() {
   renderList();
 }
 
+/* Carga la Papelera (anuncios eliminados, restaurables 30 días). */
+async function loadTrash() {
+  const params = new URLSearchParams();
+  params.set('page', STATE.page);
+  let data;
+  try {
+    const res = await fetch(`/mis-anuncios/papelera?${params.toString()}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    data = await res.json();
+  } catch (e) { data = { ads: [], page: 1, pages: 1 }; }
+  STATE.pages = data.pages || 1;
+  if ((data.ads || []).length === 0 && STATE.page > STATE.pages) { STATE.page = STATE.pages; return loadTrash(); }
+  STATE.page = data.page || 1;
+  MY_ADS = data.ads || [];
+  renderTrashList();
+}
+
+/* Recarga la vista actual (lista normal o papelera). */
+function reload() {
+  return STATE.status === 'papelera' ? loadTrash() : loadPage();
+}
+
+/* Render de la Papelera: cada anuncio con "Restaurar" y cuándo se borra. */
+function renderTrashList() {
+  const list = document.getElementById('adsList');
+  if (MY_ADS.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <i data-lucide="trash-2"></i>
+        <h5>La papelera está vacía</h5>
+        <p class="mb-0">Aquí aparecen los anuncios que elimines. Se borran solos a los 30 días.</p>
+      </div>`;
+    document.getElementById('pagination').innerHTML = '';
+    renderIcons();
+    return;
+  }
+
+  list.innerHTML = MY_ADS.map(a => `
+    <article class="my-ad-row inactive" data-id="${a.id}">
+      <div class="my-ad-body">
+        <div class="my-ad-head">
+          <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
+          <span class="status-badge inactive"><i data-lucide="trash-2" style="width:12px;height:12px;"></i> En papelera</span>
+        </div>
+        <p class="my-ad-text">${a.text}</p>
+        <div class="my-ad-meta">
+          <span><i data-lucide="map-pin"></i>${formatLocation(a)}</span>
+          <span><i data-lucide="clock"></i>Se elimina en ${a.expira} día${a.expira === 1 ? '' : 's'}</span>
+        </div>
+      </div>
+      <div class="my-ad-actions">
+        <button class="btn btn-outline-success" data-action="restore" data-id="${a.id}">
+          <i data-lucide="rotate-ccw"></i> Restaurar
+        </button>
+      </div>
+    </article>
+  `).join('');
+
+  renderIcons();
+  renderMyPagination();
+
+  list.querySelectorAll('[data-action="restore"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/anuncios/${btn.dataset.id}/restaurar`, {
+          method: 'PATCH',
+          headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': csrfToken() },
+          credentials: 'same-origin',
+        });
+        if (res.ok) { loadTrash(); }
+        else { alert('No se pudo restaurar el anuncio.'); btn.disabled = false; }
+      } catch (e) { alert('Error de conexión. Intenta nuevamente.'); btn.disabled = false; }
+    });
+  });
+}
+
 document.getElementById('confirmDelete').addEventListener('click', async () => {
   const id  = STATE.deleteId;
   const btn = document.getElementById('confirmDelete');
@@ -310,7 +387,7 @@ document.getElementById('confirmDelete').addEventListener('click', async () => {
   }
   bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
   btn.disabled = false;
-  loadPage();
+  reload();
 });
 
 document.querySelectorAll('#statusTabs .cat-pill').forEach(p => {
@@ -319,7 +396,7 @@ document.querySelectorAll('#statusTabs .cat-pill').forEach(p => {
     p.classList.add('active');
     STATE.status = p.dataset.status;
     STATE.page = 1;
-    loadPage();
+    reload();
   });
 });
 

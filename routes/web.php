@@ -47,10 +47,20 @@ Route::patch('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'updat
     ->middleware('throttle:per-user')
     ->name('ads.update');
 
-// Eliminar un anuncio propio.
+// Eliminar un anuncio propio (soft delete → Papelera).
 Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'destroy'])
     ->middleware('throttle:per-user')
     ->name('ads.destroy');
+
+// Papelera: anuncios eliminados por el usuario (restaurables 30 días).
+Route::get('/mis-anuncios/papelera', [App\Http\Controllers\AdController::class, 'trashed'])
+    ->middleware('throttle:per-user')
+    ->name('ads.trashed');
+
+// Restaurar un anuncio de la Papelera.
+Route::patch('/anuncios/{id}/restaurar', [App\Http\Controllers\AdController::class, 'restore'])
+    ->middleware('throttle:per-user')
+    ->name('ads.restore');
 
 /*
 |--------------------------------------------------------------------------
