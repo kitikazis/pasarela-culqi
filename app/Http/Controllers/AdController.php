@@ -60,22 +60,40 @@ class AdController extends Controller
         ], 201);
     }
 
+    /** Cuántos anuncios por página devuelve la API pública. */
+    private const PER_PAGE = 24;
+
     /**
-     * Lista pública de anuncios activos.
-     * Los DESTACADOS (featured vigente) aparecen primero.
+     * Lista pública de anuncios activos — FILTRADA y PAGINADA en el servidor.
+     * Acepta query params: cat, dep, prov, dist, q (búsqueda), page.
+     * Así la home solo recibe una página (no cientos), aunque haya miles en BD.
      *
      * Los campos de texto del usuario (text/dep/prov/dist) se devuelven
      * HTML-escapados con e() para prevenir XSS almacenado: el frontend los
      * inserta con innerHTML. NO volver a escaparlos en el front (doble-encode).
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $cat  = $request->query('cat');
+        $dep  = $request->query('dep');
+        $prov = $request->query('prov');
+        $dist = $request->query('dist');
+        $term = trim((string) $request->query('q', ''));
+
         $ads = Ad::where('status', 'active')
+            ->when($cat && $cat !== 'todos', fn ($qry) => $qry->where('category', $cat))
+            // "Nacional" = anuncios de cobertura nacional; cualquier otro = ese departamento.
+            ->when($dep === 'Nacional', fn ($qry) => $qry->where('coverage', 'nacional'))
+            ->when($dep && $dep !== 'Nacional', fn ($qry) => $qry->where('department', $dep))
+            ->when($prov, fn ($qry) => $qry->where('province', $prov))
+            ->when($dist, fn ($qry) => $qry->where('district', $dist))
+            ->when($term !== '', fn ($qry) => $qry->where('description', 'like', '%'.$term.'%'))
             ->orderByRaw('CASE WHEN featured_until IS NOT NULL AND featured_until > NOW() THEN 0 ELSE 1 END')
             ->orderByDesc('created_at')
-            ->limit(500)   // interino: la home pagina del lado del cliente. TODO: paginación real en servidor.
-            ->get()
-            ->map(fn (Ad $ad) => [
+            ->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'data' => collect($ads->items())->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
                 'cat'      => $ad->category,
                 'text'     => e($ad->description),
@@ -85,9 +103,11 @@ class AdController extends Controller
                 'phone'    => $ad->phone,
                 'date'     => $ad->created_at?->toDateString(),
                 'featured' => $ad->isFeatured(),
-            ]);
-
-        return response()->json($ads);
+            ]),
+            'page'  => $ads->currentPage(),
+            'pages' => $ads->lastPage(),
+            'total' => $ads->total(),
+        ]);
     }
 
     /** Anuncios del usuario autenticado (para "Mis anuncios"). */
