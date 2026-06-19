@@ -110,18 +110,34 @@ class AdController extends Controller
         ]);
     }
 
-    /** Anuncios del usuario autenticado (para "Mis anuncios"). */
-    public function mine(): JsonResponse
+    /**
+     * Anuncios del usuario autenticado (para "Mis anuncios") — PAGINADO.
+     * Acepta query params: status (activo|inactivo|todos), page.
+     * Devuelve también los conteos (total/activos/inactivos) calculados en BD,
+     * para no traer todos los anuncios solo para contar.
+     */
+    public function mine(Request $request): JsonResponse
     {
         $user = Auth::user();
         if (! $user) {
             return response()->json(['authenticated' => false], 401);
         }
 
+        // Conteos en BD (no se descargan los anuncios para contarlos).
+        $total     = $user->ads()->count();
+        $activos   = $user->ads()->where('status', 'active')->count();
+        $inactivos = $total - $activos;
+
+        $status = $request->query('status');
         $ads = $user->ads()
+            ->when($status === 'activo', fn ($qry) => $qry->where('status', 'active'))
+            ->when($status === 'inactivo', fn ($qry) => $qry->where('status', 'inactive'))
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Ad $ad) => [
+            ->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'authenticated' => true,
+            'ads' => collect($ads->items())->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
                 'cat'      => $ad->category,
                 'text'     => e($ad->description),
@@ -133,9 +149,11 @@ class AdController extends Controller
                 'status'   => $ad->status === 'active' ? 'activo' : 'inactivo',
                 'views'    => $ad->views,
                 'featured' => $ad->isFeatured(),
-            ]);
-
-        return response()->json(['authenticated' => true, 'ads' => $ads]);
+            ]),
+            'page'   => $ads->currentPage(),
+            'pages'  => $ads->lastPage(),
+            'counts' => ['total' => $total, 'activos' => $activos, 'inactivos' => $inactivos],
+        ]);
     }
 
     /** Activa o desactiva un anuncio propio. */

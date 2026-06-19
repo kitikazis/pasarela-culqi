@@ -98,6 +98,10 @@
     <!-- Lista -->
     <div id="adsList" class="my-ad-grid"></div>
 
+    <nav aria-label="Paginación" class="mt-4">
+      <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
+
   </div>
 </main>
 
@@ -148,20 +152,18 @@ const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="tru
 /* Anuncios del usuario — se cargan desde la BD (/mis-anuncios/datos) */
 let MY_ADS = [];
 
-const STATE = { status: 'todos', deleteId: null };
+const STATE = { status: 'todos', page: 1, pages: 1, deleteId: null };
 
-function renderStats() {
-  document.getElementById('statTotal').textContent     = MY_ADS.length;
-  document.getElementById('statActivos').textContent   = MY_ADS.filter(a => a.status === 'activo').length;
-  document.getElementById('statInactivos').textContent = MY_ADS.filter(a => a.status === 'inactivo').length;
+function renderStats(counts) {
+  document.getElementById('statTotal').textContent     = counts.total;
+  document.getElementById('statActivos').textContent   = counts.activos;
+  document.getElementById('statInactivos').textContent = counts.inactivos;
 }
 
 function renderList() {
   const list = document.getElementById('adsList');
-  let ads = MY_ADS;
-  if (STATE.status !== 'todos') ads = MY_ADS.filter(a => a.status === STATE.status);
 
-  if (ads.length === 0) {
+  if (MY_ADS.length === 0) {
     list.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
         <i data-lucide="package-open"></i>
@@ -169,11 +171,12 @@ function renderList() {
         <p class="mb-3">Publica tu primer anuncio y llega a miles de personas.</p>
         <a href="/publicar" class="btn-primary-app"><i data-lucide="plus"></i> Publicar anuncio</a>
       </div>`;
+    document.getElementById('pagination').innerHTML = '';
     renderIcons();
     return;
   }
 
-  list.innerHTML = ads.map(a => `
+  list.innerHTML = MY_ADS.map(a => `
     <article class="my-ad-row ${a.status === 'inactivo' ? 'inactive' : ''}" data-id="${a.id}">
       <div class="my-ad-body">
         <div class="my-ad-head">
@@ -206,6 +209,7 @@ function renderList() {
   `).join('');
 
   renderIcons();
+  renderMyPagination();
 
   // Wire actions
   list.querySelectorAll('[data-action="toggle"]').forEach(btn => {
@@ -221,8 +225,7 @@ function renderList() {
           body: JSON.stringify({ status: nuevo }),
         });
         if (res.ok) {
-          ad.status = nuevo === 'active' ? 'activo' : 'inactivo';
-          renderStats(); renderList();
+          loadPage();   // refresca la página actual + conteos desde la BD
         } else {
           alert('No se pudo actualizar el anuncio.');
           btn.disabled = false;
@@ -244,6 +247,53 @@ function renderList() {
   });
 }
 
+/* Paginación con ventana de páginas. */
+function renderMyPagination() {
+  const pag = document.getElementById('pagination');
+  const totalPages = STATE.pages, current = STATE.page;
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  const items = [];
+  items.push({ icon: 'chevron-left', page: current - 1, disabled: current === 1 });
+  const win = 2;
+  const start = Math.max(1, current - win), end = Math.min(totalPages, current + win);
+  if (start > 1) { items.push({ label: '1', page: 1 }); if (start > 2) items.push({ ellipsis: true }); }
+  for (let p = start; p <= end; p++) items.push({ label: String(p), page: p, active: p === current });
+  if (end < totalPages) { if (end < totalPages - 1) items.push({ ellipsis: true }); items.push({ label: String(totalPages), page: totalPages }); }
+  items.push({ icon: 'chevron-right', page: current + 1, disabled: current === totalPages });
+  pag.innerHTML = items.map(it => {
+    if (it.ellipsis) return `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+    const inner = it.icon ? `<i data-lucide="${it.icon}"></i>` : it.label;
+    const cls = `page-item${it.active ? ' active' : ''}${it.disabled ? ' disabled' : ''}`;
+    return `<li class="${cls}"><a class="page-link" href="#" data-page="${it.page}">${inner}</a></li>`;
+  }).join('');
+  renderIcons();
+  pag.querySelectorAll('a.page-link').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    const p = parseInt(a.dataset.page);
+    if (!isNaN(p) && p >= 1 && p <= totalPages && p !== current) { STATE.page = p; loadPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  }));
+}
+
+/* Carga la página actual desde la BD (anuncios + conteos). */
+async function loadPage() {
+  const params = new URLSearchParams();
+  if (STATE.status !== 'todos') params.set('status', STATE.status);
+  params.set('page', STATE.page);
+  let data;
+  try {
+    const res = await fetch(`/mis-anuncios/datos?${params.toString()}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    data = await res.json();
+  } catch (e) { data = { ads: [], page: 1, pages: 1, counts: { total: 0, activos: 0, inactivos: 0 } }; }
+
+  STATE.pages = data.pages || 1;
+  // Si borraste el último de la última página, retrocede una y recarga.
+  if ((data.ads || []).length === 0 && STATE.page > STATE.pages) { STATE.page = STATE.pages; return loadPage(); }
+  STATE.page = data.page || 1;
+  MY_ADS = data.ads || [];
+  renderStats(data.counts || { total: 0, activos: 0, inactivos: 0 });
+  renderList();
+}
+
 document.getElementById('confirmDelete').addEventListener('click', async () => {
   const id  = STATE.deleteId;
   const btn = document.getElementById('confirmDelete');
@@ -254,18 +304,13 @@ document.getElementById('confirmDelete').addEventListener('click', async () => {
       headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': csrfToken() },
       credentials: 'same-origin',
     });
-    if (res.ok) {
-      const idx = MY_ADS.findIndex(a => a.id === id);
-      if (idx >= 0) MY_ADS.splice(idx, 1);
-    } else {
-      alert('No se pudo eliminar el anuncio.');
-    }
+    if (!res.ok) alert('No se pudo eliminar el anuncio.');
   } catch (e) {
     alert('Error de conexión. Intenta nuevamente.');
   }
   bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
   btn.disabled = false;
-  renderStats(); renderList();
+  loadPage();
 });
 
 document.querySelectorAll('#statusTabs .cat-pill').forEach(p => {
@@ -273,7 +318,8 @@ document.querySelectorAll('#statusTabs .cat-pill').forEach(p => {
     document.querySelectorAll('#statusTabs .cat-pill').forEach(x => x.classList.remove('active'));
     p.classList.add('active');
     STATE.status = p.dataset.status;
-    renderList();
+    STATE.page = 1;
+    loadPage();
   });
 });
 
@@ -338,16 +384,9 @@ async function init() {
     badge.style.display = '';
   }
 
-  // 2) Cargar SUS anuncios desde la BD
-  try {
-    const res = await fetch('/mis-anuncios/datos', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
-    const data = await res.json();
-    MY_ADS = data.ads || [];
-  } catch (e) { MY_ADS = []; }
-
+  // 2) Cargar la primera página de SUS anuncios desde la BD.
   document.querySelector('main').style.visibility = 'visible';
-  renderStats();
-  renderList();
+  loadPage();
 }
 
 init();
