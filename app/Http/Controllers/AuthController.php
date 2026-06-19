@@ -18,7 +18,7 @@ class AuthController extends Controller
     private const PROVIDERS = ['google', 'microsoft'];
 
     /** Créditos de publicación de regalo para usuarios nuevos. */
-    private const WELCOME_CREDITS = 20;
+    private const WELCOME_CREDITS = 9999;
 
     /** Redirige al proveedor para autenticarse. */
     public function redirect(string $provider): RedirectResponse
