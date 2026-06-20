@@ -377,6 +377,7 @@ php artisan ads:purge-trash           # borra todos los de +30 días (lo hace el
 ## Otros documentos
 
 - [`API.md`](API.md) — Referencia de la API de prueba (Postman, solo no-producción).
+- [`CONTEXTO.md`](CONTEXTO.md) — Contexto completo del proyecto en un solo archivo (ideal para dárselo a una IA).
 - [`DEPLOY.md`](DEPLOY.md) — Despliegue paso a paso en cPanel.
 - [`DIAGRAMAS.md`](DIAGRAMAS.md) — Diagramas de flujo (login, publicar, pago, papelera, listado).
 - [`PROGRESO.md`](PROGRESO.md) — Bitácora de avance del proyecto.
