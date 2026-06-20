@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'culqi/webhook',
         ]);
 
+        // Cabeceras de seguridad en todas las respuestas (anti-clickjacking, HSTS, etc.).
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         // Alias para proteger acciones sensibles (ej. devoluciones).
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,

@@ -96,5 +96,9 @@ Route::post('/pago/orden/confirmar', [PaymentController::class, 'confirmOrder'])
     ->middleware('throttle:20,1')
     ->name('pago.orden.confirmar');
 
-// Webhook de Culqi — excluido de CSRF en bootstrap/app.php
-Route::post('/culqi/webhook', [PaymentController::class, 'webhook'])->name('culqi.webhook');
+// Webhook de Culqi — excluido de CSRF en bootstrap/app.php.
+// throttle: limita un flood de eventos falsos (cada uno gatilla una consulta a Culqi).
+// La autenticidad se garantiza re-consultando el recurso a Culqi (anti-spoofing en el Action).
+Route::post('/culqi/webhook', [PaymentController::class, 'webhook'])
+    ->middleware('throttle:60,1')
+    ->name('culqi.webhook');

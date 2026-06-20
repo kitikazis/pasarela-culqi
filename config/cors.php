@@ -27,10 +27,12 @@ return [
         'anuncios',
         'anuncios/*',
         'mis-anuncios/datos',
+        'mis-anuncios/papelera',
         'pago/*',
     ],
 
-    'allowed_methods' => ['*'],
+    // Métodos reales que usa el front (con credenciales, evitar el comodín '*').
+    'allowed_methods' => ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 
     // Solo estos orígenes pueden hacer peticiones cruzadas. Default: tu dominio.
     'allowed_origins' => array_filter(array_map(
@@ -40,7 +42,7 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['Accept', 'Content-Type', 'Origin', 'X-Requested-With', 'X-CSRF-TOKEN', 'X-XSRF-TOKEN'],
 
     'exposed_headers' => [],
 

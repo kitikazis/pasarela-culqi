@@ -268,3 +268,38 @@ php artisan ads:purge-trash            # borra todos los de +30 días (lo hace e
 ```bash
 php artisan db:seed --class=AdsSeeder  # crea anuncios de prueba (cantidad en el seeder)
 ```
+
+---
+
+## Seguridad en producción
+
+El código ya trae CORS restringido, rate limiting, CSRF, escape XSS, validación,
+cabeceras de seguridad (middleware `SecurityHeaders`) y throttle en el webhook.
+Faltan **2 ajustes que dependen del servidor**:
+
+### 1. Cookie de sesión segura (en el `.env` de producción)
+
+```env
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
+```
+Luego `php artisan config:cache`. Así la cookie de sesión nunca viaja por HTTP.
+
+### 2. Forzar HTTPS (redirección + HSTS) en `.htaccess`
+
+En `~/public_html/.htaccess`, dentro de `<IfModule mod_rewrite.c>`, antes de la regla
+que redirige a `public/`:
+
+```apache
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+```
+
+> La cabecera **HSTS** ya la envía la app (middleware `SecurityHeaders`) cuando la
+> conexión es HTTPS, así que con la redirección de arriba queda completo.
+
+### 3. Rotar secretos expuestos
+
+Si alguna credencial se compartió (chat, captura, etc.), rótala:
+- **Google Client Secret** → Google Cloud Console → Credenciales → regenerar.
+- **Contraseña de BD** → cPanel → MySQL Databases → Change Password (y actualizar `.env`).

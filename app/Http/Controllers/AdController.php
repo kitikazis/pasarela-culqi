@@ -90,7 +90,8 @@ class AdController extends Controller
             ->when($dep && $dep !== 'Nacional', fn ($qry) => $qry->where('department', $dep))
             ->when($prov, fn ($qry) => $qry->where('province', $prov))
             ->when($dist, fn ($qry) => $qry->where('district', $dist))
-            ->when($term !== '', fn ($qry) => $qry->where('description', 'like', '%'.$term.'%'))
+            // Escapa los comodines del usuario (% _ \) para que no actúen como LIKE.
+            ->when($term !== '', fn ($qry) => $qry->where('description', 'like', '%'.addcslashes($term, '%_\\').'%'))
             ->orderByRaw('CASE WHEN featured_until IS NOT NULL AND featured_until > NOW() THEN 0 ELSE 1 END')
             ->orderByDesc('created_at')
             ->paginate(self::PER_PAGE);
