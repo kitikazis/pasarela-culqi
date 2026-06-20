@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Cada día, borra definitivamente los anuncios con +30 días en la Papelera.
 Schedule::command('ads:purge-trash')->daily();
+
+// Cada día, registra métricas de salud en storage/logs/health.log.
+Schedule::command('health:check')->daily()->appendOutputTo(storage_path('logs/health.log'));

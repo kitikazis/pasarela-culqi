@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Cabeceras de seguridad en todas las respuestas (anti-clickjacking, HSTS, etc.).
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
+        // Profiling de peticiones lentas / N+1 (se auto-desactiva en producción).
+        $middleware->append(\App\Http\Middleware\LogQueryMetrics::class);
+
         // Alias para proteger acciones sensibles (ej. devoluciones).
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
