@@ -681,6 +681,16 @@ h1, h2, h3, h4, h5 {
   .ad-text { font-size: .8rem; }
 }
 
+/* Móvil/tablet: barra superior SÓLIDA (sin transparencia ni blur) para que el
+   contenido no se transparente por detrás al hacer scroll. */
+@media (max-width: 991.98px) {
+  .app-navbar {
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* Filtros de ubicación del navbar (desktop) */
 @media (min-width: 992px) {
   .app-navbar .location-filter-nav .form-select {
