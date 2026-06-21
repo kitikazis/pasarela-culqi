@@ -272,6 +272,22 @@
                 if (window.lucide) lucide.createIcons();
             }
 
+            /* Placeholders animados mientras cargan los anuncios. */
+            function renderSkeletons(n = 8) {
+                document.getElementById("adsGrid").innerHTML = Array.from({ length: n })
+                    .map(() => `
+                        <div class="skel-card">
+                          <div class="skeleton skel-badge"></div>
+                          <div class="skeleton skel-line"></div>
+                          <div class="skeleton skel-line w-80"></div>
+                          <div class="skel-foot">
+                            <div class="skeleton skel-line w-60"></div>
+                            <div class="skeleton skel-line w-60"></div>
+                          </div>
+                        </div>`)
+                    .join("");
+            }
+
             /* ===== STATE ===== */
             const STATE = {
                 category: "todos",
@@ -372,6 +388,7 @@
                 params.set("page", STATE.page);
 
                 const seq = ++fetchSeq;
+                renderSkeletons();   // feedback de carga (sobre todo en conexiones lentas)
                 try {
                     const res = await fetch(`/api/ads?${params.toString()}`, {
                         headers: { Accept: "application/json" },

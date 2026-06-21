@@ -48,11 +48,19 @@
 </section>
 
 <!-- ===== FORM ===== -->
-<main class="py-4" style="visibility:hidden;">
+<main class="py-4">
   <div class="container">
     <div class="row">
       <div class="col-lg-8 mx-auto">
-        <form class="form-card" id="adForm" novalidate>
+        <!-- Skeleton mientras se verifica la sesión / créditos -->
+        <div id="formSkeleton" class="form-card">
+          <div class="skeleton skel-line" style="height:18px;width:45%;margin-bottom:1.4rem;"></div>
+          <div class="skeleton skel-line" style="margin-bottom:.7rem;"></div>
+          <div class="skeleton skel-line" style="height:90px;margin-bottom:1.2rem;"></div>
+          <div class="skeleton skel-line w-60" style="margin-bottom:1.2rem;"></div>
+          <div class="skel-btns"><div class="skeleton skel-btn"></div><div class="skeleton skel-btn"></div></div>
+        </div>
+        <form class="form-card" id="adForm" style="display:none" novalidate>
 
           <!-- Categoría -->
           <div class="mb-3">
@@ -230,7 +238,9 @@ const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="tru
   // const sub = document.getElementById('publicarSubtitle');
   // if (sub) sub.textContent = `Tienes ${credits} publicación${credits === 1 ? '' : 'es'} disponible${credits === 1 ? '' : 's'}.`;
 
-  document.querySelector('main').style.visibility = 'visible';
+  // Oculta el skeleton y muestra el formulario real.
+  document.getElementById('formSkeleton').style.display = 'none';
+  document.getElementById('adForm').style.display = '';
 })();
 /* ===== Selects encadenados ===== */
 const depSel  = document.getElementById('departamento');
