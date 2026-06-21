@@ -654,14 +654,31 @@ h1, h2, h3, h4, h5 {
 
 /* Móvil (≤575px) */
 @media (max-width: 575.98px) {
-  .ad-grid { gap: .85rem; }
-  .ad-card { min-height: auto; padding: 1.1rem; border-radius: 12px; }
+  /* Cuadrícula de 2 columnas estilo marketplace (Temu) en móvil. */
+  .ad-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  .ad-card {
+    min-height: auto;
+    padding: .8rem;
+    border-radius: 12px;
+    gap: .55rem;
+  }
   .ad-card:active { transform: scale(.99); }
-  .ad-text { font-size: .925rem; }
+  .badge-cat { font-size: .6rem; padding: .25rem .45rem; }
+  .ad-text { font-size: .82rem; line-height: 1.4; -webkit-line-clamp: 3; }
+  .ad-meta { padding-top: .55rem; gap: .3rem; font-size: .72rem; }
+  .ad-meta-row .lucide { width: 13px; height: 13px; }
+  .ad-meta-row .phone { font-size: .78rem; }
   .cat-pill { padding: .5rem 1rem; }
   #resultsTitle { font-size: 1.15rem; }
   .user-stats { gap: .6rem; }
   .stat-box { padding: 1rem; }
+}
+
+/* Teléfonos muy angostos (≤360px): un poco más compacto aún. */
+@media (max-width: 360px) {
+  .ad-grid { gap: .5rem; }
+  .ad-card { padding: .7rem; }
+  .ad-text { font-size: .8rem; }
 }
 
 /* Filtros de ubicación del navbar (desktop) */
