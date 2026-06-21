@@ -197,8 +197,9 @@
                 <input type="email" id="email" placeholder="tucorreo@ejemplo.com" autocomplete="email">
             </div>
 
-            <label for="phone">Celular</label>
-            <input type="tel" id="phone" placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric">
+            <label for="phone">Celular <span style="color:#DC2626">*</span></label>
+            <input type="tel" id="phone" placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric" required>
+            <small style="color:var(--muted); font-size:.78rem;">9 dígitos, empieza con 9. Obligatorio para el pago.</small>
 
             <button id="btnPay" type="button" disabled>Selecciona un plan</button>
 
@@ -272,6 +273,11 @@
             document.getElementById('identitySummary').style.display = 'none';
         });
 
+        // Celular: solo dígitos, máximo 9.
+        document.getElementById('phone').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
+        });
+
         // ── Selección de plan ──
         document.querySelectorAll('.plan').forEach(card => {
             card.addEventListener('click', () => {
@@ -313,6 +319,26 @@
 
         async function abrirCheckout() {
             if (!selectedPlan) return;
+
+            // La orden de Culqi exige nombres, apellidos, correo y CELULAR.
+            // Validamos aquí para no fallar en silencio (y perder métodos de pago).
+            const email = val('email'), firstName = val('firstName'),
+                  lastName = val('lastName'), phone = val('phone');
+
+            if (!firstName || !lastName || !email) {
+                // Reabre los campos completos si faltan datos de identidad.
+                document.getElementById('identityFields').style.display = '';
+                document.getElementById('identitySummary').style.display = 'none';
+                mostrar('err', 'Completa tus nombres, apellidos y correo antes de pagar.');
+                return;
+            }
+            if (!/^9\d{8}$/.test(phone)) {
+                mostrar('err', 'Ingresa tu número de celular (9 dígitos, empieza con 9) para continuar.');
+                const p = document.getElementById('phone');
+                p.focus(); p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
             procesando = false;   // nuevo intento de pago
             const btn = document.getElementById('btnPay');
             btn.disabled = true; btn.textContent = 'Preparando...';
