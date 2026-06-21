@@ -84,10 +84,21 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv05", "ss01";
+  /* Blindaje anti-desbordamiento horizontal: nada hace scroll lateral. */
+  overflow-x: clip;
+  max-width: 100%;
 }
 
-body { display: flex; flex-direction: column; min-height: 100vh; }
-main { flex: 1 0 auto; }
+body { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
+main { flex: 1 0 auto; min-width: 0; }
+
+/* Las imágenes nunca desbordan su contenedor. */
+img { max-width: 100%; height: auto; }
+
+/* Los hijos flex pueden encogerse por debajo de su contenido (evita overflow). */
+.app-navbar .container > div,
+.search-wrap,
+.location-filter-nav { min-width: 0; }
 
 a { color: var(--accent); text-decoration: none; transition: color .15s ease; }
 a:hover { color: var(--accent-2); text-decoration: none; }
