@@ -82,7 +82,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Home: filtros / búsqueda / página"] --> B["GET /api/ads?cat&dep&prov&dist&q&page"]
+    A["Home: filtros / búsqueda / página"] --> B["GET /api/publicaciones?cat&dep&prov&dist&q&page"]
     B --> C["AdController@index"]
     C --> D["Filtra en la BD (status=active + filtros)<br/>usa índices compuestos"]
     D --> E["Pagina (24 por página)"]

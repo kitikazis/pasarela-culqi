@@ -35,16 +35,16 @@ pagando con Culqi.
 
 ## 3. Stack tecnológico
 
-| Capa | Tecnología |
-|------|-----------|
-| Backend | **Laravel 12**, PHP 8.2+ |
-| Base de datos | MySQL (`anuncial_culqi_bd` en producción) |
-| Pagos | **Culqi** API v2.0 + Custom Checkout v4 (multipago) vía SDK `culqi/culqi-php` |
-| Auth | Laravel **Socialite** (Google + Microsoft, sin contraseñas) |
-| Frontend público | **HTML/CSS/JS estático** en `public/`, servido por Laravel (PageController) con cache-busting |
-| Frontend checkout | Vista **Blade** (`resources/views/payment/checkout.blade.php`) |
-| Diseño | Design system propio: tipografía **Inter**, iconos **Lucide** (CDN, sin Font Awesome ni emojis), paleta azul/ámbar/verde |
-| Moderación (opcional) | Listas locales + Google Perspective API |
+| Capa                  | Tecnología                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Backend               | **Laravel 12**, PHP 8.2+                                                                                                 |
+| Base de datos         | MySQL (`anuncial_culqi_bd` en producción)                                                                                |
+| Pagos                 | **Culqi** API v2.0 + Custom Checkout v4 (multipago) vía SDK `culqi/culqi-php`                                            |
+| Auth                  | Laravel **Socialite** (Google + Microsoft, sin contraseñas)                                                              |
+| Frontend público      | **HTML/CSS/JS estático** en `public/`, servido por Laravel (PageController) con cache-busting                            |
+| Frontend checkout     | Vista **Blade** (`resources/views/payment/checkout.blade.php`)                                                           |
+| Diseño                | Design system propio: tipografía **Inter**, iconos **Lucide** (CDN, sin Font Awesome ni emojis), paleta azul/ámbar/verde |
+| Moderación (opcional) | Listas locales + Google Perspective API                                                                                  |
 
 > El frontend NO es React/Vue. Son páginas HTML con JS vanilla que llaman a la API por `fetch`.
 
@@ -102,10 +102,12 @@ de negocio (pago → créditos + correo).
 ## 5. Modelo de datos (tablas)
 
 ### `users`
+
 `id`, `name`, `email` (único), `avatar`, `provider` (google|microsoft), `provider_id`,
 **`publish_credits`** (int, créditos para publicar), `email_verified_at`, timestamps.
 
-### `ads`  (usa SoftDeletes → columna `deleted_at`)
+### `ads` (usa SoftDeletes → columna `deleted_at`)
+
 `id`, `user_id` (FK→users, cascadeOnDelete), `category` (venta|compra|trabajo|busca),
 `description` (≤144), `phone` (9 díg., empieza en 9), `coverage`
 (nacional|departamental|provincial|distrital), `department`, `province`, `district`
@@ -114,14 +116,16 @@ de negocio (pago → créditos + correo).
 `created_at`, `featured_until` + compuestos `(status,created_at)`, `(status,category,created_at)`,
 `(status,department)`, `(coverage)`.
 
-### `transactions`  (soft deletes)
+### `transactions` (soft deletes)
+
 `id`, `user_id`, `ad_id` (nullable, legacy), `charge_id`, `order_number`, `payment_method`
 (card|yape|pagoefectivo), `amount` (céntimos), `currency`, `status`
 (paid|pending|failed|refunded), `culqi_response_code`, **`customer_email` (encriptado)**,
 `customer_name`, `card_last4`, `card_brand`, `description`, `metadata` (JSON: order_id, plan…),
 timestamps. Nunca guarda número de tarjeta ni CVV.
 
-### `webhook_events`  (auditoría + idempotencia)
+### `webhook_events` (auditoría + idempotencia)
+
 `id`, `event_id` (único de Culqi), `type`, `resource_id`, `status`
 (received|processed|ignored), `payload` (JSON saneado), `processed_at`, timestamps.
 
@@ -133,16 +137,19 @@ y `metadata.order_id` / `charge_id`.
 ## 6. Flujos principales
 
 ### Registro / Login (OAuth)
+
 `/auth/{provider}/redirect` → proveedor valida → `/auth/{provider}/callback` →
 `User::updateOrCreate` (por email) → si **wasRecentlyCreated** → +9999 créditos → `Auth::login`
 → redirige a `/mis-anuncios`.
 
 ### Publicar anuncio
+
 `/publicar` → ¿sesión? no → login · sí → ¿créditos? no → CTA `/pago` · sí → formulario →
 `POST /anuncios` → validación + **moderación (NoProfanity)** → ¿ok? no → modal de aviso ·
 ok → **transacción atómica** (decremento condicional de 1 crédito + crea anuncio) → 201.
 
 ### Compra de créditos (pago)
+
 `/pago` → elige plan → `POST /pago/orden` (el **monto lo pone el backend** según el plan) →
 abre widget Culqi → paga → `POST /pago/orden/confirmar` → ¿paid? →
 **evento `PaymentConfirmed`** → `GrantCreditsOnPayment` (suma créditos) +
@@ -151,14 +158,16 @@ Camino "No/rechazado" → muestra error y permite reintentar. Anti doble-pago: l
 pago (no se carga token aparte) + overlay que bloquea la pantalla.
 
 ### Eliminar / Papelera
+
 `DELETE /anuncios/{id}` → **soft delete** (`deleted_at`). Pestaña **Papelera** en mis-anuncios
 lista los eliminados ≤30 días con "se borra en X días" + **Restaurar**
 (`PATCH /anuncios/{id}/restaurar`). El comando `ads:purge-trash` (cron diario) borra de verdad
 los de +30 días. Para admin: `php artisan ads:trash`.
 
 ### Listado público (rendimiento)
-`GET /api/ads?cat&dep&prov&dist&q&page` → **filtra y pagina en la BD** (24/página, usa índices)
-→ devuelve solo esa página + total + nº de páginas. La home tiene búsqueda con *debounce* y
+
+`GET /api/publicaciones?cat&dep&prov&dist&q&page` → **filtra y pagina en la BD** (24/página, usa índices)
+→ devuelve solo esa página + total + nº de páginas. La home tiene búsqueda con _debounce_ y
 paginación con ventana. (Diagramas en `DIAGRAMAS.md`.)
 
 ---
@@ -166,22 +175,27 @@ paginación con ventana. (Diagramas en `DIAGRAMAS.md`.)
 ## 7. Rutas / endpoints
 
 ### Páginas (navegador, vía PageController)
+
 `GET /` · `GET /publicar` · `GET /mis-anuncios` · `GET /completar-perfil` · `GET /pago`
 
 ### Auth
+
 `GET /auth/{provider}/redirect` · `GET /auth/{provider}/callback` · `GET /me` · `POST /logout`
 
 ### Anuncios
-`GET /api/ads` (público, paginado/filtrado) · `GET /mis-anuncios/datos` (paginado + conteos) ·
+
+`GET /api/publicaciones` (público, paginado/filtrado) · `GET /mis-anuncios/datos` (paginado + conteos) ·
 `GET /mis-anuncios/papelera` · `POST /anuncios` (publicar) · `PATCH /anuncios/{ad}`
 (activar/desactivar) · `DELETE /anuncios/{ad}` (soft delete) · `PATCH /anuncios/{id}/restaurar`
 
 ### Pagos (web, con CSRF)
+
 `POST /pago/orden` · `POST /pago/cargo` · `POST /pago/orden/confirmar` ·
 `POST /pago/guardar-tarjeta` · `POST /pago/devolucion` (**solo admin**) ·
 `POST /culqi/webhook` (sin CSRF, throttle 60/min)
 
 ### Otros
+
 `GET /api/health` · `GET /up` (health Laravel). Rutas `/api/payment/*` y `/api/transaction/*`
 **solo existen fuera de producción** (pruebas Postman).
 
@@ -212,11 +226,11 @@ paginación con ventana. (Diagramas en `DIAGRAMAS.md`.)
 
 Claves: `APP_ENV` (production en prod), `APP_DEBUG` (false en prod), `APP_URL`,
 `DB_*` (en prod `DB_HOST=localhost`, base `anuncial_culqi_bd`, usuario `anuncial_culqi`),
-`CULQI_PUBLIC_KEY`/`CULQI_SECRET_KEY` (pk_test/sk_test en sandbox; pk_live/sk_live para cobrar),
-`CULQI_RSA_*` (opcional, se activa solo), `GOOGLE_CLIENT_*` + `GOOGLE_REDIRECT_URI`,
-`MICROSOFT_*`, `ADMIN_EMAILS` (correos admin / aviso de pago), `CORS_ALLOWED_ORIGINS`,
-`MAIL_*` (con `log` no envía; SMTP de cPanel para correos reales), `PERSPECTIVE_*` (moderación IA).
-Ver plantilla en `.env.example`.
+`CULQI_PUBLIC_KEY`/`CULQI_SECRET_KEY` (pk*test/sk_test en sandbox; pk_live/sk_live para cobrar),
+`CULQI_RSA*_`(opcional, se activa solo),`GOOGLE*CLIENT*_`+`GOOGLE*REDIRECT_URI`,
+`MICROSOFT*_`, `ADMIN*EMAILS`(correos admin / aviso de pago),`CORS_ALLOWED_ORIGINS`,
+`MAIL*_`(con`log`no envía; SMTP de cPanel para correos reales),`PERSPECTIVE\_\*`(moderación IA).
+Ver plantilla en`.env.example`.
 
 ---
 
@@ -264,5 +278,6 @@ rotar `GOOGLE_CLIENT_SECRET`; tests; (opcional) índice FULLTEXT para la búsque
 ---
 
 ## 14. Documentos relacionados
+
 `README.md` (general) · `DEPLOY.md` (despliegue) · `DIAGRAMAS.md` (flujos Mermaid) ·
 `PROGRESO.md` (bitácora) · `API.md` (API de pruebas, desactualizada).

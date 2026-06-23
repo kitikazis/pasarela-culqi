@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Route;
 // Toda la API limitada a 120 peticiones/min por usuario (o IP si es invitado).
 Route::middleware('throttle:api')->group(function () {
 
-    // Anuncios públicos (desde la BD)
-    Route::get('/ads', [AdController::class, 'index']);
+    // Anuncios públicos (desde la BD).
+    // OJO: la ruta NO puede contener "ads" porque los bloqueadores (Brave Shields,
+    // uBlock, EasyList) cortan cualquier URL con esa palabra. Por eso es /publicaciones.
+    Route::get('/publicaciones', [AdController::class, 'index']);
 
     // Estado del servicio (BD + Culqi). Oculta detalles de conexión salvo en debug.
     Route::get('/health', [HealthController::class, 'index']);

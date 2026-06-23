@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Índices compuestos para acelerar el listado público de anuncios
  * (filtros por estado/categoría/departamento/cobertura + orden por fecha).
- * Pensado para que /api/ads siga rápido con miles de filas.
+ * Pensado para que /api/publicaciones siga rápido con miles de filas.
  */
 return new class extends Migration
 {

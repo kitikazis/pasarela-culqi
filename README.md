@@ -220,7 +220,7 @@ Defensa en capas, ya implementada:
 ### Anuncios
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/api/ads` | Lista pública (JSON) — **paginada y filtrada en servidor** (`cat`, `dep`, `prov`, `dist`, `q`, `page`) |
+| GET | `/api/publicaciones` | Lista pública (JSON) — **paginada y filtrada en servidor** (`cat`, `dep`, `prov`, `dist`, `q`, `page`). _No se llama `/api/ads` a propósito: los bloqueadores (Brave/uBlock) cortan URLs con "ads"._ |
 | GET | `/mis-anuncios/datos` | Anuncios del usuario (paginado + conteos; `status`, `page`) |
 | GET | `/mis-anuncios/papelera` | Papelera del usuario (eliminados ≤ 30 días) |
 | POST | `/anuncios` | Publicar (gasta 1 crédito) |

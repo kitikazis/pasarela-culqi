@@ -390,7 +390,7 @@
                 const seq = ++fetchSeq;
                 renderSkeletons();   // feedback de carga (sobre todo en conexiones lentas)
                 try {
-                    const res = await fetch(`/api/ads?${params.toString()}`, {
+                    const res = await fetch(`/api/publicaciones?${params.toString()}`, {
                         headers: { Accept: "application/json" },
                     });
                     const data = await res.json();
