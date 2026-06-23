@@ -1,7 +1,7 @@
 /* =========================================================
    anuncialo.pe — Design System
    Estética: minimalista premium, marketplace moderno.
-   Paleta: Azul (primario) · Ámbar (secundario) · Verde (contacto)
+  Paleta: Naranja (primario) · Amarillo (secundario) · Verde (contacto)
    Tipografía: Inter  ·  Iconografía: Lucide (logos de login = marcas).
    ========================================================= */
 
@@ -17,24 +17,24 @@
   --line:         #E5E7EB;   /* bordes / divisores */
   --line-strong:  #D1D5DB;   /* bordes de control */
 
-  /* Primario: azul (CTAs, enlaces, estados activos) */
-  --primary:      #2563EB;
-  --primary-2:    #1D4ED8;   /* hover */
-  --primary-soft: #EAF1FE;
-  --primary-ring: rgba(37, 99, 235, .16);
+  /* Primario: naranja / amarillo de marca (CTAs, enlaces, estados activos) */
+  --primary:      #FF7A00;   /* naranja vibrante */
+  --primary-2:    #E66900;   /* hover / oscuro */
+  --primary-soft: #FFF4E6;   /* fondos suaves */
+  --primary-ring: rgba(255,122,0,0.16);
   --primary-dark: var(--primary-2);   /* compat */
 
-  /* Secundario: ámbar (anuncios featured / urgencia) */
-  --secondary:      #F59E0B;
-  --secondary-2:    #D97706;
-  --secondary-soft: #FEF4E2;
+  /* Secundario: amarillo (acento secundario del degradado) */
+  --secondary:      #FFD100;
+  --secondary-2:    #E6C000;
+  --secondary-soft: #FFF9E6;
 
   /* Éxito / contacto: verde (acciones positivas) */
   --success:      #10B981;
   --success-2:    #059669;
   --success-soft: #E7F8F1;
 
-  /* Compat: el sistema usa --accent* para la acción primaria → azul */
+  /* Compat: el sistema usa --accent* para la acción primaria → color de marca */
   --accent:       var(--primary);
   --accent-2:     var(--primary-2);
   --accent-soft:  var(--primary-soft);
@@ -48,7 +48,7 @@
 
   /* Categorías — derivadas de la paleta */
   --cat-venta-bg:#E7F8F1;  --cat-venta-fg:#059669;   /* Venta  → verde  */
-  --cat-compra-bg:#EAF1FE; --cat-compra-fg:#1D4ED8;  /* Compra → azul   */
+  --cat-compra-bg:var(--primary-soft); --cat-compra-fg:var(--primary-2);  /* Compra → color de marca */
   --cat-trabajo-bg:#FEF4E2;--cat-trabajo-fg:#B45309; /* Empleo → ámbar  */
   --cat-busca-bg:#F3F4F6;  --cat-busca-fg:#4B5563;   /* Busco  → neutro */
 
@@ -146,13 +146,22 @@ h1, h2, h3, h4, h5 {
 .brand .brand-mark {
   width: 34px; height: 34px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--accent);
+  background: transparent;
   color: #fff;
   border-radius: 9px;
   font-weight: 600;
   font-size: 1rem;
 }
 .brand .brand-mark span { line-height: 1; }
+
+/* Logo image sizing */
+.brand .brand-mark img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
+}
 
 .search-wrap { position: relative; flex: 1; max-width: 540px; }
 .search-wrap .form-control {

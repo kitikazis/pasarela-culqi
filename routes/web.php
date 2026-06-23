@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,3 +103,14 @@ Route::post('/pago/orden/confirmar', [PaymentController::class, 'confirmOrder'])
 Route::post('/culqi/webhook', [PaymentController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->name('culqi.webhook');
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin panel (Login + Dashboard)
+|--------------------------------------------------------------------------
+*/
+Route::get('/admin/login', [AdminController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.post');
+Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
+Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
