@@ -99,7 +99,7 @@
     </div>
 
     <!-- Lista -->
-    <div id="adsList" class="my-ad-grid"></div>
+    <div id="listingsList" class="my-listing-grid"></div>
 
     <nav aria-label="Paginación" class="mt-4">
       <ul class="pagination justify-content-center" id="pagination"></ul>
@@ -150,7 +150,7 @@ renderIcons();
 
 /* Placeholders animados mientras cargan los anuncios. */
 function renderSkeletons(n = 6) {
-  document.getElementById('adsList').innerHTML = Array.from({ length: n }).map(() => `
+  document.getElementById('listingsList').innerHTML = Array.from({ length: n }).map(() => `
     <div class="skel-card">
       <div class="skeleton skel-badge"></div>
       <div class="skeleton skel-line"></div>
@@ -176,7 +176,7 @@ function renderStats(counts) {
 }
 
 function renderList() {
-  const list = document.getElementById('adsList');
+  const list = document.getElementById('listingsList');
 
   if (MY_ADS.length === 0) {
     list.innerHTML = `
@@ -192,22 +192,22 @@ function renderList() {
   }
 
   list.innerHTML = MY_ADS.map(a => `
-    <article class="my-ad-row ${a.status === 'inactivo' ? 'inactive' : ''}" data-id="${a.id}">
-      <div class="my-ad-body">
-        <div class="my-ad-head">
+    <article class="my-listing-row ${a.status === 'inactivo' ? 'inactive' : ''}" data-id="${a.id}">
+      <div class="my-listing-body">
+        <div class="my-listing-head">
           <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
           <span class="status-badge ${a.status === 'activo' ? 'active' : 'inactive'}">
             <span class="dot"></span>${a.status === 'activo' ? 'Activo' : 'Inactivo'}
           </span>
         </div>
-        <p class="my-ad-text">${a.text}</p>
-        <div class="my-ad-meta">
+        <p class="my-listing-text">${a.text}</p>
+        <div class="my-listing-meta">
           <span><i data-lucide="map-pin"></i>${formatLocation(a)}</span>
           <span><i data-lucide="clock"></i>${relativeDate(a.date)}</span>
           <span><i data-lucide="eye"></i>${a.views} vistas</span>
         </div>
       </div>
-      <div class="my-ad-actions">
+      <div class="my-listing-actions">
         ${a.status === 'activo'
           ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
                <i data-lucide="circle-pause"></i> Desactivar
@@ -334,7 +334,7 @@ function reload() {
 
 /* Render de la Papelera: cada anuncio con "Restaurar" y cuándo se borra. */
 function renderTrashList() {
-  const list = document.getElementById('adsList');
+  const list = document.getElementById('listingsList');
   if (MY_ADS.length === 0) {
     list.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
@@ -348,19 +348,19 @@ function renderTrashList() {
   }
 
   list.innerHTML = MY_ADS.map(a => `
-    <article class="my-ad-row inactive" data-id="${a.id}">
-      <div class="my-ad-body">
-        <div class="my-ad-head">
+    <article class="my-listing-row inactive" data-id="${a.id}">
+      <div class="my-listing-body">
+        <div class="my-listing-head">
           <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
           <span class="status-badge inactive"><i data-lucide="trash-2" style="width:12px;height:12px;"></i> En papelera</span>
         </div>
-        <p class="my-ad-text">${a.text}</p>
-        <div class="my-ad-meta">
+        <p class="my-listing-text">${a.text}</p>
+        <div class="my-listing-meta">
           <span><i data-lucide="map-pin"></i>${formatLocation(a)}</span>
           <span><i data-lucide="clock"></i>Se elimina en ${a.expira} día${a.expira === 1 ? '' : 's'}</span>
         </div>
       </div>
-      <div class="my-ad-actions">
+      <div class="my-listing-actions">
         <button class="btn btn-outline-success" data-action="restore" data-id="${a.id}">
           <i data-lucide="rotate-ccw"></i> Restaurar
         </button>

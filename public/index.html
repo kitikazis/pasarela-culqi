@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                <div class="ad-grid" id="adsGrid"></div>
+                <div class="listing-grid" id="listingsGrid"></div>
 
                 <nav aria-label="Paginación" class="mt-5">
                     <ul
@@ -274,7 +274,7 @@
 
             /* Placeholders animados mientras cargan los anuncios. */
             function renderSkeletons(n = 8) {
-                document.getElementById("adsGrid").innerHTML = Array.from({ length: n })
+                document.getElementById("listingsGrid").innerHTML = Array.from({ length: n })
                     .map(() => `
                         <div class="skel-card">
                           <div class="skeleton skel-badge"></div>
@@ -410,7 +410,7 @@
 
             /* ===== RENDER ADS GRID ===== */
             function renderAds(resp) {
-                const grid = document.getElementById("adsGrid");
+                const grid = document.getElementById("listingsGrid");
                 const ads = resp.data || [];
                 const total = resp.total || 0;
                 const pages = resp.pages || 1;
@@ -450,19 +450,19 @@
                 grid.innerHTML = ads
                     .map(
                         (a) => `
-          <article class="ad-card">
+          <article class="listing-card">
             <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
-            <p class="ad-text">${a.text}</p>
-            <div class="ad-meta">
-              <div class="ad-meta-row">
+            <p class="listing-text">${a.text}</p>
+            <div class="listing-meta">
+              <div class="listing-meta-row">
                 <i data-lucide="map-pin"></i>
                 <span>${formatLocation(a)}</span>
               </div>
-              <div class="ad-meta-row">
+              <div class="listing-meta-row">
                 <i data-lucide="phone"></i>
                 <span class="phone">${a.phone}</span>
               </div>
-              <div class="ad-meta-row">
+              <div class="listing-meta-row">
                 <i data-lucide="clock"></i>
                 <span>${relativeDate(a.date)}</span>
               </div>

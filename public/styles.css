@@ -337,13 +337,13 @@ h1, h2, h3, h4, h5 {
 /* =========================================================
    TARJETAS DE ANUNCIO (home)
    ========================================================= */
-.ad-grid {
+.listing-grid {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 264px), 1fr));
 }
 
-.ad-card {
+.listing-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -355,7 +355,7 @@ h1, h2, h3, h4, h5 {
   gap: .9rem;
   min-height: 216px;
 }
-.ad-card:hover {
+.listing-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
   border-color: var(--line-strong);
@@ -377,7 +377,7 @@ h1, h2, h3, h4, h5 {
 .badge-cat.trabajo { background: var(--cat-trabajo-bg); color: var(--cat-trabajo-fg); }
 .badge-cat.busca   { background: var(--cat-busca-bg);   color: var(--cat-busca-fg); }
 
-.ad-text {
+.listing-text {
   color: var(--ink);
   font-size: .95rem;
   line-height: 1.5;
@@ -393,7 +393,7 @@ h1, h2, h3, h4, h5 {
   overflow: hidden;
 }
 
-.ad-meta {
+.listing-meta {
   display: flex;
   flex-direction: column;
   gap: .45rem;
@@ -403,12 +403,12 @@ h1, h2, h3, h4, h5 {
   font-size: .8125rem;
   color: var(--muted);
 }
-.ad-meta-row { display: flex; align-items: center; gap: .55rem; min-width: 0; }
-.ad-meta-row i { width: 14px; text-align: center; color: var(--muted); font-size: .85rem; flex-shrink: 0; }
-.ad-meta-row .lucide { width: 15px; height: 15px; color: var(--muted); }
-.ad-meta-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ad-meta-row .phone { color: var(--success-2); font-weight: 600; }
-.ad-meta-row:has(.phone) .lucide { color: var(--success-2); }
+.listing-meta-row { display: flex; align-items: center; gap: .55rem; min-width: 0; }
+.listing-meta-row i { width: 14px; text-align: center; color: var(--muted); font-size: .85rem; flex-shrink: 0; }
+.listing-meta-row .lucide { width: 15px; height: 15px; color: var(--muted); }
+.listing-meta-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.listing-meta-row .phone { color: var(--success-2); font-weight: 600; }
+.listing-meta-row:has(.phone) .lucide { color: var(--success-2); }
 
 /* =========================================================
    SIDEBAR FILTER (Departamento)
@@ -531,13 +531,13 @@ h1, h2, h3, h4, h5 {
 /* =========================================================
    MIS ANUNCIOS — cuadrícula de tarjetas compactas
    ========================================================= */
-.my-ad-grid {
+.my-listing-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 1.25rem;
   align-items: stretch;
 }
-.my-ad-row {
+.my-listing-row {
   display: flex; flex-direction: column; gap: .7rem;
   padding: 1.25rem;
   background: var(--surface);
@@ -546,32 +546,32 @@ h1, h2, h3, h4, h5 {
   box-shadow: var(--shadow-sm);
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
-.my-ad-row:hover { border-color: var(--line-strong); box-shadow: var(--shadow-md); transform: translateY(-3px); }
-.my-ad-row.inactive { opacity: .65; background: var(--bg-soft); }
+.my-listing-row:hover { border-color: var(--line-strong); box-shadow: var(--shadow-md); transform: translateY(-3px); }
+.my-listing-row.inactive { opacity: .65; background: var(--bg-soft); }
 
-.my-ad-body { display: flex; flex-direction: column; gap: .55rem; min-width: 0; flex: 1; }
-.my-ad-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-.my-ad-text {
+.my-listing-body { display: flex; flex-direction: column; gap: .55rem; min-width: 0; flex: 1; }
+.my-listing-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.my-listing-text {
   margin: 0; font-size: .9rem; line-height: 1.45; color: var(--ink);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   overflow-wrap: anywhere; word-break: break-word;
 }
-.my-ad-meta { display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .76rem; color: var(--muted); }
-.my-ad-meta i { margin-right: .3rem; }
-.my-ad-meta .lucide { width: 14px; height: 14px; margin-right: .3rem; }
+.my-listing-meta { display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .76rem; color: var(--muted); }
+.my-listing-meta i { margin-right: .3rem; }
+.my-listing-meta .lucide { width: 14px; height: 14px; margin-right: .3rem; }
 
-.my-ad-actions {
+.my-listing-actions {
   display: flex; gap: .5rem;
   margin-top: auto; padding-top: .85rem;
   border-top: 1px solid var(--line);
 }
-.my-ad-actions .btn {
+.my-listing-actions .btn {
   flex: 1; justify-content: center;
   font-size: .8rem; padding: .5rem .5rem; font-weight: 500;
   display: inline-flex; align-items: center; gap: .4rem;
   border-radius: var(--radius-sm);
 }
-.my-ad-actions .btn .lucide { width: 15px; height: 15px; }
+.my-listing-actions .btn .lucide { width: 15px; height: 15px; }
 
 /* Badge de estado */
 .status-badge {
@@ -707,20 +707,20 @@ h1, h2, h3, h4, h5 {
   /* Cuadrícula de 2 columnas estilo marketplace (Temu) en móvil.
      minmax(0,1fr) deja que las columnas se encojan por debajo de su contenido
      (sin esto, un teléfono o palabra larga ensancha la columna y se sale). */
-  .ad-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
-  .ad-card {
+  .listing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .listing-card {
     min-width: 0;
     min-height: auto;
     padding: .8rem;
     border-radius: 12px;
     gap: .55rem;
   }
-  .ad-card:active { transform: scale(.99); }
+  .listing-card:active { transform: scale(.99); }
   .badge-cat { font-size: .6rem; padding: .25rem .45rem; }
-  .ad-text { font-size: .82rem; line-height: 1.4; -webkit-line-clamp: 3; }
-  .ad-meta { padding-top: .55rem; gap: .3rem; font-size: .72rem; }
-  .ad-meta-row .lucide { width: 13px; height: 13px; }
-  .ad-meta-row .phone { font-size: .78rem; }
+  .listing-text { font-size: .82rem; line-height: 1.4; -webkit-line-clamp: 3; }
+  .listing-meta { padding-top: .55rem; gap: .3rem; font-size: .72rem; }
+  .listing-meta-row .lucide { width: 13px; height: 13px; }
+  .listing-meta-row .phone { font-size: .78rem; }
   .cat-pill { padding: .5rem 1rem; }
   #resultsTitle { font-size: 1.15rem; }
   .user-stats { gap: .6rem; }
@@ -729,9 +729,9 @@ h1, h2, h3, h4, h5 {
 
 /* Teléfonos muy angostos (≤360px): un poco más compacto aún. */
 @media (max-width: 360px) {
-  .ad-grid { gap: .5rem; }
-  .ad-card { padding: .7rem; }
-  .ad-text { font-size: .8rem; }
+  .listing-grid { gap: .5rem; }
+  .listing-card { padding: .7rem; }
+  .listing-text { font-size: .8rem; }
 }
 
 /* Móvil/tablet: barra superior SÓLIDA (sin transparencia ni blur) para que el
