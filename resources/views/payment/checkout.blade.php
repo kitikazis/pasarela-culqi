@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --brand:#2563EB; --brand-dark:#1D4ED8; --line:#E5E7EB; --ink:#1F2937; --muted:#6B7280; --success:#10B981; }
+        :root { --brand:#FF7A00; --brand-dark:#E66900; --line:#E5E7EB; --ink:#1F2937; --muted:#6B7280; --success:#10B981; }
         * { box-sizing:border-box; font-family:'Inter',system-ui,-apple-system,Segoe UI,sans-serif; }
         body { background:#F9FAFB; margin:0; padding:2.5rem 1rem; color:var(--ink); -webkit-font-smoothing:antialiased; }
         .lucide { width:18px; height:18px; vertical-align:middle; flex-shrink:0; }
@@ -26,7 +26,7 @@
         .plan { background:#fff; border:2px solid var(--line); border-radius:16px; padding:1.5rem;
                 cursor:pointer; transition:all .15s ease; position:relative; display:flex; flex-direction:column; }
         .plan:hover { border-color:#b9c4d4; transform:translateY(-2px); }
-        .plan.selected { border-color:var(--brand); box-shadow:0 8px 24px rgba(37,99,235,.15); }
+        .plan.selected { border-color:var(--brand); box-shadow:0 8px 24px rgba(255,122,0,.15); }
         .plan.popular { border-color:var(--brand); }
         .tag { position:absolute; top:-12px; left:50%; transform:translateX(-50%);
                background:var(--brand); color:#fff; font-size:.7rem; font-weight:700;
@@ -47,7 +47,7 @@
         .checkout h2 { font-size:1.1rem; margin:0 0 1rem; }
         label { display:block; font-size:.78rem; font-weight:600; color:#3c4043; margin:.7rem 0 .3rem; }
         input { width:100%; padding:.6rem .7rem; border:1px solid #d9dee5; border-radius:8px; font-size:.95rem; }
-        input:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+        input:focus { outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(255,122,0,.15); }
         .row { display:flex; gap:.6rem; } .row>div { flex:1; }
         button { width:100%; border:none; border-radius:10px; padding:.95rem; font-size:1rem;
                  font-weight:700; cursor:pointer; margin-top:1.25rem; background:var(--brand); color:#fff; }
@@ -123,7 +123,7 @@
             #btnPay {
                 position:sticky;
                 bottom:10px;
-                box-shadow:0 6px 22px rgba(37,99,235,.4);
+                box-shadow:0 6px 22px rgba(255,122,0,.4);
             }
         }
     </style>
@@ -241,28 +241,23 @@
 
         Culqi.publicKey = @json(config('culqi.public_key'));
 
-        // Exige sesión (la compra acredita al usuario) y prellena sus datos.
+        // Intenta precargar datos si hay sesión, pero permite compra sin autenticación.
         (async () => {
             let me;
             try {
                 me = await (await fetch('/me', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })).json();
             } catch (e) { return; }
 
-            if (!me.authenticated) {
-                document.getElementById('plansSection').style.display = 'none';
-                document.getElementById('checkoutSection').style.display = 'none';
-                document.getElementById('needLogin').style.display = 'block';
-                return;
+            if (me.authenticated) {
+                const parts = (me.user.name || '').trim().split(/\s+/);
+                if (parts[0]) document.getElementById('firstName').value = parts.shift();
+                if (parts.length) document.getElementById('lastName').value = parts.join(' ');
+                if (me.user.email) document.getElementById('email').value = me.user.email;
+                document.getElementById('sumName').textContent  = me.user.name || '';
+                document.getElementById('sumEmail').textContent = me.user.email || '';
+                document.getElementById('identityFields').style.display = 'none';
+                document.getElementById('identitySummary').style.display = 'flex';
             }
-
-            const parts = (me.user.name || '').trim().split(/\s+/);
-            if (parts[0]) document.getElementById('firstName').value = parts.shift();
-            if (parts.length) document.getElementById('lastName').value = parts.join(' ');
-            if (me.user.email) document.getElementById('email').value = me.user.email;
-            document.getElementById('sumName').textContent  = me.user.name || '';
-            document.getElementById('sumEmail').textContent = me.user.email || '';
-            document.getElementById('identityFields').style.display = 'none';
-            document.getElementById('identitySummary').style.display = 'flex';
         })();
 
         // "Editar" → reabre los campos completos.
@@ -298,10 +293,10 @@
                     bancaMovil: true, agente: true, cuotealo: true,
                 },
                 style: {
-                    bannerColor: '#2563EB',
-                    buttonBackground: '#2563EB',
-                    menuColor: '#2563EB',
-                    linksColor: '#2563EB',
+                    bannerColor: '#FF7A00',
+                    buttonBackground: '#FF7A00',
+                    menuColor: '#FF7A00',
+                    linksColor: '#FF7A00',
                     buttonText: 'Pagar',   // Culqi le agrega el monto solo (ej: "Pagar S/ 1.00")
                     buttonTextColor: '#ffffff',
                     priceColor: '#1F2937',
