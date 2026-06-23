@@ -20,15 +20,16 @@ ambos pasan por **GitHub**, que actúa de intermediario.
 
 - **`git push`** — tu PC sube los cambios a GitHub (el "almacén central").
 - **`git pull`** — el servidor baja la última versión desde GitHub.
-- **SSH** — es solo la *puerta* para entrar al servidor y dar las órdenes (`git pull`, etc.).
+- **SSH** — es solo la _puerta_ para entrar al servidor y dar las órdenes (`git pull`, etc.).
   No "conecta" nada por sí mismo; es tu acceso a la línea de comandos del servidor.
-- **`git remote`** — lo que hace que `~/public_html` sepa *de dónde* bajar los cambios.
+- **`git remote`** — lo que hace que `~/public_html` sepa _de dónde_ bajar los cambios.
 
 ---
 
 ## Particularidades del servidor
 
 ### Document Root → carpeta `public/`
+
 El dominio principal `anuncialo.pe` apunta a `/public_html` (no se puede cambiar en el
 dominio principal de cPanel). Como el `index.php` de Laravel vive en `public/`, hay un
 **`.htaccess` en la raíz de `public_html`** que redirige todo el tráfico hacia `public/`:
@@ -43,6 +44,7 @@ dominio principal de cPanel). Como el `index.php` de Laravel vive en `public/`, 
 > Este `.htaccess` **no está en Git** (es específico del servidor). No lo borres.
 
 ### Archivos que NO están en Git (viven solo en el servidor)
+
 - **`.env`** — configuración de producción (credenciales, `APP_URL=https://anuncialo.pe`, etc.).
 - **`vendor/`** — se genera con `composer install`.
 - **`public_html/.htaccess`** — el redirector de arriba.
@@ -70,6 +72,9 @@ chmod -R 775 storage bootstrap/cache
 
 ---
 
+> 🔐 **Credenciales del servidor (usuario y contraseña SSH/cPanel):** están en el archivo
+> local `CREDENCIALES.local.md`, que está en `.gitignore` y **no se sube** a git.
+
 ## Conectarse al servidor por SSH
 
 Desde PowerShell / Git CMD en tu PC:
@@ -78,7 +83,7 @@ Desde PowerShell / Git CMD en tu PC:
 ssh anuncial@192.250.227.240
 ```
 
-- **Usuario:** `anuncial`  ·  **Host:** `192.250.227.240`  ·  **Puerto:** 22 (por defecto).
+- **Usuario:** `anuncial` · **Host:** `192.250.227.240` · **Puerto:** 22 (por defecto).
 - Te pedirá la **contraseña de esa cuenta** (al escribirla no se ve nada; es normal).
 - La primera vez pregunta `Are you sure you want to continue connecting?` → escribe **`yes`**.
 
@@ -122,13 +127,13 @@ cd ~/public_html && git pull origin main && bash deploy.sh
 ## Login social (Google OAuth)
 
 El `redirect_uri` debe estar autorizado en
-[Google Cloud Console](https://console.cloud.google.com) → *APIs y servicios → Credenciales*.
+[Google Cloud Console](https://console.cloud.google.com) → _APIs y servicios → Credenciales_.
 Cada entorno usa su propia URL (debe coincidir **exacta**: sin barra final, con/sin `https`):
 
-| Entorno | Redirect URI autorizado | JS Origin |
-|---------|-------------------------|-----------|
-| Producción | `https://anuncialo.pe/auth/google/callback` | `https://anuncialo.pe` |
-| Local | `http://localhost:8000/auth/google/callback` | `http://localhost:8000` |
+| Entorno    | Redirect URI autorizado                      | JS Origin               |
+| ---------- | -------------------------------------------- | ----------------------- |
+| Producción | `https://anuncialo.pe/auth/google/callback`  | `https://anuncialo.pe`  |
+| Local      | `http://localhost:8000/auth/google/callback` | `http://localhost:8000` |
 
 > El valor lo toma de `GOOGLE_REDIRECT_URI` en el `.env` de cada entorno.
 > Tras editar en Google Cloud, puede tardar de 5 min a 1 h en aplicarse.
@@ -139,9 +144,9 @@ Cada entorno usa su propia URL (debe coincidir **exacta**: sin barra final, con/
 
 Culqi **oculta** métodos cuyo mínimo no alcanza el monto del plan:
 
-| Monto del plan | Métodos visibles |
-|----------------|------------------|
-| S/ 1.00 – 5.99 | Solo 💳 Tarjeta |
+| Monto del plan | Métodos visibles                  |
+| -------------- | --------------------------------- |
+| S/ 1.00 – 5.99 | Solo 💳 Tarjeta                   |
 | Desde S/ 6.00  | Tarjeta + 📱 Yape + 👛 Billeteras |
 
 > Para que aparezcan **todos** los métodos en producción, usa **S/ 6.00 o más**
@@ -209,8 +214,8 @@ MAIL_FROM_NAME="Anuncialo"
 
 ## Login Microsoft (OAuth)
 
-Igual que Google, pero en [Azure Portal](https://portal.azure.com) → *Azure AD → Registros
-de aplicaciones*. El Redirect URI debe ser `https://anuncialo.pe/auth/microsoft/callback`
+Igual que Google, pero en [Azure Portal](https://portal.azure.com) → _Azure AD → Registros
+de aplicaciones_. El Redirect URI debe ser `https://anuncialo.pe/auth/microsoft/callback`
 y las variables `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` en el `.env`.
 
 ---
@@ -245,11 +250,11 @@ en cPanel → **Cron Jobs** que dispare el scheduler **cada minuto**.
 /usr/local/bin/php /home/anuncial/public_html/artisan schedule:run >> /dev/null 2>&1
 ```
 
-3. Clic en **"Añadir nuevo trabajo de cron"**. Debe aparecer en *Trabajos de cron actuales*.
+3. Clic en **"Añadir nuevo trabajo de cron"**. Debe aparecer en _Trabajos de cron actuales_.
 
 > Ese cron maneja **todas** las tareas programadas (`routes/console.php`), no solo la purga.
 > La ruta del PHP (`/usr/local/bin/php`) la indica la propia página de Cron Jobs en
-> *"PHP command examples"*; si cambia, usa la que muestre ahí.
+> _"PHP command examples"_; si cambia, usa la que muestre ahí.
 > Para depurar, reemplaza `>> /dev/null 2>&1` por
 > `>> /home/anuncial/public_html/storage/logs/cron.log 2>&1` y revisa ese archivo.
 
@@ -283,6 +288,7 @@ Faltan **2 ajustes que dependen del servidor**:
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 ```
+
 Luego `php artisan config:cache`. Así la cookie de sesión nunca viaja por HTTP.
 
 ### 2. Forzar HTTPS (redirección + HSTS) en `.htaccess`
@@ -301,5 +307,6 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 ### 3. Rotar secretos expuestos
 
 Si alguna credencial se compartió (chat, captura, etc.), rótala:
+
 - **Google Client Secret** → Google Cloud Console → Credenciales → regenerar.
 - **Contraseña de BD** → cPanel → MySQL Databases → Change Password (y actualizar `.env`).
