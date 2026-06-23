@@ -154,10 +154,10 @@ h1, h2, h3, h4, h5 {
 }
 .brand .brand-mark span { line-height: 1; }
 
-/* Logo image sizing */
+/* Logo image sizing — llena el contenedor (.brand-mark = 34x34) sin desbordarlo. */
 .brand .brand-mark img {
-  width: 60px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
   border-radius: 8px;
   object-fit: contain;
   display: block;

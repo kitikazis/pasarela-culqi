@@ -111,6 +111,12 @@ Route::post('/culqi/webhook', [PaymentController::class, 'webhook'])
 |--------------------------------------------------------------------------
 */
 Route::get('/admin/login', [AdminController::class, 'showLogin'])->name('admin.login');
-Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.post');
+Route::post('/admin/login', [AdminController::class, 'login'])
+    ->middleware('throttle:5,1')   // anti fuerza bruta
+    ->name('admin.login.post');
 Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
-Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+// Dashboard protegido: requiere haber iniciado sesión en el panel (EnsureAdminPanel).
+Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])
+    ->middleware('admin.panel')
+    ->name('admin.dashboard');

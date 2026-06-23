@@ -15,13 +15,19 @@
             <p class="text-sm text-gray-500">Ingresa tus credenciales para continuar</p>
         </div>
 
+        @error('usuario')
+            <div class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{{ $message }}</div>
+        @enderror
+
         <form method="POST" action="{{ route('admin.login.post') }}">
             @csrf
-            <label class="block text-sm font-medium text-gray-700">Email</label>
-            <input name="email" type="email" required class="mt-1 mb-3 w-full rounded border-gray-200 focus:ring-brand focus:border-brand">
+            <label class="block text-sm font-medium text-gray-700">Usuario</label>
+            <input name="usuario" type="text" value="{{ old('usuario') }}" required autofocus
+                   class="mt-1 mb-3 w-full rounded border-gray-200 focus:ring-brand focus:border-brand">
 
             <label class="block text-sm font-medium text-gray-700">Contraseña</label>
-            <input name="password" type="password" required class="mt-1 mb-4 w-full rounded border-gray-200 focus:ring-brand focus:border-brand">
+            <input name="password" type="password" required
+                   class="mt-1 mb-4 w-full rounded border-gray-200 focus:ring-brand focus:border-brand">
 
             <button type="submit" class="w-full py-2 bg-brand text-white rounded hover:brightness-95">Entrar</button>
         </form>

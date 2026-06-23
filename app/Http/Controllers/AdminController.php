@@ -2,55 +2,88 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ad;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Panel de administración (/admin).
+ *
+ * Login simple usuario/contraseña de PRUEBA contra config('admin_panel')
+ * (admin/123 por defecto). El acceso al dashboard lo guarda el middleware
+ * 'admin.panel' (EnsureAdminPanel), que exige la marca de sesión que pone login().
+ *
+ * Nota: esto es independiente del login OAuth de los usuarios y de ADMIN_EMAILS
+ * (que protege las devoluciones). Para producción conviene migrar a OAuth + ADMIN_EMAILS.
+ */
 class AdminController extends Controller
 {
     public function showLogin()
     {
+        // Si ya inició sesión en el panel, directo al dashboard.
+        if (session('admin_authenticated')) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('admin.login');
     }
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
+        $data = $request->validate([
+            'usuario'  => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // Demo: accept any credentials and mark session as admin for demo purposes.
-        session(['is_admin' => true, 'admin_name' => 'Administrador Demo']);
+        $expectedUser = (string) config('admin_panel.user');
+        $expectedPass = (string) config('admin_panel.password');
 
-        return redirect()->route('admin.dashboard');
+        // Comparación en tiempo constante (evita ataques de temporización).
+        $ok = hash_equals($expectedUser, $data['usuario'])
+            && hash_equals($expectedPass, $data['password']);
+
+        if (! $ok) {
+            return back()
+                ->withErrors(['usuario' => 'Usuario o contraseña incorrectos.'])
+                ->onlyInput('usuario');
+        }
+
+        // Regenera el ID de sesión al autenticar (anti session-fixation).
+        $request->session()->regenerate();
+        session(['admin_authenticated' => true, 'admin_name' => 'Administrador']);
+
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function logout(Request $request)
     {
-        $request->session()->forget(['is_admin', 'admin_name']);
+        $request->session()->forget(['admin_authenticated', 'admin_name']);
+
         return redirect()->route('admin.login');
     }
 
     public function dashboard()
     {
-        // Datos falsos de ejemplo
-        $users = [
-            ['id' => 1, 'name' => 'María Pérez', 'email' => 'maria@example.com', 'role' => 'Usuario'],
-            ['id' => 2, 'name' => 'José Gómez', 'email' => 'jose@example.com', 'role' => 'Moderador'],
-            ['id' => 3, 'name' => 'Ana Ruiz', 'email' => 'ana@example.com', 'role' => 'Usuario'],
+        // Totales reales (los anuncios/transacciones en papelera no cuentan: SoftDeletes).
+        $stats = [
+            'users'        => User::count(),
+            'ads'          => Ad::count(),
+            'transactions' => Transaction::count(),
+            'paid'         => Transaction::where('status', 'paid')->count(),
         ];
 
-        $ads = [
-            ['id' => 101, 'title' => 'Vendo bici de montaña', 'user' => 'María Pérez', 'status' => 'Publicado'],
-            ['id' => 102, 'title' => 'Se alquila departamento', 'user' => 'José Gómez', 'status' => 'Pendiente'],
-            ['id' => 103, 'title' => 'Curso de guitarra', 'user' => 'Ana Ruiz', 'status' => 'Publicado'],
-        ];
+        // Últimos registros reales de la BD.
+        $users = User::latest()->take(10)
+            ->get(['id', 'name', 'email', 'provider', 'publish_credits', 'created_at']);
 
-        $transactions = [
-            ['id' => 'T-9001', 'user' => 'María Pérez', 'amount' => 'S/ 120.00', 'status' => 'Completada'],
-            ['id' => 'T-9002', 'user' => 'José Gómez', 'amount' => 'S/ 45.50', 'status' => 'Reembolsada'],
-            ['id' => 'T-9003', 'user' => 'Ana Ruiz', 'amount' => 'S/ 300.00', 'status' => 'Pendiente'],
-        ];
+        $ads = Ad::with('user:id,name')->latest()->take(10)
+            ->get(['id', 'user_id', 'category', 'description', 'status', 'created_at']);
 
-        return view('admin.dashboard', compact('users', 'ads', 'transactions'));
+        $transactions = Transaction::with('user:id,name')->latest()->take(10)
+            ->get(['id', 'user_id', 'order_number', 'charge_id', 'payment_method',
+                   'amount', 'currency', 'status', 'customer_name', 'created_at']);
+
+        return view('admin.dashboard', compact('stats', 'users', 'ads', 'transactions'));
     }
 }

@@ -26,7 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Alias para proteger acciones sensibles (ej. devoluciones).
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'admin'       => \App\Http\Middleware\EnsureAdmin::class,   // OAuth + ADMIN_EMAILS (refunds)
+            'admin.panel' => \App\Http\Middleware\EnsureAdminPanel::class, // login del panel /admin
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
