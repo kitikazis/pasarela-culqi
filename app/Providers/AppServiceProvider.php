@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\PaymentConfirmed;
 use App\Listeners\GrantCreditsOnPayment;
 use App\Listeners\NotifyAdminOnPayment;
+use App\Listeners\SendReceiptToCustomer;
 use App\Support\ConnectionCheck;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -30,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Pago confirmado → avisa por correo al administrador (ADMIN_EMAILS).
         Event::listen(PaymentConfirmed::class, NotifyAdminOnPayment::class);
+
+        // Pago confirmado → enviar recibo al cliente
+        Event::listen(PaymentConfirmed::class, SendReceiptToCustomer::class);
 
         // Registra el proveedor Microsoft en Socialite (Google es nativo).
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
