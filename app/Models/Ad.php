@@ -39,6 +39,26 @@ class Ad extends Model
         'vistas'          => 'integer',
     ];
 
+    /**
+     * Mantiene `deleted_at` en sincronía con el estado:
+     *  - al pasar a "borrado" → registra la hora exacta del borrado (va a la Papelera).
+     *  - al dejar de estar "borrado" → se restaura (limpia deleted_at).
+     * Solo reacciona cuando `estado` cambia, para no interferir con otros guardados.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Ad $ad): void {
+            if (! $ad->isDirty('estado')) {
+                return;
+            }
+            if ($ad->estado === 'borrado') {
+                $ad->deleted_at = now();
+            } elseif ($ad->getOriginal('estado') === 'borrado') {
+                $ad->deleted_at = null;
+            }
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
