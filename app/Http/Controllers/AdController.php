@@ -186,6 +186,9 @@ class AdController extends Controller
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
         }
 
+        // Marca el estado como "borrado" para verlo de un vistazo en la BD/admin.
+        // El soft delete (deleted_at) guarda la fecha/hora exacta del borrado.
+        $ad->update(['estado' => 'borrado']);
         $ad->delete();
 
         return response()->json(['success' => true]);
@@ -236,7 +239,9 @@ class AdController extends Controller
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
         }
 
+        // Al recuperarlo de la Papelera vuelve a quedar activo (deja de estar "borrado").
         $ad->restore();
+        $ad->update(['estado' => 'active']);
 
         return response()->json(['success' => true]);
     }
