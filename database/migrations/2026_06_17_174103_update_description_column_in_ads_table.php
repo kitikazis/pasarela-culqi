@@ -21,11 +21,11 @@ return new class extends Migration
         // para que MySQL no rechace el cambio de columna por truncamiento.
         // (Los anuncios nuevos ya vienen limitados a 144 por la validación.)
         DB::table('publicaciones')
-            ->whereRaw('CHAR_LENGTH(description) > 144')
-            ->update(['description' => DB::raw('LEFT(description, 144)')]);
+            ->whereRaw('CHAR_LENGTH(descripcion) > 144')
+            ->update(['descripcion' => DB::raw('LEFT(descripcion, 144)')]);
 
         Schema::table('publicaciones', function (Blueprint $table) {
-            $table->string('description', 144)->change();
+            $table->string('descripcion', 144)->change();
         });
     }
 
@@ -35,7 +35,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('publicaciones', function (Blueprint $table) {
-            $table->text('description')->change();
+            $table->text('descripcion')->change();
         });
     }
 };

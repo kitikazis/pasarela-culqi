@@ -61,12 +61,12 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             @forelse($ads as $ad)
             <div class="bg-white rounded shadow p-4">
-                <div class="text-sm text-gray-500">#{{ $ad->id }} · {{ ucfirst($ad->category) }}</div>
-                <div class="font-semibold mt-2">{{ \Illuminate\Support\Str::limit($ad->description, 70) }}</div>
+                <div class="text-sm text-gray-500">#{{ $ad->id }} · {{ ucfirst($ad->categoria) }}</div>
+                <div class="font-semibold mt-2">{{ \Illuminate\Support\Str::limit($ad->descripcion, 70) }}</div>
                 <div class="text-sm text-gray-500 mt-1">Por: {{ $ad->user?->name ?? '—' }}</div>
                 <div class="mt-3">
-                    <span class="px-2 py-1 rounded text-sm {{ $ad->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100' }}">
-                        {{ $ad->status === 'active' ? 'Activo' : 'Inactivo' }}
+                    <span class="px-2 py-1 rounded text-sm {{ $ad->estado === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100' }}">
+                        {{ $ad->estado === 'active' ? 'Activo' : 'Inactivo' }}
                     </span>
                 </div>
             </div>

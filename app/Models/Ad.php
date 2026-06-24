@@ -22,21 +22,21 @@ class Ad extends Model
 
     protected $fillable = [
         'user_id',
-        'category',
-        'description',
-        'phone',
-        'coverage',
-        'department',
-        'province',
-        'district',
-        'status',
-        'featured_until',
-        'views',
+        'categoria',
+        'descripcion',
+        'telefono',
+        'cobertura',
+        'departamento',
+        'provincia',
+        'distrito',
+        'estado',
+        'destacado_hasta',
+        'vistas',
     ];
 
     protected $casts = [
-        'featured_until' => 'datetime',
-        'views'          => 'integer',
+        'destacado_hasta' => 'datetime',
+        'vistas'          => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -47,19 +47,19 @@ class Ad extends Model
     /** ¿El anuncio está destacado ahora mismo? */
     public function isFeatured(): bool
     {
-        return $this->featured_until !== null && $this->featured_until->isFuture();
+        return $this->destacado_hasta !== null && $this->destacado_hasta->isFuture();
     }
 
     /** Destaca el anuncio por N días (acumula si ya estaba destacado). */
     public function feature(int $days): void
     {
-        $base = $this->isFeatured() ? $this->featured_until : now();
-        $this->update(['featured_until' => $base->copy()->addDays($days)]);
+        $base = $this->isFeatured() ? $this->destacado_hasta : now();
+        $this->update(['destacado_hasta' => $base->copy()->addDays($days)]);
     }
 
     /** Scope: solo anuncios destacados vigentes. */
     public function scopeFeatured(Builder $query): Builder
     {
-        return $query->whereNotNull('featured_until')->where('featured_until', '>', now());
+        return $query->whereNotNull('destacado_hasta')->where('destacado_hasta', '>', now());
     }
 }

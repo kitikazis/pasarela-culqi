@@ -15,13 +15,13 @@ return new class extends Migration
     {
         Schema::table('publicaciones', function (Blueprint $table) {
             // Listado base: activos ordenados por fecha.
-            $table->index(['status', 'created_at'], 'publicaciones_status_created_idx');
+            $table->index(['estado', 'created_at'], 'publicaciones_status_created_idx');
             // Filtro por categoría + orden por fecha.
-            $table->index(['status', 'category', 'created_at'], 'publicaciones_status_cat_created_idx');
+            $table->index(['estado', 'categoria', 'created_at'], 'publicaciones_status_cat_created_idx');
             // Filtro por departamento.
-            $table->index(['status', 'department'], 'publicaciones_status_dep_idx');
+            $table->index(['estado', 'departamento'], 'publicaciones_status_dep_idx');
             // Filtro "Nacional".
-            $table->index('coverage', 'publicaciones_coverage_idx');
+            $table->index('cobertura', 'publicaciones_coverage_idx');
         });
     }
 

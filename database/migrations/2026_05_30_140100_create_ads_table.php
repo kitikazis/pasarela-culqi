@@ -16,25 +16,25 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-            $table->string('category');                  // venta | compra | trabajo | busca
-            $table->text('description');
-            $table->string('phone', 9);
+            $table->string('categoria');                 // venta | compra | trabajo | busca
+            $table->text('descripcion');
+            $table->string('telefono', 9);
 
-            $table->string('coverage')->default('departamental'); // nacional|departamental|provincial|distrital
-            $table->string('department')->nullable();
-            $table->string('province')->nullable();
-            $table->string('district')->nullable();
+            $table->string('cobertura')->default('departamental'); // nacional|departamental|provincial|distrital
+            $table->string('departamento')->nullable();
+            $table->string('provincia')->nullable();
+            $table->string('distrito')->nullable();
 
-            $table->string('status')->default('active'); // active | inactive
-            $table->timestamp('featured_until')->nullable();
-            $table->unsignedInteger('views')->default(0);
+            $table->string('estado')->default('active'); // active | inactive
+            $table->timestamp('destacado_hasta')->nullable();
+            $table->unsignedInteger('vistas')->default(0);
 
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('status');
-            $table->index('featured_until');
-            $table->index('category');
+            $table->index('estado');
+            $table->index('destacado_hasta');
+            $table->index('categoria');
         });
     }
 

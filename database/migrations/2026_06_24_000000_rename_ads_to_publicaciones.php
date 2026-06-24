@@ -36,31 +36,52 @@ return new class extends Migration
                 $table->id();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-                $table->string('category');
-                $table->string('description', 144);
-                $table->string('phone', 9);
+                $table->string('categoria');
+                $table->string('descripcion', 144);
+                $table->string('telefono', 9);
 
-                $table->string('coverage')->default('departamental');
-                $table->string('department')->nullable();
-                $table->string('province')->nullable();
-                $table->string('district')->nullable();
+                $table->string('cobertura')->default('departamental');
+                $table->string('departamento')->nullable();
+                $table->string('provincia')->nullable();
+                $table->string('distrito')->nullable();
 
-                $table->string('status')->default('active');
-                $table->timestamp('featured_until')->nullable();
-                $table->unsignedInteger('views')->default(0);
+                $table->string('estado')->default('active');
+                $table->timestamp('destacado_hasta')->nullable();
+                $table->unsignedInteger('vistas')->default(0);
 
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->index('status');
-                $table->index('featured_until');
-                $table->index('category');
-                $table->index(['status', 'created_at'], 'publicaciones_status_created_idx');
-                $table->index(['status', 'category', 'created_at'], 'publicaciones_status_cat_created_idx');
-                $table->index(['status', 'department'], 'publicaciones_status_dep_idx');
-                $table->index('coverage', 'publicaciones_coverage_idx');
-                $table->index(['user_id', 'status'], 'publicaciones_user_status_idx');
+                $table->index('estado');
+                $table->index('destacado_hasta');
+                $table->index('categoria');
+                $table->index(['estado', 'created_at'], 'publicaciones_status_created_idx');
+                $table->index(['estado', 'categoria', 'created_at'], 'publicaciones_status_cat_created_idx');
+                $table->index(['estado', 'departamento'], 'publicaciones_status_dep_idx');
+                $table->index('cobertura', 'publicaciones_coverage_idx');
+                $table->index(['user_id', 'estado'], 'publicaciones_user_status_idx');
             });
+        }
+
+        // ── Columnas en español ────────────────────────────────────────────
+        // Si la tabla viene de una versión anterior con columnas en inglés, las
+        // pasa a español (idempotente: si ya están en español, no hace nada).
+        $renombres = [
+            'category'       => 'categoria',
+            'description'    => 'descripcion',
+            'phone'          => 'telefono',
+            'coverage'       => 'cobertura',
+            'department'     => 'departamento',
+            'province'       => 'provincia',
+            'district'       => 'distrito',
+            'status'         => 'estado',
+            'featured_until' => 'destacado_hasta',
+            'views'          => 'vistas',
+        ];
+        foreach ($renombres as $en => $es) {
+            if (Schema::hasColumn('publicaciones', $en) && ! Schema::hasColumn('publicaciones', $es)) {
+                Schema::table('publicaciones', fn (Blueprint $t) => $t->renameColumn($en, $es));
+            }
         }
 
         // ── Columna FK en transactions ─────────────────────────────────────

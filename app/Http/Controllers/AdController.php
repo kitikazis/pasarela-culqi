@@ -31,14 +31,14 @@ class AdController extends Controller
             }
 
             $ad = $user->ads()->create([
-                'category'    => $data['category'],
-                'description' => $data['description'],
-                'phone'       => $data['phone'],
-                'coverage'    => $data['coverage'],
-                'department'  => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
-                'province'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
-                'district'    => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
-                'status'      => 'active',
+                'categoria'    => $data['category'],
+                'descripcion'  => $data['description'],
+                'telefono'     => $data['phone'],
+                'cobertura'    => $data['coverage'],
+                'departamento' => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
+                'provincia'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
+                'distrito'     => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
+                'estado'       => 'active',
             ]);
 
             return true;
@@ -83,28 +83,28 @@ class AdController extends Controller
         $dist = $request->query('dist');
         $term = trim((string) $request->query('q', ''));
 
-        $ads = Ad::where('status', 'active')
-            ->when($cat && $cat !== 'todos', fn ($qry) => $qry->where('category', $cat))
+        $ads = Ad::where('estado', 'active')
+            ->when($cat && $cat !== 'todos', fn ($qry) => $qry->where('categoria', $cat))
             // "Nacional" = anuncios de cobertura nacional; cualquier otro = ese departamento.
-            ->when($dep === 'Nacional', fn ($qry) => $qry->where('coverage', 'nacional'))
-            ->when($dep && $dep !== 'Nacional', fn ($qry) => $qry->where('department', $dep))
-            ->when($prov, fn ($qry) => $qry->where('province', $prov))
-            ->when($dist, fn ($qry) => $qry->where('district', $dist))
+            ->when($dep === 'Nacional', fn ($qry) => $qry->where('cobertura', 'nacional'))
+            ->when($dep && $dep !== 'Nacional', fn ($qry) => $qry->where('departamento', $dep))
+            ->when($prov, fn ($qry) => $qry->where('provincia', $prov))
+            ->when($dist, fn ($qry) => $qry->where('distrito', $dist))
             // Escapa los comodines del usuario (% _ \) para que no actúen como LIKE.
-            ->when($term !== '', fn ($qry) => $qry->where('description', 'like', '%'.addcslashes($term, '%_\\').'%'))
-            ->orderByRaw('CASE WHEN featured_until IS NOT NULL AND featured_until > NOW() THEN 0 ELSE 1 END')
+            ->when($term !== '', fn ($qry) => $qry->where('descripcion', 'like', '%'.addcslashes($term, '%_\\').'%'))
+            ->orderByRaw('CASE WHEN destacado_hasta IS NOT NULL AND destacado_hasta > NOW() THEN 0 ELSE 1 END')
             ->orderByDesc('created_at')
             ->paginate(self::PER_PAGE);
 
         return response()->json([
             'data' => collect($ads->items())->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
-                'cat'      => $ad->category,
-                'text'     => e($ad->description),
-                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
-                'prov'     => e($ad->province),
-                'dist'     => e($ad->district),
-                'phone'    => $ad->phone,
+                'cat'      => $ad->categoria,
+                'text'     => e($ad->descripcion),
+                'dep'      => $ad->cobertura === 'nacional' ? 'Nacional' : e($ad->departamento),
+                'prov'     => e($ad->provincia),
+                'dist'     => e($ad->distrito),
+                'phone'    => $ad->telefono,
                 'date'     => $ad->created_at?->toDateString(),
                 'featured' => $ad->isFeatured(),
             ]),
@@ -129,13 +129,13 @@ class AdController extends Controller
 
         // Conteos en BD (no se descargan los anuncios para contarlos).
         $total     = $user->ads()->count();
-        $activos   = $user->ads()->where('status', 'active')->count();
+        $activos   = $user->ads()->where('estado', 'active')->count();
         $inactivos = $total - $activos;
 
         $status = $request->query('status');
         $ads = $user->ads()
-            ->when($status === 'activo', fn ($qry) => $qry->where('status', 'active'))
-            ->when($status === 'inactivo', fn ($qry) => $qry->where('status', 'inactive'))
+            ->when($status === 'activo', fn ($qry) => $qry->where('estado', 'active'))
+            ->when($status === 'inactivo', fn ($qry) => $qry->where('estado', 'inactive'))
             ->orderByDesc('created_at')
             ->paginate(self::PER_PAGE);
 
@@ -143,15 +143,15 @@ class AdController extends Controller
             'authenticated' => true,
             'ads' => collect($ads->items())->map(fn (Ad $ad) => [
                 'id'       => $ad->id,
-                'cat'      => $ad->category,
-                'text'     => e($ad->description),
-                'dep'      => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
-                'prov'     => e($ad->province),
-                'dist'     => e($ad->district),
-                'phone'    => $ad->phone,
+                'cat'      => $ad->categoria,
+                'text'     => e($ad->descripcion),
+                'dep'      => $ad->cobertura === 'nacional' ? 'Nacional' : e($ad->departamento),
+                'prov'     => e($ad->provincia),
+                'dist'     => e($ad->distrito),
+                'phone'    => $ad->telefono,
                 'date'     => $ad->created_at?->toDateString(),
-                'status'   => $ad->status === 'active' ? 'activo' : 'inactivo',
-                'views'    => $ad->views,
+                'status'   => $ad->estado === 'active' ? 'activo' : 'inactivo',
+                'views'    => $ad->vistas,
                 'featured' => $ad->isFeatured(),
             ]),
             'page'   => $ads->currentPage(),
@@ -171,9 +171,9 @@ class AdController extends Controller
             'status' => ['required', 'in:active,inactive'],
         ]);
 
-        $ad->update(['status' => $validated['status']]);
+        $ad->update(['estado' => $validated['status']]);
 
-        return response()->json(['success' => true, 'status' => $ad->status]);
+        return response()->json(['success' => true, 'status' => $ad->estado]);
     }
 
     /**
@@ -212,12 +212,12 @@ class AdController extends Controller
             'authenticated' => true,
             'ads' => collect($ads->items())->map(fn (Ad $ad) => [
                 'id'     => $ad->id,
-                'cat'    => $ad->category,
-                'text'   => e($ad->description),
-                'dep'    => $ad->coverage === 'nacional' ? 'Nacional' : e($ad->department),
-                'prov'   => e($ad->province),
-                'dist'   => e($ad->district),
-                'phone'  => $ad->phone,
+                'cat'    => $ad->categoria,
+                'text'   => e($ad->descripcion),
+                'dep'    => $ad->cobertura === 'nacional' ? 'Nacional' : e($ad->departamento),
+                'prov'   => e($ad->provincia),
+                'dist'   => e($ad->distrito),
+                'phone'  => $ad->telefono,
                 'date'   => $ad->created_at?->toDateString(),
                 // Días que faltan para el borrado definitivo.
                 'expira' => max(0, self::TRASH_DAYS - (int) $ad->deleted_at->diffInDays(now())),

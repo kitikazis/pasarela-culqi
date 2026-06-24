@@ -78,7 +78,7 @@ class AdminController extends Controller
             ->get(['id', 'name', 'email', 'provider', 'publish_credits', 'created_at']);
 
         $ads = Ad::with('user:id,name')->latest()->take(10)
-            ->get(['id', 'user_id', 'category', 'description', 'status', 'created_at']);
+            ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'created_at']);
 
         $transactions = Transaction::with('user:id,name')->latest()->take(10)
             ->get(['id', 'user_id', 'order_number', 'charge_id', 'payment_method',
