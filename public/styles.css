@@ -144,7 +144,7 @@ h1, h2, h3, h4, h5 {
 }
 .brand:hover { color: var(--ink); }
 .brand .brand-mark {
-  width: 34px; height: 34px;
+  width: 48px; height: 48px;
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent;
   color: #fff;
