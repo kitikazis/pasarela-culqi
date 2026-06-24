@@ -55,7 +55,7 @@ class AdController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Anuncio publicado.',
-            'ad_id'   => $ad->id,
+            'publicacion_id' => $ad->id,
             'credits' => $user->fresh()->publish_credits,
         ], 201);
     }

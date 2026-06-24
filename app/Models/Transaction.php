@@ -21,7 +21,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'user_id',
-        'ad_id',
+        'publicacion_id',
         'charge_id',
         'order_number',
         'payment_method',     // card | yape | pagoefectivo
@@ -62,6 +62,6 @@ class Transaction extends Model
 
     public function ad(): BelongsTo
     {
-        return $this->belongsTo(Ad::class);
+        return $this->belongsTo(Ad::class, 'publicacion_id');
     }
 }

@@ -12,7 +12,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ads', function (Blueprint $table) {
+        Schema::create('publicaciones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
@@ -40,6 +40,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('ads');
+        Schema::dropIfExists('publicaciones');
     }
 };

@@ -11,6 +11,12 @@ class Ad extends Model
 {
     use SoftDeletes;
 
+    /**
+     * Tabla en BD. Se llama "publicaciones" (no "ads") por consistencia con la
+     * marca y la ruta pública /publicaciones; el modelo sigue siendo Ad.
+     */
+    protected $table = 'publicaciones';
+
     /** Largo máximo de la descripción (fuente única de verdad: validación y formulario). */
     public const MAX_DESCRIPTION = 144;
 
