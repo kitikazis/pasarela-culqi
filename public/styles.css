@@ -726,7 +726,8 @@ h1, h2, h3, h4, h5 {
   }
   .listing-card:active { transform: scale(.99); }
   .badge-cat { font-size: .6rem; padding: .25rem .45rem; }
-  .listing-text { font-size: .82rem; line-height: 1.4; -webkit-line-clamp: 3; }
+  /* En móvil (tarjetas en 1 columna) se muestra la descripción COMPLETA. */
+  .listing-text { font-size: .82rem; line-height: 1.4; -webkit-line-clamp: unset; display: block; overflow: visible; }
   .listing-meta { padding-top: .55rem; gap: .3rem; font-size: .72rem; }
   .listing-meta-row .lucide { width: 13px; height: 13px; }
   .listing-meta-row .phone { font-size: .78rem; }
