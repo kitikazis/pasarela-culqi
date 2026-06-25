@@ -39,14 +39,6 @@ class AdminController extends Controller
         $expectedUser = (string) config('admin_panel.user');
         $expectedPass = (string) config('admin_panel.password');
 
-        // Sin credenciales definidas en el .env, el panel queda BLOQUEADO
-        // (ya no hay un default admin/123 en el código).
-        if ($expectedUser === '' || $expectedPass === '') {
-            return back()
-                ->withErrors(['usuario' => 'El panel de administración no está configurado.'])
-                ->onlyInput('usuario');
-        }
-
         // Comparación en tiempo constante (evita ataques de temporización).
         $ok = hash_equals($expectedUser, $data['usuario'])
             && hash_equals($expectedPass, $data['password']);

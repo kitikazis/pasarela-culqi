@@ -8,17 +8,13 @@ return [
     |--------------------------------------------------------------------------
     | Login simple usuario/contraseña SOLO para el panel /admin (es independiente
     | del login OAuth de los usuarios y de ADMIN_EMAILS, que protege las
-    | devoluciones).
-    |
-    | Las credenciales viven SOLO en el .env (sin valores por defecto en el
-    | código): si no se definen, el panel queda BLOQUEADO (fail-secure) en vez
-    | de abrirse con un admin/123 conocido.
+    | devoluciones). Por defecto admin/123 para pruebas.
     |
     | ⚠️ PRODUCCIÓN: define ADMIN_PANEL_USER y un ADMIN_PANEL_PASSWORD FUERTE en
-    | el .env. Idealmente migrar a OAuth + ADMIN_EMAILS.
+    | el .env (nunca dejes 123). Idealmente migrar a OAuth + ADMIN_EMAILS.
     */
 
-    'user'     => env('ADMIN_PANEL_USER'),
-    'password' => env('ADMIN_PANEL_PASSWORD'),
+    'user'     => env('ADMIN_PANEL_USER', 'admin'),
+    'password' => env('ADMIN_PANEL_PASSWORD', '123'),
 
 ];
