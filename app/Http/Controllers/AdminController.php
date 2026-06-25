@@ -65,22 +65,32 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // Totales reales (los anuncios/transacciones en papelera no cuentan: SoftDeletes).
+        // Métricas detalladas. Los anuncios "borrado" están en la Papelera
+        // (SoftDeletes): por eso se cuentan con onlyTrashed()/withTrashed().
         $stats = [
             'users'        => User::count(),
-            'ads'          => Ad::count(),
+            'users_today'  => User::whereDate('created_at', today())->count(),
+            'ads_total'    => Ad::withTrashed()->count(),
+            'ads_active'   => Ad::where('estado', 'active')->count(),
+            'ads_inactive' => Ad::where('estado', 'inactive')->count(),
+            'ads_borrado'  => Ad::onlyTrashed()->count(),
+            'ads_today'    => Ad::withTrashed()->whereDate('created_at', today())->count(),
             'transactions' => Transaction::count(),
             'paid'         => Transaction::where('status', 'paid')->count(),
+            'pending'      => Transaction::where('status', 'pending')->count(),
+            // Ingresos confirmados, en céntimos (se divide /100 en la vista).
+            'revenue'      => (int) Transaction::where('status', 'paid')->sum('amount'),
         ];
 
-        // Últimos registros reales de la BD.
-        $users = User::latest()->take(10)
-            ->get(['id', 'name', 'email', 'provider', 'publish_credits', 'created_at']);
+        // Últimos registros reales de la BD (con la cuenta de anuncios por usuario).
+        $users = User::withCount('ads')->latest()->take(15)
+            ->get(['id', 'name', 'email', 'avatar', 'provider', 'publish_credits', 'created_at']);
 
-        $ads = Ad::with('user:id,name')->latest()->take(10)
-            ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'created_at']);
+        // Incluye los borrados (withTrashed) para verlos con su fecha de borrado.
+        $ads = Ad::withTrashed()->with('user:id,name')->latest()->take(15)
+            ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at']);
 
-        $transactions = Transaction::with('user:id,name')->latest()->take(10)
+        $transactions = Transaction::with('user:id,name')->latest()->take(15)
             ->get(['id', 'user_id', 'order_number', 'charge_id', 'payment_method',
                    'amount', 'currency', 'status', 'customer_name', 'created_at']);
 

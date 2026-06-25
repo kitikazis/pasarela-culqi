@@ -7,107 +7,226 @@
 @endsection
 
 @section('content')
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Usuarios</div>
-            <div class="text-2xl font-bold">{{ $stats['users'] }}</div>
+    {{-- ===== Tarjetas de métricas ===== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        {{-- Usuarios --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Usuarios</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['users']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">👥</div>
+            </div>
+            <div class="text-xs mt-3 {{ $stats['users_today'] > 0 ? 'text-green-600' : 'text-gray-400' }}">
+                +{{ $stats['users_today'] }} hoy
+            </div>
         </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Anuncios</div>
-            <div class="text-2xl font-bold">{{ $stats['ads'] }}</div>
+
+        {{-- Anuncios --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Anuncios</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['ads_total']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-orange-50 text-brand flex items-center justify-center text-xl">📢</div>
+            </div>
+            <div class="text-xs text-gray-500 mt-3 flex flex-wrap gap-x-3 gap-y-1">
+                <span><span class="text-green-600">●</span> {{ $stats['ads_active'] }} activos</span>
+                <span><span class="text-gray-400">●</span> {{ $stats['ads_inactive'] }} inactivos</span>
+                <span><span class="text-red-500">●</span> {{ $stats['ads_borrado'] }} borrados</span>
+            </div>
         </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Transacciones</div>
-            <div class="text-2xl font-bold">{{ $stats['transactions'] }}</div>
+
+        {{-- Ingresos --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Ingresos</div>
+                    <div class="text-3xl font-bold mt-1">S/ {{ number_format($stats['revenue'] / 100, 2) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl">💰</div>
+            </div>
+            <div class="text-xs text-gray-500 mt-3">{{ $stats['paid'] }} pagos confirmados</div>
         </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Pagos confirmados</div>
-            <div class="text-2xl font-bold">{{ $stats['paid'] }}</div>
+
+        {{-- Transacciones --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Transacciones</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['transactions']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">💳</div>
+            </div>
+            <div class="text-xs mt-3 {{ $stats['pending'] > 0 ? 'text-yellow-600' : 'text-gray-400' }}">
+                {{ $stats['pending'] }} pendientes
+            </div>
         </div>
     </div>
 
-    <section id="users" class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">Usuarios recientes</h2>
-        <div class="bg-white rounded shadow overflow-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-sm text-gray-600">
+    {{-- ===== Usuarios ===== --}}
+    <section id="users" class="mb-8 scroll-mt-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Usuarios recientes</h2>
+            <span class="text-sm text-gray-400">Últimos {{ count($users) }} de {{ number_format($stats['users']) }}</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                     <tr>
-                        <th class="p-3">ID</th>
-                        <th class="p-3">Nombre</th>
-                        <th class="p-3">Email</th>
-                        <th class="p-3">Proveedor</th>
-                        <th class="p-3">Créditos</th>
+                        <th class="px-4 py-3 text-left font-medium">Usuario</th>
+                        <th class="px-4 py-3 text-left font-medium">Proveedor</th>
+                        <th class="px-4 py-3 text-center font-medium">Créditos</th>
+                        <th class="px-4 py-3 text-center font-medium">Anuncios</th>
+                        <th class="px-4 py-3 text-left font-medium">Registrado</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                 @forelse($users as $u)
-                    <tr class="border-t">
-                        <td class="p-3">{{ $u->id }}</td>
-                        <td class="p-3">{{ $u->name }}</td>
-                        <td class="p-3">{{ $u->email }}</td>
-                        <td class="p-3 capitalize">{{ $u->provider }}</td>
-                        <td class="p-3">{{ $u->publish_credits }}</td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                @if($u->avatar)
+                                    <img src="{{ $u->avatar }}" alt="" referrerpolicy="no-referrer"
+                                         class="w-9 h-9 rounded-full object-cover bg-gray-100">
+                                @else
+                                    <div class="w-9 h-9 rounded-full bg-brand/10 text-brand flex items-center justify-center font-semibold">
+                                        {{ strtoupper(mb_substr($u->name ?? '?', 0, 1)) }}
+                                    </div>
+                                @endif
+                                <div class="min-w-0">
+                                    <div class="font-medium text-gray-800 truncate">{{ $u->name }}</div>
+                                    <div class="text-xs text-gray-500 truncate">{{ $u->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 capitalize text-gray-600">{{ $u->provider ?? '—' }}</td>
+                        <td class="px-4 py-3 text-center font-medium">{{ $u->publish_credits }}</td>
+                        <td class="px-4 py-3 text-center">{{ $u->ads_count }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="text-gray-700">{{ $u->created_at?->format('d/m/Y H:i') }}</div>
+                            <div class="text-xs text-gray-400">{{ $u->created_at?->diffForHumans() }}</div>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td class="p-3 text-gray-500" colspan="5">Sin usuarios todavía.</td></tr>
+                    <tr><td class="px-4 py-6 text-center text-gray-400" colspan="5">Sin usuarios todavía.</td></tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
     </section>
 
-    <section id="ads" class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">Anuncios recientes</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            @forelse($ads as $ad)
-            <div class="bg-white rounded shadow p-4">
-                <div class="text-sm text-gray-500">#{{ $ad->id }} · {{ ucfirst($ad->categoria) }}</div>
-                <div class="font-semibold mt-2">{{ \Illuminate\Support\Str::limit($ad->descripcion, 70) }}</div>
-                <div class="text-sm text-gray-500 mt-1">Por: {{ $ad->user?->name ?? '—' }}</div>
-                <div class="mt-3">
-                    <span class="px-2 py-1 rounded text-sm {{ $ad->estado === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100' }}">
-                        {{ $ad->estado === 'active' ? 'Activo' : 'Inactivo' }}
-                    </span>
-                </div>
-            </div>
-            @empty
-            <div class="text-gray-500">Sin anuncios todavía.</div>
-            @endforelse
+    {{-- ===== Anuncios ===== --}}
+    <section id="ads" class="mb-8 scroll-mt-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Anuncios recientes</h2>
+            <span class="text-sm text-gray-400">Incluye borrados</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-medium">#</th>
+                        <th class="px-4 py-3 text-left font-medium">Categoría</th>
+                        <th class="px-4 py-3 text-left font-medium">Descripción</th>
+                        <th class="px-4 py-3 text-left font-medium">Dueño</th>
+                        <th class="px-4 py-3 text-center font-medium">Estado</th>
+                        <th class="px-4 py-3 text-center font-medium">Vistas</th>
+                        <th class="px-4 py-3 text-left font-medium">Publicado</th>
+                        <th class="px-4 py-3 text-left font-medium">Borrado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                @forelse($ads as $ad)
+                    @php
+                        if ($ad->trashed()) {
+                            $eb = ['Borrado', 'bg-red-100 text-red-700'];
+                        } else {
+                            $eb = match ($ad->estado) {
+                                'active'   => ['Activo', 'bg-green-100 text-green-700'],
+                                'inactive' => ['Inactivo', 'bg-gray-100 text-gray-600'],
+                                default    => [ucfirst($ad->estado), 'bg-gray-100 text-gray-600'],
+                            };
+                        }
+                    @endphp
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-gray-400">{{ $ad->id }}</td>
+                        <td class="px-4 py-3 capitalize text-gray-600">{{ $ad->categoria }}</td>
+                        <td class="px-4 py-3">
+                            <div class="line-clamp-2 text-gray-700 max-w-xs">{{ $ad->descripcion }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">{{ $ad->user?->name ?? '—' }}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $eb[1] }}">{{ $eb[0] }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center text-gray-600">{{ $ad->vistas }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="text-gray-700">{{ $ad->created_at?->format('d/m/Y H:i') }}</div>
+                            <div class="text-xs text-gray-400">{{ $ad->created_at?->diffForHumans() }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            @if($ad->deleted_at)
+                                <div class="text-red-600">{{ $ad->deleted_at->format('d/m/Y H:i') }}</div>
+                                <div class="text-xs text-gray-400">{{ $ad->deleted_at->diffForHumans() }}</div>
+                            @else
+                                <span class="text-gray-300">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td class="px-4 py-6 text-center text-gray-400" colspan="8">Sin anuncios todavía.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
     </section>
 
-    <section id="transactions">
-        <h2 class="text-lg font-semibold mb-3">Transacciones recientes</h2>
-        <div class="bg-white rounded shadow overflow-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-sm text-gray-600">
+    {{-- ===== Transacciones ===== --}}
+    <section id="transactions" class="scroll-mt-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Transacciones recientes</h2>
+            <span class="text-sm text-gray-400">Últimas {{ count($transactions) }} de {{ number_format($stats['transactions']) }}</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                     <tr>
-                        <th class="p-3">Orden</th>
-                        <th class="p-3">Usuario</th>
-                        <th class="p-3">Método</th>
-                        <th class="p-3">Monto</th>
-                        <th class="p-3">Estado</th>
+                        <th class="px-4 py-3 text-left font-medium">Orden / Cargo</th>
+                        <th class="px-4 py-3 text-left font-medium">Cliente</th>
+                        <th class="px-4 py-3 text-left font-medium">Método</th>
+                        <th class="px-4 py-3 text-right font-medium">Monto</th>
+                        <th class="px-4 py-3 text-center font-medium">Estado</th>
+                        <th class="px-4 py-3 text-left font-medium">Fecha</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-100">
                 @forelse($transactions as $t)
                     @php
-                        $badge = match ($t->status) {
-                            'paid'                 => 'bg-green-100 text-green-700',
-                            'pending'              => 'bg-yellow-100 text-yellow-700',
-                            'failed', 'refunded'   => 'bg-red-100 text-red-700',
-                            default                => 'bg-gray-100 text-gray-700',
+                        $tb = match ($t->status) {
+                            'paid'     => ['Pagado', 'bg-green-100 text-green-700'],
+                            'pending'  => ['Pendiente', 'bg-yellow-100 text-yellow-700'],
+                            'failed'   => ['Fallido', 'bg-red-100 text-red-700'],
+                            'refunded' => ['Devuelto', 'bg-red-100 text-red-700'],
+                            default    => [ucfirst($t->status), 'bg-gray-100 text-gray-700'],
                         };
                     @endphp
-                    <tr class="border-t">
-                        <td class="p-3">{{ $t->order_number ?? $t->charge_id ?? '—' }}</td>
-                        <td class="p-3">{{ $t->user?->name ?? $t->customer_name ?? '—' }}</td>
-                        <td class="p-3 uppercase">{{ $t->payment_method }}</td>
-                        <td class="p-3">{{ $t->currency ?? 'PEN' }} {{ number_format($t->amount / 100, 2) }}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-sm {{ $badge }}">{{ ucfirst($t->status) }}</span></td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-mono text-xs text-gray-600 whitespace-nowrap">{{ $t->order_number ?? $t->charge_id ?? '—' }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">{{ $t->user?->name ?? $t->customer_name ?? '—' }}</td>
+                        <td class="px-4 py-3 uppercase text-xs text-gray-600">{{ $t->payment_method }}</td>
+                        <td class="px-4 py-3 text-right font-medium whitespace-nowrap">{{ $t->currency ?? 'PEN' }} {{ number_format($t->amount / 100, 2) }}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $tb[1] }}">{{ $tb[0] }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="text-gray-700">{{ $t->created_at?->format('d/m/Y H:i') }}</div>
+                            <div class="text-xs text-gray-400">{{ $t->created_at?->diffForHumans() }}</div>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td class="p-3 text-gray-500" colspan="5">Sin transacciones todavía.</td></tr>
+                    <tr><td class="px-4 py-6 text-center text-gray-400" colspan="6">Sin transacciones todavía.</td></tr>
                 @endforelse
                 </tbody>
             </table>
