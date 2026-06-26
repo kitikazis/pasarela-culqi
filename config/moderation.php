@@ -48,13 +48,18 @@ return [
         'soy complaciente', 'complaciente', 'morbosa', 'rica y caliente',
         'sexo', 'sexual', 'orgia', 'table dance', 'tabledance',
         'salida hotel', 'delivery de chicas', 'chicas a domicilio',
+        // Partes íntimas / contenido sexual explícito
+        'pene', 'penes', 'vagina', 'vaginas', 'verga', 'vergas', 'pinga', 'pingas',
+        'pichula', 'chucha', 'teta', 'tetas', 'pezon', 'pezones', 'culo', 'culos',
+        'masturbacion', 'masturbar', 'masturbo', 'orgasmo', 'ereccion', 'coito',
+        'follar', 'penetracion', 'penetrar',
     ],
 
     // ── IA opcional (Google Perspective API) ───────────────────
     'perspective' => [
         'enabled'    => env('PERSPECTIVE_ENABLED', false),
         'api_key'    => env('PERSPECTIVE_API_KEY'),
-        'threshold'  => (float) env('PERSPECTIVE_THRESHOLD', 0.85),
+        'threshold'  => (float) env('PERSPECTIVE_THRESHOLD', 0.70),
         'language'   => 'es',
         'attributes' => ['TOXICITY', 'SEVERE_TOXICITY', 'INSULT', 'PROFANITY', 'THREAT'],
     ],

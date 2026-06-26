@@ -59,7 +59,7 @@ class PaymentController extends Controller
         if (! $result['success']) {
             // Auditoría del intento fallido (sin datos sensibles)
             $this->record->handle([
-                'ad_id'               => $data['ad_id'] ?? null,
+                'publicacion_id'      => $data['publicacion_id'] ?? null,
                 'payment_method'      => 'card',
                 'amount'              => $amount,
                 'currency'            => $data['currency_code'] ?? 'PEN',
@@ -80,7 +80,7 @@ class PaymentController extends Controller
         $charge = $result['data'];
 
         $transaction = $this->record->handle([
-            'ad_id'               => $data['ad_id'] ?? null,
+            'publicacion_id'      => $data['publicacion_id'] ?? null,
             'charge_id'           => $charge->id,
             'payment_method'      => 'card',
             'amount'              => $charge->amount,
@@ -185,7 +185,7 @@ class PaymentController extends Controller
 
         if (! $result['success']) {
             $this->record->handle([
-                'ad_id'          => $data['ad_id'] ?? null,
+                'publicacion_id' => $data['publicacion_id'] ?? null,
                 'payment_method' => 'yape',
                 'amount'         => $data['amount'],
                 'currency'       => 'PEN',
@@ -205,7 +205,7 @@ class PaymentController extends Controller
         $charge = $result['data'];
 
         $transaction = $this->record->handle([
-            'ad_id'               => $data['ad_id'] ?? null,
+            'publicacion_id'      => $data['publicacion_id'] ?? null,
             'charge_id'           => $charge->id,
             'payment_method'      => 'yape',
             'amount'              => $charge->amount,
@@ -263,7 +263,7 @@ class PaymentController extends Controller
 
         // Registro local de la orden pendiente (ligada al anuncio y usuario).
         $this->record->handle([
-            'ad_id'          => $data['ad_id'] ?? null,
+            'publicacion_id' => $data['publicacion_id'] ?? null,
             'order_number'   => $order->order_number ?? null,
             'payment_method' => 'pagoefectivo',
             'amount'         => $amount,

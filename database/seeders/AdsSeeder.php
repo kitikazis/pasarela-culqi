@@ -81,18 +81,18 @@ class AdsSeeder extends Seeder
             }
 
             $filas[] = [
-                'user_id'     => $user->id,
-                'category'    => $cat,
-                'description' => $desc,
-                'phone'       => '9' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT),
-                'coverage'    => $cobertura,
-                'department'  => $dep,
-                'province'    => $prov,
-                'district'    => $dist,
-                'status'      => 'active',
-                'views'       => random_int(0, 500),
-                'created_at'  => $ahora->copy()->subDays(random_int(0, 30))->subMinutes(random_int(0, 1440)),
-                'updated_at'  => $ahora,
+                'user_id'      => $user->id,
+                'categoria'    => $cat,
+                'descripcion'  => $desc,
+                'telefono'     => '9' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT),
+                'cobertura'    => $cobertura,
+                'departamento' => $dep,
+                'provincia'    => $prov,
+                'distrito'     => $dist,
+                'estado'       => 'active',
+                'vistas'       => random_int(0, 500),
+                'created_at'   => $ahora->copy()->subDays(random_int(0, 30))->subMinutes(random_int(0, 1440)),
+                'updated_at'   => $ahora,
             ];
         }
 

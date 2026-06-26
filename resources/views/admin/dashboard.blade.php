@@ -7,110 +7,82 @@
 @endsection
 
 @section('content')
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Usuarios</div>
-            <div class="text-2xl font-bold">{{ $stats['users'] }}</div>
-        </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Anuncios</div>
-            <div class="text-2xl font-bold">{{ $stats['ads'] }}</div>
-        </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Transacciones</div>
-            <div class="text-2xl font-bold">{{ $stats['transactions'] }}</div>
-        </div>
-        <div class="bg-white rounded shadow p-4">
-            <div class="text-sm text-gray-500">Pagos confirmados</div>
-            <div class="text-2xl font-bold">{{ $stats['paid'] }}</div>
-        </div>
+    <h2 class="text-xl font-bold mb-1">Resumen general</h2>
+    <p class="text-sm text-gray-500 mb-6">Vista rápida de tu plataforma. Entra a cada sección para el detalle completo.</p>
+
+    {{-- ===== Tarjetas de métricas ===== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <a href="{{ route('admin.users') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Usuarios</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['users']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="users" class="w-5 h-5"></i></div>
+            </div>
+            <div class="text-xs mt-3 {{ $stats['users_today'] > 0 ? 'text-green-600' : 'text-gray-400' }}">+{{ $stats['users_today'] }} hoy</div>
+        </a>
+
+        <a href="{{ route('admin.ads') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Anuncios</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['ads_total']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-orange-50 text-brand flex items-center justify-center"><i data-lucide="megaphone" class="w-5 h-5"></i></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-3 flex flex-wrap gap-x-3 gap-y-1">
+                <span><span class="text-green-600">●</span> {{ $stats['ads_active'] }} act.</span>
+                <span><span class="text-gray-400">●</span> {{ $stats['ads_inactive'] }} inact.</span>
+                <span><span class="text-red-500">●</span> {{ $stats['ads_borrado'] }} borr.</span>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.transactions') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Ingresos</div>
+                    <div class="text-3xl font-bold mt-1">S/ {{ number_format($stats['revenue'] / 100, 2) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+            </div>
+            <div class="text-xs text-gray-500 mt-3">{{ $stats['paid'] }} pagos confirmados</div>
+        </a>
+
+        <a href="{{ route('admin.transactions') }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Transacciones</div>
+                    <div class="text-3xl font-bold mt-1">{{ number_format($stats['transactions']) }}</div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
+            </div>
+            <div class="text-xs mt-3 {{ $stats['pending'] > 0 ? 'text-yellow-600' : 'text-gray-400' }}">{{ $stats['pending'] }} pendientes</div>
+        </a>
     </div>
 
-    <section id="users" class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">Usuarios recientes</h2>
-        <div class="bg-white rounded shadow overflow-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-sm text-gray-600">
-                    <tr>
-                        <th class="p-3">ID</th>
-                        <th class="p-3">Nombre</th>
-                        <th class="p-3">Email</th>
-                        <th class="p-3">Proveedor</th>
-                        <th class="p-3">Créditos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($users as $u)
-                    <tr class="border-t">
-                        <td class="p-3">{{ $u->id }}</td>
-                        <td class="p-3">{{ $u->name }}</td>
-                        <td class="p-3">{{ $u->email }}</td>
-                        <td class="p-3 capitalize">{{ $u->provider }}</td>
-                        <td class="p-3">{{ $u->publish_credits }}</td>
-                    </tr>
-                @empty
-                    <tr><td class="p-3 text-gray-500" colspan="5">Sin usuarios todavía.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+    {{-- ===== Recientes (resumen, 5 de cada uno) ===== --}}
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold">Últimos usuarios</h3>
+            <a href="{{ route('admin.users') }}" class="text-sm text-brand hover:underline">Ver todos →</a>
         </div>
+        @include('admin.partials.users-table')
     </section>
 
-    <section id="ads" class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">Anuncios recientes</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            @forelse($ads as $ad)
-            <div class="bg-white rounded shadow p-4">
-                <div class="text-sm text-gray-500">#{{ $ad->id }} · {{ ucfirst($ad->category) }}</div>
-                <div class="font-semibold mt-2">{{ \Illuminate\Support\Str::limit($ad->description, 70) }}</div>
-                <div class="text-sm text-gray-500 mt-1">Por: {{ $ad->user?->name ?? '—' }}</div>
-                <div class="mt-3">
-                    <span class="px-2 py-1 rounded text-sm {{ $ad->status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100' }}">
-                        {{ $ad->status === 'active' ? 'Activo' : 'Inactivo' }}
-                    </span>
-                </div>
-            </div>
-            @empty
-            <div class="text-gray-500">Sin anuncios todavía.</div>
-            @endforelse
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold">Últimos anuncios</h3>
+            <a href="{{ route('admin.ads') }}" class="text-sm text-brand hover:underline">Ver todos →</a>
         </div>
+        @include('admin.partials.ads-table')
     </section>
 
-    <section id="transactions">
-        <h2 class="text-lg font-semibold mb-3">Transacciones recientes</h2>
-        <div class="bg-white rounded shadow overflow-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-sm text-gray-600">
-                    <tr>
-                        <th class="p-3">Orden</th>
-                        <th class="p-3">Usuario</th>
-                        <th class="p-3">Método</th>
-                        <th class="p-3">Monto</th>
-                        <th class="p-3">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($transactions as $t)
-                    @php
-                        $badge = match ($t->status) {
-                            'paid'                 => 'bg-green-100 text-green-700',
-                            'pending'              => 'bg-yellow-100 text-yellow-700',
-                            'failed', 'refunded'   => 'bg-red-100 text-red-700',
-                            default                => 'bg-gray-100 text-gray-700',
-                        };
-                    @endphp
-                    <tr class="border-t">
-                        <td class="p-3">{{ $t->order_number ?? $t->charge_id ?? '—' }}</td>
-                        <td class="p-3">{{ $t->user?->name ?? $t->customer_name ?? '—' }}</td>
-                        <td class="p-3 uppercase">{{ $t->payment_method }}</td>
-                        <td class="p-3">{{ $t->currency ?? 'PEN' }} {{ number_format($t->amount / 100, 2) }}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-sm {{ $badge }}">{{ ucfirst($t->status) }}</span></td>
-                    </tr>
-                @empty
-                    <tr><td class="p-3 text-gray-500" colspan="5">Sin transacciones todavía.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+    <section>
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold">Últimas transacciones</h3>
+            <a href="{{ route('admin.transactions') }}" class="text-sm text-brand hover:underline">Ver todas →</a>
         </div>
+        @include('admin.partials.transactions-table')
     </section>
 @endsection

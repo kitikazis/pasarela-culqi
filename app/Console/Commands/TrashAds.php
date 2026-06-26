@@ -72,7 +72,7 @@ class TrashAds extends Command
             $ads->map(fn (Ad $ad) => [
                 $ad->id,
                 optional($ad->user)->email ?? '—',
-                mb_strimwidth($ad->description, 0, 40, '…'),
+                mb_strimwidth($ad->descripcion, 0, 40, '…'),
                 $ad->deleted_at->format('d/m/Y H:i'),
                 max(0, 30 - (int) $ad->deleted_at->diffInDays(now())),
             ])->all()

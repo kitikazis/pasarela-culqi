@@ -20,12 +20,12 @@ return new class extends Migration
         // Recorta a 144 las descripciones existentes que se pasen del límite,
         // para que MySQL no rechace el cambio de columna por truncamiento.
         // (Los anuncios nuevos ya vienen limitados a 144 por la validación.)
-        DB::table('ads')
-            ->whereRaw('CHAR_LENGTH(description) > 144')
-            ->update(['description' => DB::raw('LEFT(description, 144)')]);
+        DB::table('publicaciones')
+            ->whereRaw('CHAR_LENGTH(descripcion) > 144')
+            ->update(['descripcion' => DB::raw('LEFT(descripcion, 144)')]);
 
-        Schema::table('ads', function (Blueprint $table) {
-            $table->string('description', 144)->change();
+        Schema::table('publicaciones', function (Blueprint $table) {
+            $table->string('descripcion', 144)->change();
         });
     }
 
@@ -34,8 +34,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->text('description')->change();
+        Schema::table('publicaciones', function (Blueprint $table) {
+            $table->text('descripcion')->change();
         });
     }
 };

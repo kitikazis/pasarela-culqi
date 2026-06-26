@@ -12,15 +12,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->index(['user_id', 'status'], 'ads_user_status_idx');
+        Schema::table('publicaciones', function (Blueprint $table) {
+            $table->index(['user_id', 'estado'], 'publicaciones_user_status_idx');
         });
     }
 
     public function down(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->dropIndex('ads_user_status_idx');
+        Schema::table('publicaciones', function (Blueprint $table) {
+            $table->dropIndex('publicaciones_user_status_idx');
         });
     }
 };

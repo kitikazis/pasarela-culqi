@@ -13,25 +13,25 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
+        Schema::table('publicaciones', function (Blueprint $table) {
             // Listado base: activos ordenados por fecha.
-            $table->index(['status', 'created_at'], 'ads_status_created_idx');
+            $table->index(['estado', 'created_at'], 'publicaciones_status_created_idx');
             // Filtro por categoría + orden por fecha.
-            $table->index(['status', 'category', 'created_at'], 'ads_status_cat_created_idx');
+            $table->index(['estado', 'categoria', 'created_at'], 'publicaciones_status_cat_created_idx');
             // Filtro por departamento.
-            $table->index(['status', 'department'], 'ads_status_dep_idx');
+            $table->index(['estado', 'departamento'], 'publicaciones_status_dep_idx');
             // Filtro "Nacional".
-            $table->index('coverage', 'ads_coverage_idx');
+            $table->index('cobertura', 'publicaciones_coverage_idx');
         });
     }
 
     public function down(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->dropIndex('ads_status_created_idx');
-            $table->dropIndex('ads_status_cat_created_idx');
-            $table->dropIndex('ads_status_dep_idx');
-            $table->dropIndex('ads_coverage_idx');
+        Schema::table('publicaciones', function (Blueprint $table) {
+            $table->dropIndex('publicaciones_status_created_idx');
+            $table->dropIndex('publicaciones_status_cat_created_idx');
+            $table->dropIndex('publicaciones_status_dep_idx');
+            $table->dropIndex('publicaciones_coverage_idx');
         });
     }
 };

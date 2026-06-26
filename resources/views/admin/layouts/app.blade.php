@@ -23,6 +23,8 @@
         }
     </script>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
         /* Minimal page-safe background */
         body { background-color: #f7f7fa; }
@@ -49,5 +51,7 @@
             @yield('content')
         </div>
     </div>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -24,8 +24,8 @@ class HealthCheck extends Command
         $metrics = [
             'database'         => $this->databaseOk() ? 'OK' : 'ERROR',
             'ads_total'        => Ad::count(),
-            'ads_active'       => Ad::where('status', 'active')->count(),
-            'ads_inactive'     => Ad::where('status', 'inactive')->count(),
+            'ads_active'       => Ad::where('estado', 'active')->count(),
+            'ads_inactive'     => Ad::where('estado', 'inactive')->count(),
             'ads_en_papelera'  => Ad::onlyTrashed()->count(),
             'users_total'      => User::count(),
             'tx_total'         => Transaction::count(),
