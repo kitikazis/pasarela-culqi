@@ -102,9 +102,20 @@ class PaymentController extends Controller
             ],
         ]);
 
-        // Cobro confirmado en línea (tarjeta) → destacar el anuncio si aplica.
+        // Cobro confirmado en línea (tarjeta/Yape) → destacar el anuncio si aplica.
         if ($transaction) {
             event(new \App\Events\PaymentConfirmed($transaction->fresh()));
+        }
+
+        // El checkout crea una orden ANTES de abrir Culqi (para habilitar PagoEfectivo/
+        // Cuotéalo). Si al final se pagó por token, esa orden quedó pendiente y sin uso:
+        // la descartamos (soft-delete) para no ensuciar el panel. Solo la propia y si
+        // sigue pendiente (nunca toca un PagoEfectivo legítimo en espera de pago).
+        if (! empty($data['abandoned_order_id'])) {
+            Transaction::where('metadata->order_id', $data['abandoned_order_id'])
+                ->where('status', 'pending')
+                ->where('user_id', auth()->id())
+                ->delete();
         }
 
         return response()->json([

@@ -24,6 +24,8 @@ class ChargeRequest extends FormRequest
             'first_name'    => ['nullable', 'string', 'max:50'],
             'last_name'     => ['nullable', 'string', 'max:50'],
             'description'   => ['nullable', 'string', 'max:250'],
+            // Orden creada para el checkout pero NO usada (se pagó por token): se descarta.
+            'abandoned_order_id' => ['nullable', 'string'],
         ];
     }
 

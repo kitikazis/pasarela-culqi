@@ -273,6 +273,7 @@
         let selectedPlan   = null;
         let selectedAmount = 0;   // céntimos (solo para mostrar en el widget)
         let procesando     = false; // guard contra doble pago / doble disparo del callback
+        let lastOrderId    = null;  // orden creada para el checkout (se descarta si se paga por token)
 
         Culqi.publicKey = @json(config('culqi.public_key'));
 
@@ -400,8 +401,10 @@
                     }),
                 });
                 const data = await res.json();
-                configurarCheckout(data.success ? data.order_id : null);
+                lastOrderId = data.success ? data.order_id : null;
+                configurarCheckout(lastOrderId);
             } catch (e) {
+                lastOrderId = null;
                 configurarCheckout(null);
             }
 
@@ -473,6 +476,7 @@
                         email: email || val('email'),
                         first_name: val('firstName'),
                         last_name: val('lastName'),
+                        abandoned_order_id: lastOrderId,  // descarta la orden no usada
                     }),
                 });
                 const data = await res.json();
