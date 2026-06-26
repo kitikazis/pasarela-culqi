@@ -5,9 +5,17 @@
 <aside class="w-64 bg-white border-r min-h-screen">
     <nav class="p-4 space-y-1">
         <div class="px-2 py-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Navegación</div>
-        <a href="{{ route('admin.dashboard') }}" class="{{ $link }} {{ request()->routeIs('admin.dashboard') ? $active : '' }}"><span>📊</span> Dashboard</a>
-        <a href="{{ route('admin.users') }}" class="{{ $link }} {{ request()->routeIs('admin.users') ? $active : '' }}"><span>👥</span> Usuarios</a>
-        <a href="{{ route('admin.ads') }}" class="{{ $link }} {{ request()->routeIs('admin.ads') ? $active : '' }}"><span>📢</span> Anuncios</a>
-        <a href="{{ route('admin.transactions') }}" class="{{ $link }} {{ request()->routeIs('admin.transactions') ? $active : '' }}"><span>💳</span> Transacciones</a>
+        <a href="{{ route('admin.dashboard') }}" class="{{ $link }} {{ request()->routeIs('admin.dashboard') ? $active : '' }}">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+        </a>
+        <a href="{{ route('admin.users') }}" class="{{ $link }} {{ request()->routeIs('admin.users') ? $active : '' }}">
+            <i data-lucide="users" class="w-5 h-5"></i> Usuarios
+        </a>
+        <a href="{{ route('admin.ads') }}" class="{{ $link }} {{ request()->routeIs('admin.ads') ? $active : '' }}">
+            <i data-lucide="megaphone" class="w-5 h-5"></i> Anuncios
+        </a>
+        <a href="{{ route('admin.transactions') }}" class="{{ $link }} {{ request()->routeIs('admin.transactions') ? $active : '' }}">
+            <i data-lucide="credit-card" class="w-5 h-5"></i> Transacciones
+        </a>
     </nav>
 </aside>

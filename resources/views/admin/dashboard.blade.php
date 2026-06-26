@@ -18,7 +18,7 @@
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Usuarios</div>
                     <div class="text-3xl font-bold mt-1">{{ number_format($stats['users']) }}</div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">👥</div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="users" class="w-5 h-5"></i></div>
             </div>
             <div class="text-xs mt-3 {{ $stats['users_today'] > 0 ? 'text-green-600' : 'text-gray-400' }}">+{{ $stats['users_today'] }} hoy</div>
         </a>
@@ -29,7 +29,7 @@
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Anuncios</div>
                     <div class="text-3xl font-bold mt-1">{{ number_format($stats['ads_total']) }}</div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-orange-50 text-brand flex items-center justify-center text-xl">📢</div>
+                <div class="w-11 h-11 rounded-xl bg-orange-50 text-brand flex items-center justify-center"><i data-lucide="megaphone" class="w-5 h-5"></i></div>
             </div>
             <div class="text-xs text-gray-500 mt-3 flex flex-wrap gap-x-3 gap-y-1">
                 <span><span class="text-green-600">●</span> {{ $stats['ads_active'] }} act.</span>
@@ -44,7 +44,7 @@
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Ingresos</div>
                     <div class="text-3xl font-bold mt-1">S/ {{ number_format($stats['revenue'] / 100, 2) }}</div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl">💰</div>
+                <div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5"></i></div>
             </div>
             <div class="text-xs text-gray-500 mt-3">{{ $stats['paid'] }} pagos confirmados</div>
         </a>
@@ -55,7 +55,7 @@
                     <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Transacciones</div>
                     <div class="text-3xl font-bold mt-1">{{ number_format($stats['transactions']) }}</div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">💳</div>
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
             </div>
             <div class="text-xs mt-3 {{ $stats['pending'] > 0 ? 'text-yellow-600' : 'text-gray-400' }}">{{ $stats['pending'] }} pendientes</div>
         </a>
