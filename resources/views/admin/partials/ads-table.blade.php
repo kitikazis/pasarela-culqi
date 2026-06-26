@@ -51,7 +51,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td class="px-4 py-6 text-center text-gray-400" colspan="8">Sin anuncios todavía.</td></tr>
+            <tr><td class="px-4 py-6 text-center text-gray-400" colspan="8">No hay anuncios para mostrar.</td></tr>
         @endforelse
         </tbody>
     </table>

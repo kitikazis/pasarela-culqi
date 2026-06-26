@@ -36,7 +36,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td class="px-4 py-6 text-center text-gray-400" colspan="6">Sin transacciones todavía.</td></tr>
+            <tr><td class="px-4 py-6 text-center text-gray-400" colspan="6">No hay transacciones para mostrar.</td></tr>
         @endforelse
         </tbody>
     </table>
