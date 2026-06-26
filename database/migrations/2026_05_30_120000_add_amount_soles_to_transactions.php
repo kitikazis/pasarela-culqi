@@ -13,6 +13,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Columna calculada SOLO para lectura humana en phpMyAdmin (MySQL).
+        // La app no la usa (lee con el accesor amount_in_soles), y la sintaxis
+        // "AS (...) VIRTUAL AFTER" es propia de MySQL. En SQLite/local se omite.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         if (! Schema::hasColumn('transactions', 'amount_soles')) {
             DB::statement('ALTER TABLE transactions
                 ADD COLUMN amount_soles DECIMAL(10,2)
@@ -22,7 +29,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasColumn('transactions', 'amount_soles')) {
+        if (DB::getDriverName() === 'mysql' && Schema::hasColumn('transactions', 'amount_soles')) {
             DB::statement('ALTER TABLE transactions DROP COLUMN amount_soles');
         }
     }

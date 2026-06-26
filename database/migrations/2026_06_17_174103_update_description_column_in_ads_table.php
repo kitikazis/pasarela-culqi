@@ -18,11 +18,18 @@ return new class extends Migration
     public function up(): void
     {
         // Recorta a 144 las descripciones existentes que se pasen del límite,
-        // para que MySQL no rechace el cambio de columna por truncamiento.
+        // para que el cambio de columna no falle por truncamiento.
         // (Los anuncios nuevos ya vienen limitados a 144 por la validación.)
-        DB::table('publicaciones')
-            ->whereRaw('CHAR_LENGTH(descripcion) > 144')
-            ->update(['descripcion' => DB::raw('LEFT(descripcion, 144)')]);
+        // Las funciones de string difieren por motor (MySQL vs SQLite).
+        if (DB::getDriverName() === 'sqlite') {
+            DB::table('publicaciones')
+                ->whereRaw('LENGTH(descripcion) > 144')
+                ->update(['descripcion' => DB::raw('SUBSTR(descripcion, 1, 144)')]);
+        } else {
+            DB::table('publicaciones')
+                ->whereRaw('CHAR_LENGTH(descripcion) > 144')
+                ->update(['descripcion' => DB::raw('LEFT(descripcion, 144)')]);
+        }
 
         Schema::table('publicaciones', function (Blueprint $table) {
             $table->string('descripcion', 144)->change();
