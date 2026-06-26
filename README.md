@@ -340,7 +340,7 @@ git pull && bash deploy.sh
 | Mastercard | `5111 1111 1111 1118` | 123 | 09/28 | ✅ Aprobada |
 | Visa | `4000 0000 0000 0002` | 123 | 09/28 | ❌ Rechazada |
 
-**Yape:** teléfono `999999999`, OTP `123456`.
+**Yape (sandbox):** teléfono `900000001`, OTP `123456`. (El `999999999` NO está habilitado para Yape en sandbox.) Monto mínimo de Yape: **S/ 6.00** (usa Plan Plus o Premium).
 
 Más: https://docs.culqi.com/es/documentacion/pagos-online/tarjetas-de-prueba
 
