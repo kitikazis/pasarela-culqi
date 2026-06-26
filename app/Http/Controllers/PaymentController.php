@@ -60,7 +60,7 @@ class PaymentController extends Controller
             // Auditoría del intento fallido (sin datos sensibles)
             $this->record->handle([
                 'publicacion_id'      => $data['publicacion_id'] ?? null,
-                'payment_method'      => 'card',
+                'payment_method'      => $this->methodFromSource($data['token'] ?? null),
                 'amount'              => $amount,
                 'currency'            => $data['currency_code'] ?? 'PEN',
                 'status'              => 'failed',
@@ -79,18 +79,22 @@ class PaymentController extends Controller
 
         $charge = $result['data'];
 
+        // El método real se deduce del token: Yape genera un source con id "ype_...".
+        $method = $this->methodFromSource($charge->source->id ?? null);
+
         $transaction = $this->record->handle([
             'publicacion_id'      => $data['publicacion_id'] ?? null,
             'charge_id'           => $charge->id,
-            'payment_method'      => 'card',
+            'payment_method'      => $method,
             'amount'              => $charge->amount,
             'currency'            => $charge->currency_code ?? 'PEN',
             'status'              => 'paid',
             'culqi_response_code' => $charge->outcome->code ?? null,
             'customer_email'      => $charge->email ?? $data['email'],
             'customer_name'       => $customerName,
-            'card_last4'          => $charge->source->last_four ?? null,
-            'card_brand'          => $charge->source->iin->card_brand ?? null,
+            // last4/marca solo aplican a tarjeta (en Yape el iin viene de relleno).
+            'card_last4'          => $method === 'card' ? ($charge->source->last_four ?? null) : null,
+            'card_brand'          => $method === 'card' ? ($charge->source->iin->card_brand ?? null) : null,
             'description'         => $description,
             'metadata'            => [
                 'outcome_type' => $charge->outcome->type ?? null,
@@ -330,6 +334,15 @@ class PaymentController extends Controller
     // ─────────────────────────────────────────────────────────────
     //  Resolución segura de monto y descripción desde el plan
     // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Deduce el método de pago a partir del id del token/source de Culqi.
+     * Yape tokeniza con prefijo "ype_"; el resto se trata como tarjeta.
+     */
+    private function methodFromSource(?string $sourceId): string
+    {
+        return str_starts_with((string) $sourceId, 'ype_') ? 'yape' : 'card';
+    }
 
     /** Si viene un plan, el monto se toma de config/plans.php (no del cliente). */
     private function resolveAmount(array $data): int
