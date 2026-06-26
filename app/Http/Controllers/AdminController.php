@@ -82,18 +82,46 @@ class AdminController extends Controller
             'revenue'      => (int) Transaction::where('status', 'paid')->sum('amount'),
         ];
 
-        // Últimos registros reales de la BD (con la cuenta de anuncios por usuario).
-        $users = User::withCount('ads')->latest()->take(15)
+        // Vista previa: últimos 5 de cada uno (el detalle completo va en su página).
+        $users = User::withCount('ads')->latest()->take(5)
             ->get(['id', 'name', 'email', 'avatar', 'provider', 'publish_credits', 'created_at']);
 
-        // Incluye los borrados (withTrashed) para verlos con su fecha de borrado.
-        $ads = Ad::withTrashed()->with('user:id,name')->latest()->take(15)
+        $ads = Ad::withTrashed()->with('user:id,name')->latest()->take(5)
             ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at']);
 
-        $transactions = Transaction::with('user:id,name')->latest()->take(15)
+        $transactions = Transaction::with('user:id,name')->latest()->take(5)
             ->get(['id', 'user_id', 'order_number', 'charge_id', 'payment_method',
                    'amount', 'currency', 'status', 'customer_name', 'created_at']);
 
         return view('admin.dashboard', compact('stats', 'users', 'ads', 'transactions'));
+    }
+
+    /** Página completa de usuarios (paginada). */
+    public function users()
+    {
+        $users = User::withCount('ads')->latest()->paginate(20);
+
+        return view('admin.users', compact('users'));
+    }
+
+    /** Página completa de anuncios, incluidos los borrados (paginada). */
+    public function ads()
+    {
+        $ads = Ad::withTrashed()->with('user:id,name')->latest()->paginate(20, [
+            'id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at',
+        ]);
+
+        return view('admin.ads', compact('ads'));
+    }
+
+    /** Página completa de transacciones (paginada). */
+    public function transactions()
+    {
+        $transactions = Transaction::with('user:id,name')->latest()->paginate(20, [
+            'id', 'user_id', 'order_number', 'charge_id', 'payment_method',
+            'amount', 'currency', 'status', 'customer_name', 'created_at',
+        ]);
+
+        return view('admin.transactions', compact('transactions'));
     }
 }

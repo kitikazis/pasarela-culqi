@@ -116,7 +116,10 @@ Route::post('/admin/login', [AdminController::class, 'login'])
     ->name('admin.login.post');
 Route::post('/admin/logout', [AdminController::class, 'logout'])->name('admin.logout');
 
-// Dashboard protegido: requiere haber iniciado sesión en el panel (EnsureAdminPanel).
-Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])
-    ->middleware('admin.panel')
-    ->name('admin.dashboard');
+// Páginas protegidas del panel (requieren login del panel — EnsureAdminPanel).
+Route::middleware('admin.panel')->group(function () {
+    Route::get('/admin/dashboard',     [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/usuarios',      [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/admin/anuncios',      [AdminController::class, 'ads'])->name('admin.ads');
+    Route::get('/admin/transacciones', [AdminController::class, 'transactions'])->name('admin.transactions');
+});
