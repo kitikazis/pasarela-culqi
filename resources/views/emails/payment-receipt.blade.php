@@ -17,7 +17,7 @@
       </tr>
       <tr>
         <td style="padding:8px 6px;border-top:1px solid #eef2f6;font-weight:600;">Nº de Orden</td>
-        <td style="padding:8px 6px;border-top:1px solid #eef2f6;">{{ $transaction->order_number }}</td>
+        <td style="padding:8px 6px;border-top:1px solid #eef2f6;">{{ $transaction->order_number ?? $transaction->charge_id }}</td>
       </tr>
       <tr>
         <td style="padding:8px 6px;border-top:1px solid #eef2f6;font-weight:600;">Plan</td>
@@ -29,7 +29,7 @@
       </tr>
       <tr>
         <td style="padding:8px 6px;border-top:1px solid #eef2f6;font-weight:600;">Monto</td>
-        <td style="padding:8px 6px;border-top:1px solid #eef2f6;">S/ {{ number_format($transaction->amount, 2) }}</td>
+        <td style="padding:8px 6px;border-top:1px solid #eef2f6;">S/ {{ number_format($transaction->amount_in_soles, 2) }}</td>
       </tr>
     </table>
 

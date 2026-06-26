@@ -23,9 +23,12 @@ class SendReceiptToCustomer
 
         $planDetails = $planCode ? (config('plans')[$planCode] ?? null) : null;
 
+        // Usa el correo del usuario logueado; si no hay, cae al customer_email de la transacción.
+        $email = optional($transaction->user)->email ?: $transaction->customer_email;
+
         try {
-            if ($transaction->user && $transaction->user->email) {
-                Mail::to($transaction->user->email)
+            if ($email) {
+                Mail::to($email)
                     ->send(new PaymentReceiptMail($transaction, $planDetails));
             }
         } catch (\Throwable $e) {
