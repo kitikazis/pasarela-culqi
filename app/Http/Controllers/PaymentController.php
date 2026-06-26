@@ -175,24 +175,30 @@ class PaymentController extends Controller
     {
         $data = $request->validated();
 
+        // El precio se resuelve en el backend desde el plan (no se confía del cliente).
+        $amount       = $this->resolveAmount($data);
+        $description  = $this->resolveDescription($data);
+        $customerName = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')) ?: null;
+
         $result = $this->culqi->chargeYape(
             $data['phone_number'],
             $data['otp'],
-            (int) $data['amount'],
+            $amount,
             $data['email'],
-            $data['description'] ?? null,
+            $description,
         );
 
         if (! $result['success']) {
             $this->record->handle([
                 'publicacion_id' => $data['publicacion_id'] ?? null,
                 'payment_method' => 'yape',
-                'amount'         => $data['amount'],
+                'amount'         => $amount,
                 'currency'       => 'PEN',
                 'status'         => 'failed',
                 'customer_email' => $data['email'],
-                'description'    => $data['description'] ?? null,
-                'metadata'       => ['failed_step' => $result['failed_step'] ?? null],
+                'customer_name'  => $customerName,
+                'description'    => $description,
+                'metadata'       => ['failed_step' => $result['failed_step'] ?? null, 'plan' => $data['plan'] ?? null],
             ]);
 
             return response()->json([
@@ -213,8 +219,9 @@ class PaymentController extends Controller
             'status'              => 'paid',
             'culqi_response_code' => $charge->outcome->code ?? null,
             'customer_email'      => $charge->email ?? $data['email'],
-            'description'         => $data['description'] ?? null,
-            'metadata'            => ['outcome_type' => $charge->outcome->type ?? null],
+            'customer_name'       => $customerName,
+            'description'         => $description,
+            'metadata'            => ['outcome_type' => $charge->outcome->type ?? null, 'plan' => $data['plan'] ?? null],
         ]);
 
         if ($transaction) {

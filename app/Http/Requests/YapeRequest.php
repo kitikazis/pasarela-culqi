@@ -14,11 +14,16 @@ class YapeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone_number' => ['required', 'string', 'regex:/^9\d{8}$/'],
-            'otp'          => ['required', 'string', 'regex:/^\d{6}$/'],
-            'amount'       => ['required', 'integer', 'min:100'],
-            'email'        => ['required', 'email'],
-            'description'  => ['nullable', 'string', 'max:500'],
+            // Si viene un plan válido, el monto se resuelve en el backend (no se confía del cliente).
+            'plan'           => ['nullable', 'string', 'in:' . implode(',', array_keys((array) config('plans')))],
+            'phone_number'   => ['required', 'string', 'regex:/^9\d{8}$/'],
+            'otp'            => ['required', 'string', 'regex:/^\d{6}$/'],
+            'amount'         => ['required_without:plan', 'integer', 'min:100'],
+            'email'          => ['required', 'email'],
+            'first_name'     => ['nullable', 'string', 'max:100'],
+            'last_name'      => ['nullable', 'string', 'max:100'],
+            'description'    => ['nullable', 'string', 'max:500'],
+            'publicacion_id' => ['nullable', 'integer'],
         ];
     }
 
