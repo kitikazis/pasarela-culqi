@@ -110,7 +110,11 @@ class AdminController extends Controller
             ->when($provider, fn ($query) => $query->where('provider', $provider))
             ->latest()
             ->paginate(20)
-            ->withQueryString();
+            ->appends($request->except('partial', 'page'));
+
+        if ($request->boolean('partial')) {
+            return view('admin.partials.users-results', compact('users', 'q', 'provider'));
+        }
 
         return view('admin.users', compact('users', 'q', 'provider'));
     }
@@ -140,7 +144,11 @@ class AdminController extends Controller
             ->paginate(20, [
                 'id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at',
             ])
-            ->withQueryString();
+            ->appends($request->except('partial', 'page'));
+
+        if ($request->boolean('partial')) {
+            return view('admin.partials.ads-results', compact('ads', 'q', 'estado', 'categoria'));
+        }
 
         return view('admin.ads', compact('ads', 'q', 'estado', 'categoria'));
     }
@@ -166,7 +174,12 @@ class AdminController extends Controller
                 'id', 'user_id', 'order_number', 'charge_id', 'payment_method',
                 'amount', 'currency', 'status', 'customer_name', 'created_at',
             ])
-            ->withQueryString();
+            ->appends($request->except('partial', 'page'));
+
+        // Filtrado en vivo (AJAX): devuelve solo los resultados, sin el layout.
+        if ($request->boolean('partial')) {
+            return view('admin.partials.transactions-results', compact('transactions', 'q', 'status', 'method'));
+        }
 
         return view('admin.transactions', compact('transactions', 'q', 'status', 'method'));
     }

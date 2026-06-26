@@ -9,11 +9,13 @@
 @section('content')
     <div class="mb-4">
         <h2 class="text-xl font-bold">Anuncios</h2>
-        <p class="text-sm text-gray-500">{{ number_format($ads->total()) }} resultado(s)</p>
     </div>
 
-    <form method="GET" class="mb-4 flex flex-wrap items-center gap-2">
+    <form method="GET" action="{{ route('admin.ads') }}"
+          data-live-filter data-results="adsResults" data-loading="adsLoading"
+          class="mb-4 flex flex-wrap items-center gap-2">
         <input type="text" name="q" value="{{ $q }}" placeholder="Buscar en la descripción…"
+               autocomplete="off"
                class="px-3 py-2 border border-gray-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/30">
         <select name="estado" class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="">Todos los estados</option>
@@ -28,15 +30,13 @@
             <option value="trabajo" @selected($categoria === 'trabajo')>Trabajo</option>
             <option value="busca" @selected($categoria === 'busca')>Busca</option>
         </select>
-        <button class="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition">Buscar</button>
-        @if($q !== '' || $estado || $categoria)
-            <a href="{{ route('admin.ads') }}" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700">Limpiar</a>
-        @endif
+        <button type="submit" class="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition">Buscar</button>
+        <a href="{{ route('admin.ads') }}" data-clear
+           class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 {{ ($q !== '' || $estado || $categoria) ? '' : 'hidden' }}">Limpiar</a>
+        <span id="adsLoading" class="hidden text-xs text-gray-400">Actualizando…</span>
     </form>
 
-    @include('admin.partials.ads-table')
-
-    <div class="mt-4">
-        {{ $ads->links() }}
+    <div id="adsResults">
+        @include('admin.partials.ads-results')
     </div>
 @endsection
