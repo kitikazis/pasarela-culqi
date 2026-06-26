@@ -87,11 +87,6 @@ Route::post('/pago/guardar-tarjeta', [PaymentController::class, 'saveCard'])
     ->middleware(['throttle:5,1', 'auth'])
     ->name('pago.guardar_tarjeta');
 
-// Pago con Yape (flujo propio en la página, sin el modal de Culqi) — requiere sesión.
-Route::post('/pago/yape', [PaymentController::class, 'yape'])
-    ->middleware(['throttle:5,1', 'auth'])
-    ->name('pago.yape');
-
 // Crear orden (habilita PagoEfectivo / Cuotéalo en el Checkout) — requiere sesión.
 Route::post('/pago/orden', [PaymentController::class, 'createOrder'])
     ->middleware(['throttle:10,1', 'auth'])

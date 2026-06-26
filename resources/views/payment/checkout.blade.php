@@ -59,23 +59,16 @@
         .result.err { background:#fdecea; color:#b3261e; border:1px solid #ea4335; }
         .secure { text-align:center; font-size:.76rem; color:#9aa1ad; margin-top:1rem; }
 
-        /* ── Pago con Yape (flujo propio, sin abrir el modal de Culqi) ── */
-        .yape-divider { display:flex; align-items:center; gap:.75rem; margin:1.5rem 0 .2rem;
-                        color:#9aa1ad; font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; }
-        .yape-divider::before, .yape-divider::after { content:""; flex:1; height:1px; background:var(--line); }
-        .yape-help { font-size:.78rem; color:var(--muted); line-height:1.5; margin:.5rem 0 .2rem; }
-        .yape-otp { letter-spacing:.45em; text-align:center; font-size:1.15rem; font-weight:700; padding-left:.45em; }
-        .btn-yape { background:#742284; }
-        .btn-yape:hover { background:#5d1a6b; }
-        .yape-progress { margin-top:.9rem; height:10px; border-radius:999px; background:#ececf1; overflow:hidden; display:none; }
-        .yape-progress.show { display:block; }
-        .yape-bar { height:100%; width:0; border-radius:999px;
-                    background:linear-gradient(90deg,#742284,#b14bc6); transition:width .3s ease; }
-        .yape-bar.done { background:linear-gradient(90deg,#10B981,#34d399); }
-        .yape-status { text-align:center; font-size:.85rem; margin:.55rem 0 0; min-height:1.15em; }
-        .yape-status.run { color:#742284; }
-        .yape-status.ok  { color:#0f7a37; font-weight:700; }
-        .yape-status.err { color:#b3261e; }
+        /* ── Barra de carga del pago (aparece al cerrarse el modal de Culqi) ── */
+        .pay-progress { margin-top:1rem; height:10px; border-radius:999px; background:#ececf1; overflow:hidden; display:none; }
+        .pay-progress.show { display:block; }
+        .pay-bar { height:100%; width:0; border-radius:999px;
+                   background:linear-gradient(90deg,var(--brand),#ffb066); transition:width .3s ease; }
+        .pay-bar.done { background:linear-gradient(90deg,#10B981,#34d399); }
+        .pay-status { text-align:center; font-size:.9rem; margin:.6rem 0 0; min-height:1.15em; }
+        .pay-status.run { color:var(--brand-dark); font-weight:600; }
+        .pay-status.ok  { color:#0f7a37; font-weight:700; }
+        .pay-status.err { color:#b3261e; }
 
         /* Resumen compacto de "Tus datos" cuando hay sesión */
         .identity-summary {
@@ -237,21 +230,9 @@
 
             <button id="btnPay" type="button" disabled>Selecciona un plan</button>
 
-            {{-- ── Pago con Yape: flujo propio en la página (sin abrir el modal de Culqi) ── --}}
-            <div class="yape-divider"><span>o paga al instante con Yape</span></div>
-            <div class="yape-box">
-                <p class="yape-help">
-                    En tu app de <strong>Yape</strong> entra al menú → <strong>“Código de aprobación”</strong>
-                    (compras por Internet) y genera tu código de 6 dígitos. Tu número Yape es el
-                    <strong>celular</strong> de arriba.
-                </p>
-                <label for="yapeOtp">Código de aprobación Yape</label>
-                <input type="text" id="yapeOtp" class="yape-otp" maxlength="6" inputmode="numeric"
-                       placeholder="••••••" autocomplete="one-time-code">
-                <button id="btnYape" type="button" class="btn-yape" disabled>Selecciona un plan</button>
-                <div class="yape-progress" id="yapeProgress"><div class="yape-bar" id="yapeBar"></div></div>
-                <p class="yape-status" id="yapeStatus" role="status" aria-live="polite"></p>
-            </div>
+            {{-- Barra de carga del pago: aparece al cerrarse el modal de Culqi --}}
+            <div class="pay-progress" id="payProgress"><div class="pay-bar" id="payBar"></div></div>
+            <p class="pay-status" id="payStatus" role="status" aria-live="polite"></p>
 
             <div class="result" id="result"></div>
             <p class="secure" style="display:flex;align-items:center;justify-content:center;gap:.35rem;"><i data-lucide="lock" style="width:13px;height:13px;"></i> Pago seguro con Culqi. Tus datos de tarjeta nunca pasan por este sitio.</p>
@@ -288,7 +269,6 @@
         const URL_CARGO    = @json(route('pago.cargo'));
         const URL_ORDEN    = @json(route('pago.orden'));
         const URL_CONFIRMAR = @json(route('pago.orden.confirmar'));
-        const URL_YAPE     = @json(route('pago.yape'));
 
         let selectedPlan   = null;
         let selectedAmount = 0;   // céntimos (solo para mostrar en el widget)
@@ -327,11 +307,6 @@
             e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
         });
 
-        // Código de aprobación Yape: solo dígitos, máximo 6.
-        document.getElementById('yapeOtp').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
-        });
-
         // ── Selección de plan ──
         document.querySelectorAll('.plan').forEach(card => {
             card.addEventListener('click', () => {
@@ -342,9 +317,6 @@
                 const btn = document.getElementById('btnPay');
                 btn.disabled = false;
                 btn.textContent = 'Pagar S/ ' + (selectedAmount / 100).toFixed(2);
-                const btnY = document.getElementById('btnYape');
-                btnY.disabled = false;
-                btnY.textContent = 'Pagar S/ ' + (selectedAmount / 100).toFixed(2) + ' con Yape';
             });
         });
 
@@ -357,8 +329,7 @@
                 lang: 'es',
                 installments: true,
                 paymentMethods: {
-                    // Yape va por nuestro flujo propio en la página (sin abrir el modal).
-                    tarjeta: true, yape: false, billetera: true,
+                    tarjeta: true, yape: true, billetera: true,
                     bancaMovil: true, agente: true, cuotealo: true,
                 },
                 style: {
@@ -374,7 +345,6 @@
         }
 
         document.getElementById('btnPay').addEventListener('click', abrirCheckout);
-        document.getElementById('btnYape').addEventListener('click', pagarConYape);
 
         // Cierre del overlay de éxito: X, enlace "Cerrar", clic en el fondo y tecla Esc.
         document.getElementById('payCloseX').addEventListener('click', closePaidOverlay);
@@ -447,10 +417,12 @@
             procesando = true;
 
             if (Culqi.order) {
-                setPaying(true);                                // bloquea la pantalla
+                closeCulqi();                                   // cierra el modal de Culqi
+                startPayBar('Procesando tu pago…');             // barra de carga (Yape/billetera/banca…)
                 confirmarOrden(Culqi.order.id);                 // la orden es el pago
             } else if (Culqi.token) {
-                setPaying(true);                                // bloquea la pantalla
+                closeCulqi();                                   // cierra el modal de Culqi
+                startPayBar('Procesando tu pago con tarjeta…'); // barra de carga (tarjeta)
                 enviarCargo(Culqi.token.id, Culqi.token.email); // fallback: sin orden
             } else if (Culqi.error) {
                 procesando = false;
@@ -470,16 +442,19 @@
                 });
                 const data = await res.json();
                 if (data.success && data.paid) {
-                    mostrar('ok', 'Pago confirmado. ¡Gracias! (orden ' + orderId + ')');
-                    showPaidOverlay();
+                    finishPayBar(true);                    // barra a 100% + "¡Compra realizada con éxito!"
+                    setTimeout(showPaidOverlay, 800);      // luego: CTA "Publicar anuncio" + créditos
                 } else if (data.success) {
+                    hidePayBar();
                     mostrar('ok', 'Orden ' + orderId + ' generada. Completa el pago con las instrucciones; lo confirmaremos automáticamente.');
                     finishPayment(true);
                 } else {
+                    hidePayBar();
                     mostrar('err', data.message || 'No se pudo verificar el pago.');
                     finishPayment(false);
                 }
             } catch (e) {
+                hidePayBar();
                 mostrar('err', 'Error de conexión. Intenta nuevamente.');
                 finishPayment(false);
             }
@@ -502,13 +477,15 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    mostrar('ok', data.message + ' (cargo ' + data.charge_id + ')');
-                    showPaidOverlay();
+                    finishPayBar(true);                    // barra a 100% + "¡Compra realizada con éxito!"
+                    setTimeout(showPaidOverlay, 800);      // luego: CTA "Publicar anuncio" + créditos
                 } else {
+                    hidePayBar();
                     mostrar('err', data.message || 'No se pudo procesar el pago.');
                     finishPayment(false);
                 }
             } catch (e) {
+                hidePayBar();
                 mostrar('err', 'Error de conexión. Intenta nuevamente.');
                 finishPayment(false);
             }
@@ -537,7 +514,6 @@
             closeCulqi();
             const btn = document.getElementById('btnPay');
             btn.disabled = true; btn.textContent = 'Pago realizado';
-            document.getElementById('btnYape').disabled = true;   // evita un segundo cobro por Yape
 
             // Muestra el saldo de publicaciones ya actualizado.
             let saldo = null;
@@ -569,104 +545,49 @@
         }
 
         // ─────────────────────────────────────────────────────────────
-        //  Pago con Yape — flujo propio (sin el modal de Culqi)
+        //  Barra de carga del pago (aparece al cerrarse el modal de Culqi)
         // ─────────────────────────────────────────────────────────────
-        let yapeTimer = null;
+        let payTimer = null;
 
         // La barra avanza desacelerando hasta ~90% mientras se procesa, y SOLO llega
         // al 100% cuando el backend confirma el cobro (barra "real", ligada al pago).
-        function startYapeProgress() {
-            const wrap = document.getElementById('yapeProgress');
-            const bar  = document.getElementById('yapeBar');
+        function startPayBar(texto) {
+            const wrap = document.getElementById('payProgress');
+            const bar  = document.getElementById('payBar');
+            document.getElementById('btnPay').disabled = true;   // evita reabrir Culqi mientras carga
             bar.classList.remove('done');
             bar.style.width = '8%';
             wrap.classList.add('show');
-            setYapeStatus('run', 'Validando tu código y procesando el pago…');
+            setPayStatus('run', texto || 'Procesando tu pago…');
             let p = 8;
-            clearInterval(yapeTimer);
-            yapeTimer = setInterval(() => {
+            clearInterval(payTimer);
+            payTimer = setInterval(() => {
                 p += Math.max(0.4, (90 - p) * 0.06);
                 if (p > 90) p = 90;
                 bar.style.width = p.toFixed(1) + '%';
             }, 200);
-            return bar;
         }
 
-        function finishYapeProgress(ok) {
-            clearInterval(yapeTimer);
-            const bar = document.getElementById('yapeBar');
-            if (ok) {
-                bar.classList.add('done');
-                bar.style.width = '100%';
-                setYapeStatus('ok', '¡Compra realizada con éxito! 🎉');
-            } else {
-                bar.style.width = '0%';
-                document.getElementById('yapeProgress').classList.remove('show');
-            }
+        function finishPayBar(ok) {
+            clearInterval(payTimer);
+            if (! ok) { hidePayBar(); return; }
+            const bar = document.getElementById('payBar');
+            bar.classList.add('done');
+            bar.style.width = '100%';
+            setPayStatus('ok', '¡Compra realizada con éxito! 🎉');
         }
 
-        function setYapeStatus(kind, msg) {
-            const el = document.getElementById('yapeStatus');
-            el.className = 'yape-status ' + kind;
+        function hidePayBar() {
+            clearInterval(payTimer);
+            document.getElementById('payProgress').classList.remove('show');
+            document.getElementById('payBar').style.width = '0%';
+            setPayStatus('', '');
+        }
+
+        function setPayStatus(kind, msg) {
+            const el = document.getElementById('payStatus');
+            el.className = 'pay-status ' + kind;
             el.textContent = msg;
-        }
-
-        async function pagarConYape() {
-            if (!selectedPlan) return;
-
-            const email = val('email'), firstName = val('firstName'),
-                  lastName = val('lastName'), phone = val('phone'), otp = val('yapeOtp');
-
-            if (!firstName || !lastName || !email) {
-                document.getElementById('identityFields').style.display = '';
-                document.getElementById('identitySummary').style.display = 'none';
-                mostrar('err', 'Completa tus nombres, apellidos y correo antes de pagar.');
-                return;
-            }
-            if (!/^9\d{8}$/.test(phone)) {
-                mostrar('err', 'Ingresa tu número de celular Yape (9 dígitos, empieza con 9).');
-                const p = document.getElementById('phone');
-                p.focus(); p.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-            if (!/^\d{6}$/.test(otp)) {
-                setYapeStatus('err', 'Ingresa el código de aprobación de 6 dígitos de tu app Yape.');
-                document.getElementById('yapeOtp').focus();
-                return;
-            }
-
-            const btnY = document.getElementById('btnYape');
-            const btnP = document.getElementById('btnPay');
-            btnY.disabled = true; btnP.disabled = true;
-            startYapeProgress();
-
-            try {
-                const res = await fetch(URL_YAPE, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        plan: selectedPlan,
-                        phone_number: phone, otp: otp, email: email,
-                        first_name: firstName, last_name: lastName,
-                    }),
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    finishYapeProgress(true);              // barra a 100% + "¡Compra realizada con éxito!"
-                    document.getElementById('yapeOtp').value = '';
-                    setTimeout(showPaidOverlay, 800);      // CTA "Publicar anuncio" + créditos actualizados
-                } else {
-                    finishYapeProgress(false);
-                    setYapeStatus('err', data.message || 'No se pudo procesar el pago con Yape.');
-                    btnY.disabled = false; btnP.disabled = false;
-                }
-            } catch (e) {
-                finishYapeProgress(false);
-                setYapeStatus('err', 'Error de conexión. Intenta nuevamente.');
-                btnY.disabled = false; btnP.disabled = false;
-            }
         }
 
         // ok=true: orden generada (pago pendiente). ok=false: error → permite reintentar.
