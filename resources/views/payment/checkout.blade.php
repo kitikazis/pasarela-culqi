@@ -110,6 +110,22 @@
         }
         .pay-success-btn:hover { background:#f0fdf4; }
 
+        /* Cerrar el overlay de éxito (X arriba y enlace abajo) */
+        .pay-close-x {
+            position:absolute; top:18px; right:20px;
+            width:40px; height:40px; padding:0; border:0; border-radius:50%;
+            background:rgba(255,255,255,.15); color:#fff;
+            font-size:1.7rem; line-height:1; cursor:pointer;
+            transition:background .15s ease;
+        }
+        .pay-close-x:hover { background:rgba(255,255,255,.3); }
+        .pay-close-link {
+            margin-top:.15rem; background:none; border:0; cursor:pointer;
+            color:rgba(255,255,255,.8); font-size:.85rem; text-decoration:underline;
+            padding:.25rem .5rem;
+        }
+        .pay-close-link:hover { color:#fff; }
+
         /* ── Responsive móvil ── */
         @media (max-width: 575.98px) {
             body { padding:1rem .8rem; }
@@ -210,6 +226,8 @@
 
     {{-- Overlay de pago en proceso: bloquea la pantalla para no pagar dos veces --}}
     <div class="paying-overlay" id="payingOverlay" role="alert" aria-live="assertive" aria-hidden="true">
+        {{-- La X solo se muestra cuando el pago ya está confirmado (no durante "Procesando...") --}}
+        <button type="button" id="payCloseX" class="pay-close-x" aria-label="Cerrar" style="display:none;">&times;</button>
         <div id="payingSpinner" class="overlay-block">
             <div class="spinner"></div>
             <p id="payingText">Procesando tu pago...</p>
@@ -222,6 +240,7 @@
             <p style="font-size:1.3rem;">¡Pago realizado!</p>
             <small id="paySuccessMsg">Tus créditos se agregaron a tu cuenta.</small>
             <a href="/publicar" id="paySuccessBtn" class="pay-success-btn">Publicar anuncio</a>
+            <button type="button" id="paySuccessClose" class="pay-close-link">Cerrar</button>
         </div>
     </div>
 
@@ -311,6 +330,21 @@
         }
 
         document.getElementById('btnPay').addEventListener('click', abrirCheckout);
+
+        // Cierre del overlay de éxito: X, enlace "Cerrar", clic en el fondo y tecla Esc.
+        document.getElementById('payCloseX').addEventListener('click', closePaidOverlay);
+        document.getElementById('paySuccessClose').addEventListener('click', closePaidOverlay);
+        document.getElementById('payingOverlay').addEventListener('click', (e) => {
+            // Solo si ya está en estado de éxito (la X visible); nunca durante "Procesando...".
+            if (e.target === e.currentTarget && document.getElementById('payCloseX').style.display !== 'none') {
+                closePaidOverlay();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('payCloseX').style.display !== 'none') {
+                closePaidOverlay();
+            }
+        });
 
         async function abrirCheckout() {
             if (!selectedPlan) return;
@@ -475,8 +509,17 @@
 
             document.getElementById('payingSpinner').style.display = 'none';
             document.getElementById('paySuccess').style.display = 'flex';
+            document.getElementById('payCloseX').style.display = 'block';
             const ov = document.getElementById('payingOverlay');
             ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+        }
+
+        // Cierra el overlay tras un pago confirmado (la X solo existe en ese estado).
+        function closePaidOverlay() {
+            const ov = document.getElementById('payingOverlay');
+            ov.classList.remove('show');
+            ov.setAttribute('aria-hidden', 'true');
+            document.getElementById('payCloseX').style.display = 'none';
         }
 
         // ok=true: orden generada (pago pendiente). ok=false: error → permite reintentar.
