@@ -23,7 +23,7 @@ class PaymentReceivedMail extends Mailable
         $monto = number_format($this->transaction->amount / 100, 2);
 
         return new Envelope(
-            subject: '💰 Nuevo pago en ' . config('app.name') . " — S/ {$monto}",
+            subject: ' Nuevo pago en ' . config('app.name') . " — S/ {$monto}",
         );
     }
 
