@@ -210,6 +210,9 @@ function renderList() {
         </div>
       </div>
       <div class="my-listing-actions">
+        <a class="btn btn-outline-primary" href="/publicar?editar=${a.id}">
+          <i data-lucide="pencil"></i> Editar
+        </a>
         ${a.status === 'activo'
           ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
                <i data-lucide="circle-pause"></i> Desactivar

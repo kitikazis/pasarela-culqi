@@ -30,16 +30,7 @@ class AdController extends Controller
                 return false;   // sin créditos
             }
 
-            $ad = $user->ads()->create([
-                'categoria'    => $data['category'],
-                'descripcion'  => $data['description'],
-                'telefono'     => $data['phone'],
-                'cobertura'    => $data['coverage'],
-                'departamento' => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
-                'provincia'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
-                'distrito'     => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
-                'estado'       => 'active',
-            ]);
+            $ad = $user->ads()->create($this->adColumns($data) + ['estado' => 'active']);
 
             return true;
         });
@@ -177,6 +168,43 @@ class AdController extends Controller
     }
 
     /**
+     * Datos de un anuncio propio para precargar el formulario de edición.
+     * Van SIN escapar: el formulario los pone con .value (nunca con innerHTML).
+     */
+    public function edit(Ad $ad): JsonResponse
+    {
+        if (! $this->ownsAd($ad)) {
+            return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        return response()->json([
+            'id'          => $ad->id,
+            'category'    => $ad->categoria,
+            'description' => $ad->descripcion,
+            'phone'       => $ad->telefono,
+            'coverage'    => $ad->cobertura,
+            'department'  => $ad->departamento,
+            'province'    => $ad->provincia,
+            'district'    => $ad->distrito,
+        ]);
+    }
+
+    /**
+     * Guarda la edición de un anuncio propio. Es gratis (no gasta crédito) y no
+     * toca fecha, vistas, destacado ni estado.
+     */
+    public function saveEdit(StoreAdRequest $request, Ad $ad): JsonResponse
+    {
+        if (! $this->ownsAd($ad)) {
+            return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        $ad->update($this->adColumns($request->validated()));
+
+        return response()->json(['success' => true, 'message' => 'Anuncio actualizado.']);
+    }
+
+    /**
      * Elimina un anuncio propio. NO se borra de verdad: es un soft delete
      * (se llena deleted_at). Queda en la Papelera 30 días y luego se purga.
      */
@@ -244,6 +272,20 @@ class AdController extends Controller
         $ad->update(['estado' => 'active']);
 
         return response()->json(['success' => true]);
+    }
+
+    /** Traduce el formulario validado a columnas; la cobertura decide qué ubicación se guarda. */
+    private function adColumns(array $data): array
+    {
+        return [
+            'categoria'    => $data['category'],
+            'descripcion'  => $data['description'],
+            'telefono'     => $data['phone'],
+            'cobertura'    => $data['coverage'],
+            'departamento' => $data['coverage'] === 'nacional' ? null : ($data['department'] ?? null),
+            'provincia'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
+            'distrito'     => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
+        ];
     }
 
     /** ¿El anuncio pertenece al usuario autenticado? */

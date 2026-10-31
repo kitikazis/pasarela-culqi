@@ -40,9 +40,9 @@
         <div class="d-flex align-items-center gap-2 text-muted small mb-2">
           <a href="/mis-anuncios" class="text-muted">Mis anuncios</a>
           <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
-          <span>Publicar nuevo</span>
+          <span id="breadcrumbLabel">Publicar nuevo</span>
         </div>
-        <h1>Publicar anuncio</h1>
+        <h1 id="pageTitle">Publicar anuncio</h1>
         <p id="publicarSubtitle">Describe lo que ofreces o buscas. Llega a todo el Perú.</p>
       </div>
     </div>
@@ -146,7 +146,7 @@
             <a href="/mis-anuncios" class="btn-outline-app">Cancelar</a>
             <button type="submit" class="btn-primary-app">
               <i data-lucide="send"></i>
-              Publicar anuncio
+              <span id="submitLabel">Publicar anuncio</span>
             </button>
           </div>
         </form>
@@ -186,6 +186,9 @@ renderIcons();
 const GOOGLE_SVG = '<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="true" style="flex-shrink:0"><rect x="1" y="1" width="9" height="9" fill="#F25022"/><rect x="11" y="1" width="9" height="9" fill="#7FBA00"/><rect x="1" y="11" width="9" height="9" fill="#00A4EF"/><rect x="11" y="11" width="9" height="9" fill="#FFB900"/></svg>';
 
+/* Modo edición: /publicar?editar=ID reutiliza este formulario para un anuncio propio. */
+const EDIT_ID = new URLSearchParams(location.search).get('editar');
+
 /* ===== Sesión: exige login y muestra el usuario real ===== */
 (async function () {
   let me;
@@ -216,6 +219,12 @@ const MS_SVG = '<svg viewBox="0 0 21 21" width="16" height="16" aria-hidden="tru
     const img = document.getElementById('navAvatar');
     img.src = me.user.avatar;
     img.style.display = '';
+  }
+
+  // Editar es gratis: no pasa por el chequeo de créditos.
+  if (EDIT_ID) {
+    await loadAdForEdit();
+    return;
   }
 
   // Publicar gasta 1 crédito. Sin créditos → CTA a comprar un plan.
@@ -296,13 +305,58 @@ applyCoverage(document.querySelector('input[name="cobertura"]:checked').value);
 /* ===== Contador de caracteres (tiempo real) ===== */
 const descripcion = document.getElementById('descripcion');
 const counter = document.getElementById('charCounter');
-descripcion.addEventListener('input', () => {
+function updateCounter() {
   const len = descripcion.value.length;
   counter.textContent = `${len} / 144`;
   counter.classList.remove('warn', 'danger');
   if (len >= 144)        counter.classList.add('danger');
   else if (len >= 120)   counter.classList.add('warn');
-});
+}
+descripcion.addEventListener('input', updateCounter);
+
+/* ===== Modo edición: precarga el anuncio en el formulario ===== */
+async function loadAdForEdit() {
+  let ad = null;
+  try {
+    const res = await fetch(`/anuncios/${encodeURIComponent(EDIT_ID)}/editar`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+    if (res.ok) ad = await res.json();
+  } catch (e) { /* se trata igual que un anuncio no encontrado */ }
+
+  if (!ad) {
+    document.querySelector('main').innerHTML = `
+      <div class="container">
+        <div class="form-card" style="max-width:460px;margin:1rem auto;text-align:center;">
+          <h2 style="font-size:1.3rem;margin:0 0 .4rem;">No pudimos abrir este anuncio</h2>
+          <p style="color:var(--muted);margin:0 0 1.25rem;">Puede que ya no exista o que no sea tuyo.</p>
+          <a href="/mis-anuncios" class="btn-primary-app" style="justify-content:center;">Volver a Mis anuncios</a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  document.title = 'Editar anuncio — anuncialo.pe';
+  document.getElementById('breadcrumbLabel').textContent = 'Editar';
+  document.getElementById('pageTitle').textContent = 'Editar anuncio';
+  document.getElementById('publicarSubtitle').textContent = 'Corrige los datos de tu anuncio. Editar no gasta créditos.';
+  document.getElementById('submitLabel').textContent = 'Guardar cambios';
+
+  document.getElementById('categoria').value = ad.category;
+  descripcion.value = ad.description;
+  updateCounter();
+  document.getElementById('celular').value = ad.phone;
+
+  document.querySelector(`input[name="cobertura"][value="${ad.coverage}"]`).checked = true;
+  applyCoverage(ad.coverage);
+
+  // Selects encadenados: se llena el siguiente nivel aunque no tenga valor,
+  // para que el usuario pueda ampliar la cobertura (p. ej. de departamental a provincial).
+  if (ad.department) { depSel.value = ad.department; fillProvincias(provSel, depSel.value); }
+  if (ad.province)   { provSel.value = ad.province; fillDistritos(distSel, depSel.value, provSel.value); }
+  if (ad.district)   distSel.value = ad.district;
+
+  document.getElementById('formSkeleton').style.display = 'none';
+  document.getElementById('adForm').style.display = '';
+}
 
 /* ===== Celular sanitización ===== */
 document.getElementById('celular').addEventListener('input', (e) => {
@@ -347,8 +401,8 @@ document.getElementById('adForm').addEventListener('submit', async (e) => {
   const coverage = document.querySelector('input[name="cobertura"]:checked').value;
 
   try {
-    const res = await fetch('/anuncios', {
-      method: 'POST',
+    const res = await fetch(EDIT_ID ? `/anuncios/${encodeURIComponent(EDIT_ID)}` : '/anuncios', {
+      method: EDIT_ID ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -383,7 +437,7 @@ document.getElementById('adForm').addEventListener('submit', async (e) => {
           return;
         }
       } else {
-        alert(data.message || 'No se pudo publicar el anuncio.');
+        alert(data.message || (EDIT_ID ? 'No se pudieron guardar los cambios.' : 'No se pudo publicar el anuncio.'));
       }
       btn.disabled = false;
     }

@@ -48,6 +48,14 @@ Route::patch('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'updat
     ->middleware('throttle:per-user')
     ->name('ads.update');
 
+// Editar un anuncio propio: leer sus datos y guardar (gratis, sin gastar crédito).
+Route::get('/anuncios/{ad}/editar', [App\Http\Controllers\AdController::class, 'edit'])
+    ->middleware('throttle:per-user')
+    ->name('ads.edit');
+Route::put('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'saveEdit'])
+    ->middleware('throttle:20,1')
+    ->name('ads.saveEdit');
+
 // Eliminar un anuncio propio (soft delete → Papelera).
 Route::delete('/anuncios/{ad}', [App\Http\Controllers\AdController::class, 'destroy'])
     ->middleware('throttle:per-user')
