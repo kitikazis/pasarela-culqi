@@ -181,6 +181,18 @@ class AdminAdsTest extends TestCase
             ->assertDontSee('/desactivar');
     }
 
+    /**
+     * Las acciones del panel vuelven con back(), que usa el Referer. Con "strict-origin"
+     * el navegador solo manda el dominio y back() termina en la web principal.
+     */
+    public function test_htaccess_conserva_la_ruta_del_referer_dentro_del_sitio(): void
+    {
+        $this->assertStringContainsString(
+            'Referrer-Policy "strict-origin-when-cross-origin"',
+            file_get_contents(public_path('.htaccess'))
+        );
+    }
+
     public function test_mis_anuncios_avisa_al_dueno_que_esta_retirado(): void
     {
         $user    = UserFactory::new()->create();

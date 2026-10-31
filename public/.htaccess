@@ -41,7 +41,8 @@
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin"
+    # Conserva la ruta dentro del sitio (back() de Laravel la necesita); a sitios externos solo va el dominio.
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
     # HSTS: fuerza HTTPS por 1 año (activar solo con SSL ya funcionando)
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
