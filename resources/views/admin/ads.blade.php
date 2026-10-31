@@ -7,9 +7,20 @@
 @endsection
 
 @section('content')
-    <div class="mb-4">
-        <h2 class="text-xl font-bold">Anuncios</h2>
+    @php($enPapelera = $estado === 'borrado')
+
+    <div class="mb-4 flex items-center justify-between gap-3">
+        <h2 class="text-xl font-bold">{{ $enPapelera ? 'Papelera de anuncios' : 'Anuncios' }}</h2>
+        @if($enPapelera)
+            <a href="{{ route('admin.ads') }}" class="px-3 py-2 border border-gray-200 bg-white rounded-lg text-sm hover:bg-gray-50">Volver a anuncios</a>
+        @else
+            <a href="{{ route('admin.ads', ['estado' => 'borrado']) }}" class="px-3 py-2 border border-gray-200 bg-white rounded-lg text-sm hover:bg-gray-50">Papelera ({{ $trashCount }})</a>
+        @endif
     </div>
+
+    @if(session('status'))
+        <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 text-sm">{{ session('status') }}</div>
+    @endif
 
     <form method="GET" action="{{ route('admin.ads') }}"
           data-live-filter data-results="adsResults" data-loading="adsLoading"
@@ -17,12 +28,15 @@
         <input type="text" name="q" value="{{ $q }}" placeholder="Buscar en la descripción…"
                autocomplete="off"
                class="px-3 py-2 border border-gray-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-brand/30">
-        <select name="estado" class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-            <option value="">Todos los estados</option>
-            <option value="active" @selected($estado === 'active')>Activos</option>
-            <option value="inactive" @selected($estado === 'inactive')>Inactivos</option>
-            <option value="borrado" @selected($estado === 'borrado')>Borrados</option>
-        </select>
+        @if($enPapelera)
+            <input type="hidden" name="estado" value="borrado">
+        @else
+            <select name="estado" class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                <option value="">Todos los estados</option>
+                <option value="active" @selected($estado === 'active')>Activos</option>
+                <option value="inactive" @selected($estado === 'inactive')>Inactivos</option>
+            </select>
+        @endif
         <select name="categoria" class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="">Todas las categorías</option>
             <option value="venta" @selected($categoria === 'venta')>Venta</option>

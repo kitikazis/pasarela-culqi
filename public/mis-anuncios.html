@@ -198,9 +198,12 @@ function renderList() {
       <div class="my-listing-body">
         <div class="my-listing-head">
           <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
-          <span class="status-badge ${a.status === 'activo' ? 'active' : 'inactive'}">
-            <span class="dot"></span>${a.status === 'activo' ? 'Activo' : 'Inactivo'}
-          </span>
+          ${a.retired
+            ? `<span class="status-badge inactive"><i data-lucide="shield-alert" style="width:12px;height:12px;"></i> Retirado por moderación</span>`
+            : `<span class="status-badge ${a.status === 'activo' ? 'active' : 'inactive'}">
+                 <span class="dot"></span>${a.status === 'activo' ? 'Activo' : 'Inactivo'}
+               </span>`
+          }
         </div>
         <p class="my-listing-text">${a.text}</p>
         <div class="my-listing-meta">
@@ -210,16 +213,18 @@ function renderList() {
         </div>
       </div>
       <div class="my-listing-actions">
-        <a class="btn btn-outline-primary" href="/publicar?editar=${a.id}">
-          <i data-lucide="pencil"></i> Editar
-        </a>
-        ${a.status === 'activo'
-          ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
-               <i data-lucide="circle-pause"></i> Desactivar
-             </button>`
-          : `<button class="btn btn-outline-success" data-action="toggle" data-id="${a.id}">
-               <i data-lucide="circle-play"></i> Activar
-             </button>`
+        ${a.retired ? '' : `
+          <a class="btn btn-outline-primary" href="/publicar?editar=${a.id}">
+            <i data-lucide="pencil"></i> Editar
+          </a>
+          ${a.status === 'activo'
+            ? `<button class="btn btn-outline-secondary" data-action="toggle" data-id="${a.id}">
+                 <i data-lucide="circle-pause"></i> Desactivar
+               </button>`
+            : `<button class="btn btn-outline-success" data-action="toggle" data-id="${a.id}">
+                 <i data-lucide="circle-play"></i> Activar
+               </button>`
+          }`
         }
         <button class="btn btn-outline-danger" data-action="delete" data-id="${a.id}">
           <i data-lucide="trash-2"></i> Eliminar
@@ -357,7 +362,10 @@ function renderTrashList() {
       <div class="my-listing-body">
         <div class="my-listing-head">
           <span class="badge-cat ${a.cat}">${CAT_LABELS[a.cat]}</span>
-          <span class="status-badge inactive"><i data-lucide="trash-2" style="width:12px;height:12px;"></i> En papelera</span>
+          <span class="status-badge inactive">
+            <i data-lucide="${a.retired ? 'shield-alert' : 'trash-2'}" style="width:12px;height:12px;"></i>
+            ${a.retired ? 'Retirado por moderación' : 'En papelera'}
+          </span>
         </div>
         <p class="my-listing-text">${a.text}</p>
         <div class="my-listing-meta">
@@ -365,11 +373,13 @@ function renderTrashList() {
           <span><i data-lucide="clock"></i>Se elimina en ${a.expira} día${a.expira === 1 ? '' : 's'}</span>
         </div>
       </div>
-      <div class="my-listing-actions">
-        <button class="btn btn-outline-success" data-action="restore" data-id="${a.id}">
-          <i data-lucide="rotate-ccw"></i> Restaurar
-        </button>
-      </div>
+      ${a.retired ? '' : `
+        <div class="my-listing-actions">
+          <button class="btn btn-outline-success" data-action="restore" data-id="${a.id}">
+            <i data-lucide="rotate-ccw"></i> Restaurar
+          </button>
+        </div>`
+      }
     </article>
   `).join('');
 

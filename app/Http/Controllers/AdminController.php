@@ -87,7 +87,7 @@ class AdminController extends Controller
             ->get(['id', 'name', 'email', 'avatar', 'provider', 'publish_credits', 'created_at']);
 
         $ads = Ad::withTrashed()->with('user:id,name')->latest()->take(5)
-            ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at']);
+            ->get(['id', 'user_id', 'categoria', 'descripcion', 'estado', 'retirado_en', 'vistas', 'created_at', 'deleted_at']);
 
         $transactions = Transaction::with('user:id,name')->latest()->take(5)
             ->get(['id', 'user_id', 'order_number', 'charge_id', 'payment_method',
@@ -128,13 +128,11 @@ class AdminController extends Controller
 
         $query = Ad::with('user:id,name');
 
-        // Estado: "borrado" = en Papelera; activo/inactivo = no borrados; sin filtro = todos.
+        // Estado: "borrado" = Papelera; activo/inactivo = ese estado; sin filtro = todo menos la Papelera.
         if ($estado === 'borrado') {
             $query->onlyTrashed();
         } elseif (in_array($estado, ['active', 'inactive'], true)) {
             $query->where('estado', $estado);
-        } else {
-            $query->withTrashed();
         }
 
         $ads = $query
@@ -142,7 +140,7 @@ class AdminController extends Controller
             ->when($categoria, fn ($qb) => $qb->where('categoria', $categoria))
             ->latest()
             ->paginate(20, [
-                'id', 'user_id', 'categoria', 'descripcion', 'estado', 'vistas', 'created_at', 'deleted_at',
+                'id', 'user_id', 'categoria', 'descripcion', 'estado', 'retirado_en', 'vistas', 'created_at', 'deleted_at',
             ])
             ->appends($request->except('partial', 'page'));
 
@@ -150,7 +148,58 @@ class AdminController extends Controller
             return view('admin.partials.ads-results', compact('ads', 'q', 'estado', 'categoria'));
         }
 
-        return view('admin.ads', compact('ads', 'q', 'estado', 'categoria'));
+        $trashCount = Ad::onlyTrashed()->count();
+
+        return view('admin.ads', compact('ads', 'q', 'estado', 'categoria', 'trashCount'));
+    }
+
+    /** Saca un anuncio de la web. Queda retirado: el dueño no puede reactivarlo. */
+    public function deactivateAd(int $id)
+    {
+        Ad::findOrFail($id)->update(['estado' => 'inactive', 'retirado_en' => now()]);
+
+        return back()->with('status', 'Anuncio desactivado. Su dueño no puede reactivarlo.');
+    }
+
+    /** Vuelve a publicar un anuncio y revoca el retiro. */
+    public function activateAd(int $id)
+    {
+        Ad::findOrFail($id)->update(['estado' => 'active', 'retirado_en' => null]);
+
+        return back()->with('status', 'Anuncio activado.');
+    }
+
+    /** Manda un anuncio a la Papelera. Queda retirado: el dueño no puede restaurarlo. */
+    public function deleteAd(int $id)
+    {
+        $ad = Ad::findOrFail($id);
+        $ad->update(['estado' => 'borrado', 'retirado_en' => now()]);
+        $ad->delete();
+
+        return back()->with('status', 'Anuncio enviado a la Papelera.');
+    }
+
+    /**
+     * Saca un anuncio de la Papelera. Si lo había retirado el admin vuelve a
+     * publicarse; si lo borró su dueño queda inactivo, para no republicarlo sin que él lo decida.
+     */
+    public function restoreAd(int $id)
+    {
+        $ad = Ad::onlyTrashed()->findOrFail($id);
+        $estado = $ad->isRetired() ? 'active' : 'inactive';
+
+        $ad->restore();
+        $ad->update(['estado' => $estado, 'retirado_en' => null]);
+
+        return back()->with('status', $estado === 'active' ? 'Anuncio restaurado y publicado.' : 'Anuncio restaurado como inactivo.');
+    }
+
+    /** Borra de verdad un anuncio de la Papelera (no se puede deshacer). */
+    public function purgeAd(int $id)
+    {
+        Ad::onlyTrashed()->findOrFail($id)->forceDelete();
+
+        return back()->with('status', 'Anuncio eliminado definitivamente.');
     }
 
     /** Página completa de transacciones (buscador + filtros por estado/método + paginación). */

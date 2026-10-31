@@ -130,4 +130,11 @@ Route::middleware('admin.panel')->group(function () {
     Route::get('/admin/usuarios',      [AdminController::class, 'users'])->name('admin.users');
     Route::get('/admin/anuncios',      [AdminController::class, 'ads'])->name('admin.ads');
     Route::get('/admin/transacciones', [AdminController::class, 'transactions'])->name('admin.transactions');
+
+    // Moderación de anuncios.
+    Route::post('/admin/anuncios/{id}/desactivar', [AdminController::class, 'deactivateAd'])->whereNumber('id')->name('admin.ads.deactivate');
+    Route::post('/admin/anuncios/{id}/activar',    [AdminController::class, 'activateAd'])->whereNumber('id')->name('admin.ads.activate');
+    Route::post('/admin/anuncios/{id}/eliminar',   [AdminController::class, 'deleteAd'])->whereNumber('id')->name('admin.ads.delete');
+    Route::post('/admin/anuncios/{id}/restaurar',  [AdminController::class, 'restoreAd'])->whereNumber('id')->name('admin.ads.restore');
+    Route::post('/admin/anuncios/{id}/definitivo', [AdminController::class, 'purgeAd'])->whereNumber('id')->name('admin.ads.purge');
 });

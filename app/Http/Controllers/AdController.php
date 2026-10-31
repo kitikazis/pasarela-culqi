@@ -142,6 +142,7 @@ class AdController extends Controller
                 'phone'    => $ad->telefono,
                 'date'     => $ad->created_at?->toDateString(),
                 'status'   => $ad->estado === 'active' ? 'activo' : 'inactivo',
+                'retired'  => $ad->isRetired(),
                 'views'    => $ad->vistas,
                 'featured' => $ad->isFeatured(),
             ]),
@@ -156,6 +157,10 @@ class AdController extends Controller
     {
         if (! $this->ownsAd($ad)) {
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        if ($ad->isRetired()) {
+            return $this->retiredResponse();
         }
 
         $validated = $request->validate([
@@ -175,6 +180,10 @@ class AdController extends Controller
     {
         if (! $this->ownsAd($ad)) {
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        if ($ad->isRetired()) {
+            return $this->retiredResponse();
         }
 
         return response()->json([
@@ -197,6 +206,10 @@ class AdController extends Controller
     {
         if (! $this->ownsAd($ad)) {
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        if ($ad->isRetired()) {
+            return $this->retiredResponse();
         }
 
         $ad->update($this->adColumns($request->validated()));
@@ -252,6 +265,7 @@ class AdController extends Controller
                 'date'   => $ad->created_at?->toDateString(),
                 // Días que faltan para el borrado definitivo.
                 'expira' => max(0, self::TRASH_DAYS - (int) $ad->deleted_at->diffInDays(now())),
+                'retired' => $ad->isRetired(),
             ]),
             'page'  => $ads->currentPage(),
             'pages' => $ads->lastPage(),
@@ -265,6 +279,10 @@ class AdController extends Controller
         $ad = Ad::withTrashed()->find($id);
         if (! $ad || ! $this->ownsAd($ad)) {
             return response()->json(['success' => false, 'message' => 'No autorizado.'], 403);
+        }
+
+        if ($ad->isRetired()) {
+            return $this->retiredResponse();
         }
 
         // Al recuperarlo de la Papelera vuelve a quedar activo (deja de estar "borrado").
@@ -286,6 +304,12 @@ class AdController extends Controller
             'provincia'    => in_array($data['coverage'], ['provincial', 'distrital'], true) ? ($data['province'] ?? null) : null,
             'distrito'     => $data['coverage'] === 'distrital' ? ($data['district'] ?? null) : null,
         ];
+    }
+
+    /** Respuesta cuando el dueño intenta tocar un anuncio retirado por el admin. */
+    private function retiredResponse(): JsonResponse
+    {
+        return response()->json(['success' => false, 'message' => 'Este anuncio fue retirado por moderación.'], 403);
     }
 
     /** ¿El anuncio pertenece al usuario autenticado? */

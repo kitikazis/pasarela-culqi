@@ -30,11 +30,13 @@ class Ad extends Model
         'provincia',
         'distrito',
         'estado',
+        'retirado_en',
         'destacado_hasta',
         'vistas',
     ];
 
     protected $casts = [
+        'retirado_en'     => 'datetime',
         'destacado_hasta' => 'datetime',
         'vistas'          => 'integer',
     ];
@@ -62,6 +64,12 @@ class Ad extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** ¿Lo retiró el admin? Mientras sea así, el dueño no puede reactivarlo ni editarlo. */
+    public function isRetired(): bool
+    {
+        return $this->retirado_en !== null;
     }
 
     /** ¿El anuncio está destacado ahora mismo? */
